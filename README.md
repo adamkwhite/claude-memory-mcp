@@ -15,7 +15,7 @@ A Model Context Protocol (MCP) server that provides searchable local storage for
 
 ### Prerequisites
 
-- Python 3.8+
+- Python 3.11+ (tested with 3.11.12)
 - Ubuntu/WSL environment recommended
 - Claude Desktop (for MCP integration)
 
@@ -223,7 +223,7 @@ pip install mcp[cli]  # Include CLI extras
 
 ### System Requirements
 
-- **Python**: 3.8+ (tested with 3.10)
+- **Python**: 3.11+ (tested with 3.11.12)
 - **Disk Space**: ~10MB per 100 conversations
 - **Memory**: <100MB RAM usage
 - **OS**: Ubuntu/WSL recommended, macOS/Windows compatible

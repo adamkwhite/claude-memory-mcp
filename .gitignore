@@ -53,6 +53,8 @@ summaries/*/
 # Batch import files (these contain personal conversations)
 import_batches/
 data/conversations.json
+data/projects.json
+data/users.json
 parsed_conversations.json
 
 # Config files with sensitive data
