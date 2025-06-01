@@ -1,0 +1,59 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# Virtual Environment
+.venv/
+venv/
+ENV/
+env/
+
+# MCP Logs
+*.log
+mcp-server.log
+
+# IDE
+.vscode/settings.json
+.vscode/launch.json
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Conversation Data (keep structure, not content)
+~/claude-memory/conversations/*/
+~/claude-memory/summaries/*/
+conversations/2*/
+summaries/*/
+
+# But keep example files and indexes
+!conversations/index.json.example
+!summaries/README.md
+
+# Batch import files (these contain personal conversations)
+import_batches/
+data/conversations.json
+parsed_conversations.json
+
+# Config files with sensitive data
+mcp-config.json

@@ -1,0 +1,4 @@
+# Basic Python dependencies
+# Note: pathlib and asyncio are built into Python 3.8+
+
+# We'll install MCP separately since package name/source needs verification

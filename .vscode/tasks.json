@@ -1,0 +1,115 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Generate PRD",
+      "type": "shell",
+      "command": "powershell",
+      "args": [
+        "-Command",
+        "Write-Host 'Opening PRD generation rule from C:\\Code\\workflow\\rule-generate-prd.md'"
+      ],
+      "group": "build",
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": false,
+        "panel": "shared"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Generate Tasks from Latest PRD",
+      "type": "shell",
+      "command": "powershell",
+      "args": [
+        "-Command",
+        "$prdFile = Get-ChildItem -Path '${workspaceFolder}\\tasks' -Filter 'prd-*.md' | Sort-Object LastWriteTime -Descending | Select-Object -First 1; if ($prdFile) { Write-Host \"Found latest PRD: $($prdFile.Name)\"; $projectName = $prdFile.BaseName.Substring(4); Write-Host \"Project: $projectName\"; Write-Host \"Opening task generation rule from C:\\Code\\workflow\\rule-generate-tasks.md\"; Write-Host \"Target output: ${workspaceFolder}\\tasks\\tasks-$projectName.md\" } else { Write-Host \"No PRD files found in ${workspaceFolder}\\tasks\" }"
+      ],
+      "group": "build",
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": false,
+        "panel": "shared"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Generate Test Sessions from Latest PRD",
+      "type": "shell",
+      "command": "powershell",
+      "args": [
+        "-Command",
+        "$prdFile = Get-ChildItem -Path '${workspaceFolder}\\tasks' -Filter 'prd-*.md' | Sort-Object LastWriteTime -Descending | Select-Object -First 1; if ($prdFile) { Write-Host \"Found latest PRD: $($prdFile.Name)\"; $projectName = $prdFile.BaseName.Substring(4); Write-Host \"Project: $projectName\"; Write-Host \"Opening test session generation rule from C:\\Code\\workflow\\rule-generate-test-sessions.md\"; Write-Host \"Target output: ${workspaceFolder}\\tasks\\sessions-$projectName.md\" } else { Write-Host \"No PRD files found in ${workspaceFolder}\\tasks\" }"
+      ],
+      "group": "build",
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": false,
+        "panel": "shared"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Generate Smoke Tests from Latest PRD",
+      "type": "shell",
+      "command": "powershell",
+      "args": [
+        "-Command",
+        "$prdFile = Get-ChildItem -Path '${workspaceFolder}\\tasks' -Filter 'prd-*.md' | Sort-Object LastWriteTime -Descending | Select-Object -First 1; if ($prdFile) { Write-Host \"Found latest PRD: $($prdFile.Name)\"; $projectName = $prdFile.BaseName.Substring(4); Write-Host \"Project: $projectName\"; Write-Host \"Opening smoke test generation rule from C:\\Code\\workflow\\rule-generate-smoke-tests.md\"; Write-Host \"Target output: ${workspaceFolder}\\tasks\\smoketests-$projectName.md\" } else { Write-Host \"No PRD files found in ${workspaceFolder}\\tasks\" }"
+      ],
+      "group": "build",
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": false,
+        "panel": "shared"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Generate Help Documentation from Latest PRD", 
+      "type": "shell",
+      "command": "powershell",
+      "args": [
+        "-Command",
+        "$prdFile = Get-ChildItem -Path '${workspaceFolder}\\tasks' -Filter 'prd-*.md' | Sort-Object LastWriteTime -Descending | Select-Object -First 1; if ($prdFile) { Write-Host \"Found latest PRD: $($prdFile.Name)\"; $projectName = $prdFile.BaseName.Substring(4); Write-Host \"Project: $projectName\"; Write-Host \"Opening help documentation generation rule from C:\\Code\\workflow\\rule-generate-help-documentation.md\"; Write-Host \"Target output: ${workspaceFolder}\\tasks\\help-$projectName.md\" } else { Write-Host \"No PRD files found in ${workspaceFolder}\\tasks\" }"
+      ],
+      "group": "build",
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": false,
+        "panel": "shared"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Custom Project - Generate Tasks",
+      "type": "shell", 
+      "command": "powershell",
+      "args": [
+        "-Command",
+        "$projectName = '${input:projectName}'; Write-Host \"Project: $projectName\"; if (Test-Path '${workspaceFolder}\\tasks\\prd-$projectName.md') { Write-Host \"Found PRD: prd-$projectName.md\"; Write-Host \"Opening task generation rule from C:\\Code\\workflow\\rule-generate-tasks.md\"; Write-Host \"Target output: ${workspaceFolder}\\tasks\\tasks-$projectName.md\" } else { Write-Host \"PRD file not found: ${workspaceFolder}\\tasks\\prd-$projectName.md\" }"
+      ],
+      "group": "build",
+      "presentation": {
+        "echo": true,
+        "reveal": "always", 
+        "focus": false,
+        "panel": "shared"
+      },
+      "problemMatcher": []
+    }
+  ],
+  "inputs": [
+    {
+      "id": "projectName",
+      "description": "Project name (without prd- prefix)",
+      "default": "conversation-memory-system",
+      "type": "promptString"
+    }
+  ]
+}
