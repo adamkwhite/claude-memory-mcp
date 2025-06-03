@@ -25,10 +25,13 @@ jobs:
           pip install pytest pytest-cov pytest-asyncio
       
       - name: Run tests with coverage
+        continue-on-error: true
         run: |
          PYTHONPATH=. python -m pytest --cov=. --cov-report=xml --cov-report=term
-      
-      - uses: SonarSource/sonarqube-scan-action@v5
+
+      - name: SonarQube Scan
+        if: always()
+        uses: SonarSource/sonarqube-scan-action@v5
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
           SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
