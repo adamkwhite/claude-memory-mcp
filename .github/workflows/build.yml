@@ -14,6 +14,20 @@ jobs:
         with:
           fetch-depth: 0
       
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+      
+      - name: Install dependencies
+        run: |
+          pip install -e .
+          pip install pytest pytest-cov
+      
+      - name: Run tests with coverage
+        run: |
+          pytest --cov=. --cov-report=xml --cov-report=term
+      
       - uses: SonarSource/sonarqube-scan-action@v5
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
