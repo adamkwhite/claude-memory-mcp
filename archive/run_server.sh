@@ -4,7 +4,7 @@
 # Navigate to project directory
 cd /home/adam/Code/claude-memory-mcp
 
-# Add uv to PATH (where it was installed)
+# Add uv to PATH (found at /home/adam/.local/bin/uv)
 export PATH="/home/adam/.local/bin:$PATH"
 
 # Run the server using uv

@@ -203,6 +203,57 @@ python3 standalone_test.py
 python3 bulk_import_enhanced.py test_data.json --dry-run
 ```
 
+## 🧪 Comprehensive Testing Framework
+
+This project includes a professional testing framework based on established methodologies including **Heuristic Test Strategy Model (HTSM)**, **Session-Based Test Management (SBTM)**, and **Rapid Software Testing (RST)**.
+
+### Quick Testing
+
+**Priority Testing (2.5 hours):**
+1. **Security & Data Protection** (90 min) - Validate file system security and data exposure risks
+2. **FastMCP Integration** (60 min) - Verify Claude Desktop compatibility and protocol compliance
+
+**Complete Testing (6 hours total):**
+- Add **Core Functionality** (90 min), **Edge Cases** (60 min), and **Performance** (60 min) sessions
+
+### Testing Documentation
+
+| Document | Purpose |
+|----------|----------|
+| **[TESTING.md](TESTING.md)** | Complete testing framework guide and methodology |
+| `tasks/test-strategy.md` | Risk-based test strategy for this project |
+| `tasks/session-charters.md` | 5 focused exploratory testing sessions |
+| `tasks/test-execution-guide.md` | Step-by-step execution coordination |
+| `tasks/structured-tests/` | Systematic test procedures (security, integration, functional) |
+
+### Reusable Testing Library
+
+The `tasks/prompt-*.md` files contain **reusable prompts** for generating testing documentation for other projects:
+
+- `prompt-test-strategy.md` - Generate test strategies using HTSM
+- `prompt-session-charters.md` - Create SBTM exploratory session charters
+- `prompt-security-tests.md` - Generate security test suites
+- `prompt-integration-tests.md` - Create integration/API test procedures
+- `prompt-functional-tests.md` - Generate functional validation tests
+
+**Usage:** Provide context to Claude with any prompt to generate testing documentation for your projects.
+
+### Testing Methodology
+
+**Risk-Based Priorities:**
+- **HIGH:** Security (data protection, file system security)
+- **CRITICAL:** Compatibility (FastMCP, Claude Desktop integration)  
+- **MEDIUM:** Reliability (core functionality, error handling)
+- **LOW:** Performance (response times, scalability)
+
+**Session-Based Approach:**
+- Time-boxed exploratory sessions (60-90 minutes)
+- Charter-driven focus with discovery flexibility
+- Systematic documentation using SBTM templates
+- Risk-based prioritization throughout
+
+See **[TESTING.md](TESTING.md)** for complete methodology details and execution guidance.
+
 ## Troubleshooting
 
 ### Common Issues
