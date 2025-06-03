@@ -9,7 +9,7 @@ import asyncio
 import json
 import sys
 from pathlib import Path
-from server import ConversationMemoryServer
+from server_fastmcp import ConversationMemoryServer
 
 async def test_server():
     """Test basic server functionality"""
