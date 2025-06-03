@@ -59,3 +59,12 @@ parsed_conversations.json
 
 # Config files with sensitive data
 mcp-config.json
+
+# Coverage and testing artifacts
+.coverage
+htmlcov/
+.pytest_cache/
+coverage.xml
+
+# SonarCloud scanner artifacts
+.scannerwork/
