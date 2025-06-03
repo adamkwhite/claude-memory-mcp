@@ -26,8 +26,7 @@ jobs:
       
       - name: Run tests with coverage
         run: |
-          export PYTHONPATH=$PYTHONPATH:$(pwd)
-          pytest --cov=. --cov-report=xml --cov-report=term
+         PYTHONPATH=. python -m pytest --cov=. --cov-report=xml --cov-report=term
       
       - uses: SonarSource/sonarqube-scan-action@v5
         env:
