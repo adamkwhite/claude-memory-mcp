@@ -5,9 +5,9 @@ on:
       - main
       
 permissions:
-  contents: write    
+  contents: write
   pull-requests: write
-  
+      
 jobs:
   build:
     name: Build and analyze
@@ -32,7 +32,7 @@ jobs:
         continue-on-error: true
         run: |
          PYTHONPATH=. python -m pytest --cov=. --cov-report=xml --cov-report=term
-
+      
       - name: SonarQube Scan
         if: always()
         uses: SonarSource/sonarqube-scan-action@v5
@@ -44,7 +44,8 @@ jobs:
         if: always()
         uses: jadewon/sonar-badge@v1
         with:
-          SONAR-URL: ${{ secrets.SONAR_HOST_URL }}
+          metrics: 'alert_status,coverage'
+        env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-          PROJECT_KEY: Claude-MCP
-          branch: main
+          SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
+          SONAR_PROJECT: Claude-MCP
