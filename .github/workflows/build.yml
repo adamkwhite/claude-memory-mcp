@@ -38,7 +38,7 @@ jobs:
       
       - name: SonarQube Badge
         if: always()
-        uses: sonarqube-badge-action@v1.2.0
+        uses: jadewon/sonar-badge@v1
         with:
           sonar-url: ${{ secrets.SONAR_HOST_URL }}
           sonar-token: ${{ secrets.SONAR_TOKEN }}
