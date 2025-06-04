@@ -5,12 +5,12 @@ A Model Context Protocol (MCP) server that provides searchable local storage for
 
 ## Code Quality
 
-[![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=Claude-MCP&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=Claude-MCP)
-[![Coverage](https://sonarcloud.io/api/project_badges/measure?project=Claude-MCP&metric=coverage)](https://sonarcloud.io/summary/new_code?id=Claude-MCP)
-[![Maintainability Rating](https://sonarcloud.io/api/project_badges/measure?project=Claude-MCP&metric=sqale_rating)](https://sonarcloud.io/summary/new_code?id=Claude-MCP)
-[![Reliability Rating](https://sonarcloud.io/api/project_badges/measure?project=Claude-MCP&metric=reliability_rating)](https://sonarcloud.io/summary/new_code?id=Claude-MCP)
-[![Security Rating](https://sonarcloud.io/api/project_badges/measure?project=Claude-MCP&metric=security_rating)](https://sonarcloud.io/summary/new_code?id=Claude-MCP)
-[![Technical Debt](https://sonarcloud.io/api/project_badges/measure?project=Claude-MCP&metric=sqale_index)](https://sonarcloud.io/summary/new_code?id=Claude-MCP)
+[![Quality Gate Status](http://44.206.255.230:9000/api/project_badges/measure?project=Claude-MCP&metric=alert_status)](http://44.206.255.230:9000/summary/new_code?id=Claude-MCP)
+[![Coverage](http://44.206.255.230:9000/api/project_badges/measure?project=Claude-MCP&metric=coverage)](http://44.206.255.230:9000/summary/new_code?id=Claude-MCP)
+[![Maintainability Rating](http://44.206.255.230:9000/api/project_badges/measure?project=Claude-MCP&metric=sqale_rating)](http://44.206.255.230:9000/summary/new_code?id=Claude-MCP)
+[![Reliability Rating](http://44.206.255.230:9000/api/project_badges/measure?project=Claude-MCP&metric=reliability_rating)](http://44.206.255.230:9000/summary/new_code?id=Claude-MCP)
+[![Security Rating](http://44.206.255.230:9000/api/project_badges/measure?project=Claude-MCP&metric=security_rating)](http://44.206.255.230:9000/summary/new_code?id=Claude-MCP)
+[![Technical Debt](http://44.206.255.230:9000/api/project_badges/measure?project=Claude-MCP&metric=sqale_index)](http://44.206.255.230:9000/summary/new_code?id=Claude-MCP)
 
 ## Features
 
