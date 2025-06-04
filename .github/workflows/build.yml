@@ -4,6 +4,10 @@ on:
     branches:
       - main
       
+permissions:
+  contents: write    
+  pull-requests: write
+  
 jobs:
   build:
     name: Build and analyze
@@ -40,7 +44,7 @@ jobs:
         if: always()
         uses: jadewon/sonar-badge@v1
         with:
-          sonar-url: ${{ secrets.SONAR_HOST_URL }}
-          sonar-token: ${{ secrets.SONAR_TOKEN }}
-          project-key: Claude-MCP
+          SONAR-URL: ${{ secrets.SONAR_HOST_URL }}
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          PROJECT_KEY: Claude-MCP
           branch: main
