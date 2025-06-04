@@ -1,7 +1,24 @@
 ## Code Quality
+**Overall Scorecard**  
 
-![Quality Gate Status](.badges/alert_status.svg)
-![Coverage](.badges/coverage.svg)
+[![quality gate](.badges/alert_status.svg)](http://localhost:9000/dashboard?id=sample_sonar_projectKey)
+[![bugs](.badges/bugs.svg)](http://localhost:9000/component_measures?id=sample_sonar_projectKey&metric=bugs)
+[![coverage](.badges/coverage.svg)](http://localhost:9000/component_measures?id=sample_sonar_projectKey&metric=coverage)
+[![reliability](.badges/reliability_rating.svg)](http://localhost:9000/component_measures?id=sample_sonar_projectKey&metric=reliability_rating)
+[![security](.badges/security_rating.svg)](http://localhost:9000/component_measures?id=sample_sonar_projectKey&metric=security_rating)
+[![maintainability](.badges/sqale_rating.svg)](http://localhost:9000/component_measures?id=sample_sonar_projectKey&metric=sqale_rating)
+
+**Code Quality**  
+
+[![lines of code](.badges/ncloc.svg)](http://localhost:9000/component_measures?id=sample_sonar_projectKey&metric=ncloc)
+[![duplicated lines](.badges/duplicated_lines_density.svg)](http://localhost:9000/component_measures?id=sample_sonar_projectKey&metric=duplicated_lines_density)
+[![code smells](.badges/code_smells.svg)](http://localhost:9000/component_measures?id=sample_sonar_projectKey&metric=code_smells)
+[![technical debt](.badges/sqale_index.svg)](http://localhost:9000/component_measures?id=sample_sonar_projectKey&metric=sqale_index)
+
+**Security**  
+
+[![security hotspots](.badges/security_hotspots.svg)](http://localhost:9000/component_measures?id=sample_sonar_projectKey&metric=security_hotspots)
+[![vulnerabilities](.badges/vulnerabilities.svg)](http://localhost:9000/component_measures?id=sample_sonar_projectKey&metric=vulnerabilities)
 
 # Claude Conversation Memory System
 
