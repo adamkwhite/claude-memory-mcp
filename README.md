@@ -3,15 +3,6 @@
 
 A Model Context Protocol (MCP) server that provides searchable local storage for Claude conversation history, enabling context retrieval during current sessions.
 
-## Code Quality
-
-
-[![Quality Gate Status](http://44.206.255.230:9000/api/project_badges/measure?project=Claude-MCP&metric=alert_status&token=${{ secrets.SONAR_TOKEN }})](http://44.206.255.230:9000/dashboard?id=Claude-MCP)
-[![Coverage](http://44.206.255.230:9000/api/project_badges/measure?project=Claude-MCP&metric=coverage&token=${{ secrets.SONAR_TOKEN }})](http://44.206.255.230:9000/dashboard?id=Claude-MCP)
-[![Maintainability Rating](http://44.206.255.230:9000/api/project_badges/measure?project=Claude-MCP&metric=sqale_rating&token=${{ secrets.SONAR_TOKEN }})](http://44.206.255.230:9000/dashboard?id=Claude-MCP)
-[![Reliability Rating](http://44.206.255.230:9000/api/project_badges/measure?project=Claude-MCP&metric=reliability_rating&token=${{ secrets.SONAR_TOKEN }})](http://44.206.255.230:9000/dashboard?id=Claude-MCP)
-[![Security Rating](http://44.206.255.230:9000/api/project_badges/measure?project=Claude-MCP&metric=security_rating&token=${{ secrets.SONAR_TOKEN }})](http://44.206.255.230:9000/dashboard?id=Claude-MCP)
-[![Technical Debt](http://44.206.255.230:9000/api/project_badges/measure?project=Claude-MCP&metric=sqale_index&token=${{ secrets.SONAR_TOKEN }})](http://44.206.255.230:9000/dashboard?id=Claude-MCP)
 
 ## Features
 
