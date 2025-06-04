@@ -3,8 +3,14 @@
 
 A Model Context Protocol (MCP) server that provides searchable local storage for Claude conversation history, enabling context retrieval during current sessions.
 
-## Quality Gate Status
-Currently using custom quality gate with relaxed coverage requirements.
+## Code Quality
+
+[![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=Claude-MCP&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=Claude-MCP)
+[![Coverage](https://sonarcloud.io/api/project_badges/measure?project=Claude-MCP&metric=coverage)](https://sonarcloud.io/summary/new_code?id=Claude-MCP)
+[![Maintainability Rating](https://sonarcloud.io/api/project_badges/measure?project=Claude-MCP&metric=sqale_rating)](https://sonarcloud.io/summary/new_code?id=Claude-MCP)
+[![Reliability Rating](https://sonarcloud.io/api/project_badges/measure?project=Claude-MCP&metric=reliability_rating)](https://sonarcloud.io/summary/new_code?id=Claude-MCP)
+[![Security Rating](https://sonarcloud.io/api/project_badges/measure?project=Claude-MCP&metric=security_rating)](https://sonarcloud.io/summary/new_code?id=Claude-MCP)
+[![Technical Debt](https://sonarcloud.io/api/project_badges/measure?project=Claude-MCP&metric=sqale_index)](https://sonarcloud.io/summary/new_code?id=Claude-MCP)
 
 ## Features
 
