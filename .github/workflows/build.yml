@@ -35,3 +35,12 @@ jobs:
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
           SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
+      
+      - name: SonarQube Badge
+        if: always()
+        uses: sonarqube-badge-action@v1.2.0
+        with:
+          sonar-url: ${{ secrets.SONAR_HOST_URL }}
+          sonar-token: ${{ secrets.SONAR_TOKEN }}
+          project-key: Claude-MCP
+          branch: main
