@@ -1,3 +1,7 @@
+## Code Quality
+
+![Quality Gate Status](.badges/alert_status.svg)
+![Coverage](.badges/coverage.svg)
 
 # Claude Conversation Memory System
 
