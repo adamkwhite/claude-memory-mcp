@@ -15,6 +15,9 @@ from pathlib import Path
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'src'))
 from server_fastmcp import ConversationMemoryServer
 
+import pytest
+
+@pytest.mark.asyncio
 async def test_server():
     """Test basic server functionality"""
     print("🧪 Testing Claude Memory MCP Server...")
@@ -122,23 +125,24 @@ def test_imports():
         print("   ✅ mcp.types")
     except ImportError:
         print("   ❌ mcp.types - Install with: pip install mcp")
-        return False
+        assert False, "mcp.types import failed"
     
     try:
         import mcp.server
         print("   ✅ mcp.server")
     except ImportError:
         print("   ❌ mcp.server - Install with: pip install mcp")
-        return False
+        assert False, "mcp.server import failed"
     
     try:
         import mcp.server.stdio
         print("   ✅ mcp.server.stdio")
     except ImportError:
         print("   ❌ mcp.server.stdio - Install with: pip install mcp")
-        return False
+        assert False, "mcp.server.stdio import failed"
     
-    return True
+    # If we get here, all imports succeeded
+    assert True
 
 async def main():
     """Run all tests"""
