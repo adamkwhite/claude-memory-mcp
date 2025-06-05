@@ -43,8 +43,8 @@ jobs:
       - name: Clean up build artifacts
         if: always()
         run: |
-          git checkout -- .coverage || true
-          git clean -fd .scannerwork/ || true
+          git checkout -- . || true
+          git clean -fd || true
           git status
       
       - name: SonarQube Badge
