@@ -3,6 +3,7 @@ on:
   push:
     branches:
       - main
+      - docs/custom-sonarqube-badges
       
 permissions:
   contents: write
