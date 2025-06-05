@@ -37,6 +37,8 @@ sys.modules['mcp.server.fastmcp'].FastMCP = MockFastMCP
 sys.path.append('/home/adam/Code/claude-memory-mcp')
 
 # Now import with mocked dependencies
+# Add src directory to path
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'src'))
 from server_fastmcp import ConversationMemoryServer
 
 

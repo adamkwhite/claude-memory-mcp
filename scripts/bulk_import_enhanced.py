@@ -1,4 +1,9 @@
 #!/usr/bin/env python3
+
+# Add src directory to path
+import sys
+import os
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "src"))
 """
 Enhanced Bulk Conversation Import Script for Claude Memory System
 Handles Claude conversation exports and provides detailed progress tracking

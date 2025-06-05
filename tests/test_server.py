@@ -8,7 +8,11 @@ Run this to verify your server installation and basic functionality.
 import asyncio
 import json
 import sys
+import os
 from pathlib import Path
+
+# Add src directory to path
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'src'))
 from server_fastmcp import ConversationMemoryServer
 
 async def test_server():

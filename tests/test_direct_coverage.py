@@ -1,4 +1,9 @@
 #!/usr/bin/env python3
+
+# Add src directory to path
+import sys
+import os
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "src"))
 """
 Direct tests for ConversationMemoryServer to achieve 50% coverage
 without requiring FastMCP imports

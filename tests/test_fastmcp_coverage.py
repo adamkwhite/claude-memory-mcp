@@ -9,12 +9,13 @@ import asyncio
 import json
 import tempfile
 import shutil
+import sys
+import os
 from pathlib import Path
 from datetime import datetime, timedelta
-import sys
 
-# Add the server path for imports
-sys.path.append('/home/adam/Code/claude-memory-mcp')
+# Add src directory to path
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'src'))
 
 try:
     from server_fastmcp import ConversationMemoryServer
