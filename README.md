@@ -24,7 +24,6 @@
 
 A Model Context Protocol (MCP) server that provides searchable local storage for Claude conversation history, enabling context retrieval during current sessions.
 
-
 ## Features
 
 - 🔍 **Full-text search** across conversation history

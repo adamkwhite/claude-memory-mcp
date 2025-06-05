@@ -40,6 +40,13 @@ jobs:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
           SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
       
+      - name: Clean up build artifacts
+        if: always()
+        run: |
+          git checkout -- .coverage || true
+          git clean -fd .scannerwork/ || true
+          git status
+      
       - name: SonarQube Badge
         if: always()
         uses: jadewon/sonar-badge@v1
