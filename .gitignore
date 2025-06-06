@@ -69,3 +69,6 @@ coverage.xml
 
 # SonarCloud scanner artifacts
 .scannerwork/
+
+# Personal todos
+todos.md
