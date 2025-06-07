@@ -734,13 +734,13 @@ class TestMCPToolWrapperFunctions:
         summary = server.generate_weekly_summary(0)
         assert "..." in summary  # Should show truncated topics
         
-        # Test lines 359-360: Exception handling in generate_weekly_summary
-        # Corrupt the index file to trigger exception
-        with open(server.index_file, 'w') as f:
-            f.write("invalid json")
+        # Test exception handling in generate_weekly_summary
+        # Mock the _get_week_conversations method to raise an exception
+        import unittest.mock
         
-        summary_with_error = server.generate_weekly_summary(0)
-        assert "Failed to generate weekly summary" in summary_with_error
+        with unittest.mock.patch.object(server, '_get_week_conversations', side_effect=OSError("Test error")):
+            summary_with_error = server.generate_weekly_summary(0)
+            assert "Failed to generate weekly summary" in summary_with_error
         
         # Test lines 378-379: Error handling in MCP search tool
         # We need to test the mcp_search directly with error results
@@ -749,7 +749,7 @@ class TestMCPToolWrapperFunctions:
         # Backup original method
         original_search = memory_server.search_conversations
         
-        def mock_error_search(query, limit):
+        async def mock_error_search(query, limit):
             return [{"error": "Test search error"}]
         
         # Replace the method on the global memory_server instance
