@@ -36,6 +36,15 @@ Recent fixes applied to resolve SonarQube issues:
 - ✅ Broke down complex methods (generate_weekly_summary)
 - ✅ Added path validation for security
 - ✅ Fixed README badge URLs to point to correct SonarQube instance
+- ✅ Fixed return type hint for add_conversation method
+- ✅ Reduced cognitive complexity in search_conversations method
+- ✅ Excluded archive/ and scripts/ folders from SonarQube analysis
+- ✅ Added proper file formatting (newlines at end of files)
+
+**SonarQube Configuration:**
+- Instance: http://44.206.255.230:9000/
+- Project Key: Claude-MCP
+- Exclusions: `**/*test*/**,**/__pycache__/**,htmlcov/**,archive/**,scripts/**`
 
 Current test coverage: **91.46%**
 
