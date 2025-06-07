@@ -21,6 +21,7 @@ CONTEXT_LINES_BEFORE = 2
 CONTEXT_LINES_AFTER = 3
 DEFAULT_SEARCH_LIMIT = 5
 MAX_RESULTS_DISPLAY = 10
+UTC_OFFSET_REPLACEMENT = '+00:00'
 
 COMMON_TECH_TERMS = [
     'python', 'javascript', 'react', 'node', 'aws', 'docker', 'kubernetes',
@@ -182,7 +183,7 @@ class ConversationMemoryServer:
         try:
             # Parse date or use current date
             if date:
-                conv_date = datetime.fromisoformat(date.replace('Z', '+00:00'))
+                conv_date = datetime.fromisoformat(date.replace('Z', UTC_OFFSET_REPLACEMENT))
             else:
                 conv_date = datetime.now()
             
@@ -283,7 +284,7 @@ class ConversationMemoryServer:
         """Filter conversations that fall within the specified week"""
         week_conversations = []
         for conv_info in index_data.get("conversations", []):
-            conv_date = datetime.fromisoformat(conv_info["date"].replace('Z', '+00:00'))
+            conv_date = datetime.fromisoformat(conv_info["date"].replace('Z', UTC_OFFSET_REPLACEMENT))
             # Convert to timezone-naive for comparison
             conv_date_naive = conv_date.replace(tzinfo=None)
             target_start_naive = target_week_start.replace(tzinfo=None)
@@ -377,7 +378,7 @@ class ConversationMemoryServer:
         sorted_convs = sorted(week_conversations, key=lambda x: x["date"], reverse=True)
         
         for conv in sorted_convs:
-            date_str = datetime.fromisoformat(conv["date"].replace('Z', '+00:00')).strftime('%m/%d %H:%M')
+            date_str = datetime.fromisoformat(conv["date"].replace('Z', UTC_OFFSET_REPLACEMENT)).strftime('%m/%d %H:%M')
             topics_str = ', '.join(conv.get("topics", [])[:3])
             if len(conv.get("topics", [])) > 3:
                 topics_str += "..."
