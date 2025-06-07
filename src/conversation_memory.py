@@ -185,7 +185,7 @@ class ConversationMemoryServer:
                 }
             return None
             
-        except (IOError, UnicodeDecodeError, ValueError, KeyError, TypeError):
+        except (IOError, ValueError, KeyError, TypeError):
             return None
 
     def search_conversations(self, query: str, limit: int = 10) -> List[Dict[str, Any]]:
@@ -233,7 +233,7 @@ class ConversationMemoryServer:
             preview = '\n'.join(preview_lines[:10])  # Limit preview length
             return preview[:500] + "..." if len(preview) > 500 else preview
             
-        except (IOError, UnicodeDecodeError, ValueError, KeyError, TypeError):
+        except (IOError, ValueError, KeyError, TypeError):
             return "Preview unavailable"
     
     def get_preview(self, conversation_id: str) -> str:
@@ -323,88 +323,86 @@ class ConversationMemoryServer:
     def generate_weekly_summary(self, week_offset: int = 0) -> str:
         """Generate a weekly summary of conversations"""
         try:
-            # Calculate date range for the week
             today = datetime.now()
             start_of_week = today - timedelta(days=today.weekday() + (week_offset * 7))
             end_of_week = start_of_week + timedelta(days=6)
-            
-            # Load index
-            with open(self.index_file, 'r') as f:
-                index_data = json.load(f)
-            
-            conversations = index_data.get("conversations", [])
-            
-            # Filter conversations for the week
-            week_conversations = []
-            for conv_info in conversations:
-                try:
-                    conv_date = datetime.fromisoformat(conv_info["date"].replace('Z', '+00:00'))
-                    if start_of_week.date() <= conv_date.date() <= end_of_week.date():
-                        # Load full conversation data
-                        file_path = self.storage_path / conv_info["file_path"]
-                        if file_path.exists():
-                            try:
-                                with open(file_path, 'r', encoding='utf-8') as f:
-                                    conv_data = json.load(f)
-                                week_conversations.append(conv_data)
-                            except (IOError, UnicodeDecodeError, ValueError, KeyError, TypeError):
-                                # If file read fails, use index data
-                                week_conversations.append({
-                                    "title": conv_info.get("title", "Untitled"),
-                                    "date": conv_info["date"],
-                                    "topics": conv_info.get("topics", [])
-                                })
-                except (IOError, UnicodeDecodeError, ValueError, KeyError, TypeError):
-                    continue
-            
+
+            week_conversations = self._get_week_conversations(start_of_week, end_of_week)
             if not week_conversations:
                 return f"No conversations found for week of {start_of_week.strftime('%Y-%m-%d')}"
-            
-            # Generate summary
-            summary_parts = []
-            summary_parts.append(f"# Weekly Summary: {start_of_week.strftime('%Y-%m-%d')} to {end_of_week.strftime('%Y-%m-%d')}")
-            summary_parts.append(f"\n## Overview\n- Total conversations: {len(week_conversations)}")
-            
-            # Collect all topics
-            all_topics = []
-            for conv in week_conversations:
-                all_topics.extend(conv.get("topics", []))
-            
-            # Count topic frequency
-            topic_counts = {}
-            for topic in all_topics:
-                topic_counts[topic] = topic_counts.get(topic, 0) + 1
-            
-            if topic_counts:
-                summary_parts.append("\n## Popular Topics")
-                sorted_topics = sorted(topic_counts.items(), key=lambda x: x[1], reverse=True)
-                for topic, count in sorted_topics[:10]:
-                    summary_parts.append(f"- {topic}: {count} conversations")
-            
-            # Add conversation list
-            summary_parts.append("\n## Conversations")
-            for conv in week_conversations:
-                date_str = conv.get("date", "").split("T")[0]
-                topics_str = ', '.join(conv.get("topics", [])[:3])
-                if len(conv.get("topics", [])) > 3:
-                    topics_str += "..."
-                
-                conv_line = f"- [{date_str}] {conv.get('title', 'Untitled')}"
-                if topics_str:
-                    conv_line += f" *Topics: {topics_str}*"
-                summary_parts.append(conv_line)
-            
-            summary_text = "\n".join(summary_parts)
-            
-            # Save summary to file
+
+            summary_text = self._build_weekly_summary_text(start_of_week, end_of_week, week_conversations)
+
             summary_filename = f"week-{start_of_week.strftime('%Y-%m-%d')}.md"
             summary_file = self.summaries_path / "weekly" / summary_filename
             with open(summary_file, 'w', encoding='utf-8') as f:
                 f.write(summary_text)
-            
+
             summary_text += f"\n---\n*Summary saved to {summary_file}*"
-            
             return summary_text
-            
+
         except (IOError, OSError, ValueError, KeyError, TypeError) as e:
             return f"Failed to generate weekly summary: {str(e)}"
+
+    def _get_week_conversations(self, start_of_week: datetime, end_of_week: datetime) -> List[dict]:
+        """Return conversations for the given week range"""
+        try:
+            with open(self.index_file, 'r') as f:
+                index_data = json.load(f)
+            conversations = index_data.get("conversations", [])
+        except (IOError, OSError, ValueError, KeyError, TypeError):
+            return []
+
+        week_conversations = []
+        for conv_info in conversations:
+            try:
+                conv_date = datetime.fromisoformat(conv_info["date"].replace('Z', '+00:00'))
+                if start_of_week.date() <= conv_date.date() <= end_of_week.date():
+                    file_path = self.storage_path / conv_info["file_path"]
+                    if file_path.exists():
+                        try:
+                            with open(file_path, 'r', encoding='utf-8') as f:
+                                conv_data = json.load(f)
+                            week_conversations.append(conv_data)
+                        except (IOError, UnicodeDecodeError, ValueError, KeyError, TypeError):
+                            week_conversations.append({
+                                "title": conv_info.get("title", "Untitled"),
+                                "date": conv_info["date"],
+                                "topics": conv_info.get("topics", [])
+                            })
+            except (ValueError, KeyError, TypeError):
+                continue
+        return week_conversations
+
+    def _build_weekly_summary_text(self, start_of_week: datetime, end_of_week: datetime, week_conversations: List[dict]) -> str:
+        """Build the markdown summary text for the week"""
+        summary_parts = []
+        summary_parts.append(f"# Weekly Summary: {start_of_week.strftime('%Y-%m-%d')} to {end_of_week.strftime('%Y-%m-%d')}")
+        summary_parts.append(f"\n## Overview\n- Total conversations: {len(week_conversations)}")
+
+        all_topics = []
+        for conv in week_conversations:
+            all_topics.extend(conv.get("topics", []))
+
+        topic_counts = {}
+        for topic in all_topics:
+            topic_counts[topic] = topic_counts.get(topic, 0) + 1
+
+        if topic_counts:
+            summary_parts.append("\n## Popular Topics")
+            sorted_topics = sorted(topic_counts.items(), key=lambda x: x[1], reverse=True)
+            for topic, count in sorted_topics[:10]:
+                summary_parts.append(f"- {topic}: {count} conversations")
+
+        summary_parts.append("\n## Conversations")
+        for conv in week_conversations:
+            date_str = conv.get("date", "").split("T")[0]
+            topics_str = ', '.join(conv.get("topics", [])[:3])
+            if len(conv.get("topics", [])) > 3:
+                topics_str += "..."
+            conv_line = f"- [{date_str}] {conv.get('title', 'Untitled')}"
+            if topics_str:
+                conv_line += f" *Topics: {topics_str}*"
+            summary_parts.append(conv_line)
+
+        return "\n".join(summary_parts)
