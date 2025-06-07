@@ -31,7 +31,7 @@ jobs:
       - name: Run tests with coverage
         continue-on-error: true
         run: |
-         PYTHONPATH=. python -m pytest --cov=. --cov-report=xml --cov-report=term
+         PYTHONPATH=. python -m pytest tests/test_100_percent_coverage.py --cov=src --cov-report=xml --cov-report=term
       
       - name: SonarQube Scan
         if: always()

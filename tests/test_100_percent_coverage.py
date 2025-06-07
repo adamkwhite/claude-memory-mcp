@@ -39,7 +39,7 @@ sys.path.append('/home/adam/Code/claude-memory-mcp')
 # Now import with mocked dependencies
 # Add src directory to path
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'src'))
-from server_fastmcp import ConversationMemoryServer
+from conversation_memory import ConversationMemoryServer
 
 
 @pytest.fixture
@@ -63,7 +63,7 @@ class TestCompleteEdgeCaseCoverage:
     async def test_search_file_read_exception(self, server, temp_storage):
         """Test search when file read fails (lines 96-98)"""
         # Add a conversation
-        result = await server.add_conversation(
+        result = server.add_conversation(
             "Test content for file read error",
             "File Read Test",
             "2025-01-15T10:30:00"
@@ -76,7 +76,7 @@ class TestCompleteEdgeCaseCoverage:
             file_path.chmod(0o000)  # No permissions
             
             # Search should handle the file read exception gracefully
-            results = await server.search_conversations("Test", limit=5)
+            results = server.search_conversations("Test", limit=5)
             assert isinstance(results, list)
             
         finally:
@@ -90,7 +90,7 @@ class TestCompleteEdgeCaseCoverage:
         with open(server.index_file, 'w') as f:
             f.write("invalid json")
         
-        results = await server.search_conversations("test", limit=5)
+        results = server.search_conversations("test", limit=5)
         
         # Should return a list with error information
         assert isinstance(results, list)
@@ -117,7 +117,7 @@ class TestCompleteEdgeCaseCoverage:
         server.conversations_path.chmod(0o444)
         
         try:
-            result = await server.add_conversation(
+            result = server.add_conversation(
                 "Test content that should fail",
                 "Error Test",
                 "2025-01-15T10:30:00"
@@ -146,7 +146,7 @@ class TestCompleteEdgeCaseCoverage:
             fake_path.touch()
             
             # This calls _update_index internally which should handle the exception
-            await server.add_conversation("Test content", test_title, test_date.isoformat())
+            server.add_conversation("Test content", test_title, test_date.isoformat())
             
         finally:
             # Restore permissions
@@ -159,7 +159,7 @@ class TestCompleteEdgeCaseCoverage:
         server.topics_file.chmod(0o444)
         
         try:
-            await server._update_topics_index(["python", "test"])
+            server._update_topics_index(["python", "test"], "test_conv_id")
             # Exception should be caught and printed, but not re-raised
             
         finally:
@@ -185,13 +185,13 @@ class TestCompleteEdgeCaseCoverage:
             json.dump(fake_index, f)
         
         # Search should skip the non-existent file
-        results = await server.search_conversations("test", limit=5)
+        results = server.search_conversations("test", limit=5)
         assert isinstance(results, list)
         
     @pytest.mark.asyncio
     async def test_add_conversation_no_date(self, server, temp_storage):
         """Test add_conversation with no date to cover line 153"""
-        result = await server.add_conversation(
+        result = server.add_conversation(
             "Test content without date",
             "No Date Test",
             None  # This should trigger the datetime.now() path
@@ -206,25 +206,25 @@ class TestCompleteEdgeCaseCoverage:
         current_time = datetime.now()
         
         # Add conversations that will trigger all the content analysis paths
-        await server.add_conversation(
+        server.add_conversation(
             "Writing code for a new function with class definitions and import statements",
             "Coding with Code Keywords",
             current_time.isoformat()
         )
         
-        await server.add_conversation(
+        server.add_conversation(
             "We decided on this approach and I recommend using this solution",
             "Decision with Recommendation",
             current_time.isoformat()
         )
         
-        await server.add_conversation(
+        server.add_conversation(
             "Learning how to understand and explain complex tutorial concepts",
             "Learning How To",
             current_time.isoformat()
         )
         
-        summary = await server.generate_weekly_summary(0)
+        summary = server.generate_weekly_summary(0)
         
         # Verify all analysis paths were triggered
         assert "Coding with Code Keywords" in summary
@@ -237,7 +237,7 @@ class TestCompleteEdgeCaseCoverage:
         current_time = datetime.now()
         
         # Add a conversation
-        result = await server.add_conversation(
+        result = server.add_conversation(
             "Test content for read exception",
             "Read Exception Test",
             current_time.isoformat()
@@ -248,7 +248,7 @@ class TestCompleteEdgeCaseCoverage:
         file_path.chmod(0o000)
         
         try:
-            summary = await server.generate_weekly_summary(0)
+            summary = server.generate_weekly_summary(0)
             # Should complete without crashing despite file read error
             assert isinstance(summary, str)
             assert "Read Exception Test" in summary
@@ -260,10 +260,12 @@ class TestCompleteEdgeCaseCoverage:
     async def test_weekly_summary_with_topics_count(self, server):
         """Test weekly summary topic counting and top topics section"""
         # Add conversations with topics to test counting
-        await server.add_conversation(
+        from datetime import datetime, timezone
+        current_week_date = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%S+00:00")
+        server.add_conversation(
             "Python programming discussion", 
             "Python Talk", 
-            "2025-06-01T10:00:00Z"
+            current_week_date
         )
         
         # Manually update topics index with test data
@@ -281,7 +283,7 @@ class TestCompleteEdgeCaseCoverage:
         with open(server.topics_file, 'w') as f:
             json.dump(topics_content, f)
         
-        summary = await server.generate_weekly_summary(0)
+        summary = server.generate_weekly_summary(0)
         
         # Verify summary contains topics and structure
         assert "Most Discussed Topics" in summary or "Topics" in summary
@@ -297,13 +299,13 @@ class TestCompleteEdgeCaseCoverage:
         current_week_date = now.strftime("%Y-%m-%dT%H:%M:%S+00:00")
         
         # Add test conversation for current week
-        await server.add_conversation(
+        server.add_conversation(
             "Technical discussion about API design", 
             "API Design", 
             current_week_date
         )
         
-        summary = await server.generate_weekly_summary(0)
+        summary = server.generate_weekly_summary(0)
         
         # Verify summary structure and content
         assert len(summary) > 100
@@ -314,13 +316,13 @@ class TestCompleteEdgeCaseCoverage:
         """Test weekly summary file saving functionality"""
         current_time = datetime.now()
         
-        await server.add_conversation(
+        server.add_conversation(
             "Test conversation for file saving verification",
             "File Save Test",
             current_time.isoformat()
         )
         
-        summary = await server.generate_weekly_summary(0)
+        summary = server.generate_weekly_summary(0)
         
         # Verify file was saved
         assert "Summary saved to" in summary
@@ -337,9 +339,285 @@ class TestCompleteEdgeCaseCoverage:
         
         assert "File Save Test" in file_content
 
+    @pytest.mark.asyncio
+    async def test_get_preview_success(self, server):
+        """Test get_preview method with valid conversation (lines 232-248)"""
+        # Add a test conversation
+        result = server.add_conversation(
+            "This is a test conversation content for preview testing",
+            "Preview Test",
+            "2025-06-02T10:00:00Z"
+        )
+        
+        # Get the conversation ID from the index
+        import json
+        with open(server.index_file, 'r') as f:
+            index_data = json.load(f)
+        
+        conversation_id = index_data["conversations"][-1]["id"]
+        
+        # Test get_preview
+        preview = server.get_preview(conversation_id)
+        assert "This is a test conversation content" in preview
+        assert isinstance(preview, str)
+
+    @pytest.mark.asyncio
+    async def test_get_preview_long_content(self, server):
+        """Test get_preview truncation for long content (line 248)"""
+        # Create long content (>500 chars)
+        long_content = "A" * 600
+        result = server.add_conversation(
+            long_content,
+            "Long Content Test",
+            "2025-06-02T10:00:00Z"
+        )
+        
+        # Get conversation ID
+        import json
+        with open(server.index_file, 'r') as f:
+            index_data = json.load(f)
+        
+        conversation_id = index_data["conversations"][-1]["id"]
+        
+        # Test preview truncation
+        preview = server.get_preview(conversation_id)
+        assert len(preview) == 503  # 500 chars + "..."
+        assert preview.endswith("...")
+
+    @pytest.mark.asyncio
+    async def test_get_preview_file_not_found(self, server):
+        """Test get_preview when conversation file doesn't exist (lines 249-250)"""
+        # Manually add entry to index that points to non-existent file
+        import json
+        fake_index = {
+            "conversations": [{
+                "id": "fake_conv_id",
+                "title": "Non-existent File",
+                "file_path": "conversations/nonexistent.json",
+                "date": "2025-06-01T10:00:00Z",
+                "topics": ["test"],
+                "added": "2025-06-01T10:00:00Z"
+            }],
+            "last_updated": "2025-06-01T10:00:00Z"
+        }
+        
+        with open(server.index_file, 'w') as f:
+            json.dump(fake_index, f)
+        
+        # Test get_preview with non-existent file
+        preview = server.get_preview("fake_conv_id")
+        assert preview == "Conversation file not found"
+
+    @pytest.mark.asyncio
+    async def test_get_preview_conversation_not_found(self, server):
+        """Test get_preview when conversation ID doesn't exist (line 252)"""
+        # Test with non-existent conversation ID
+        preview = server.get_preview("nonexistent_conversation_id")
+        assert preview == "Conversation not found"
+
+    @pytest.mark.asyncio
+    async def test_get_preview_exception_handling(self, server):
+        """Test get_preview exception handling (lines 254-255)"""
+        # Make index file unreadable to trigger exception
+        server.index_file.chmod(0o000)
+        
+        try:
+            preview = server.get_preview("any_id")
+            assert preview.startswith("Error retrieving conversation:")
+            
+        finally:
+            # Restore permissions
+            server.index_file.chmod(0o644)
+
+    @pytest.mark.asyncio
+    async def test_extract_topics_quoted_terms(self, server):
+        """Test topic extraction with quoted terms (lines 80-81)"""
+        # Test with quoted terms that are NOT in common_tech_terms to trigger line 81
+        content = 'We discussed "unique concept" and "special methodology" and "custom framework" in our project'
+        result = server.add_conversation(content, "Quoted Terms Test", "2025-06-02T10:00:00Z")
+        
+        # Check that quoted terms were extracted properly
+        import json
+        with open(server.index_file, 'r') as f:
+            index_data = json.load(f)
+        
+        topics = index_data["conversations"][-1]["topics"]
+        # Should include quoted terms that meet length criteria (3-49 chars) and are not in common_tech_terms
+        assert len(topics) > 0
+        # Check for the quoted terms that should be added via line 81
+        topic_str = " ".join(topics).lower()
+        assert "unique concept" in topic_str or "special methodology" in topic_str or "custom framework" in topic_str
+
+    @pytest.mark.asyncio
+    async def test_add_conversation_invalid_date_format(self, server):
+        """Test add_conversation with invalid date format (lines 99-100)"""
+        # Use an invalid date format to trigger ValueError exception
+        result = server.add_conversation(
+            "Test content with invalid date",
+            "Invalid Date Test", 
+            "invalid-date-format"  # This should trigger ValueError and fallback to datetime.now()
+        )
+        
+        assert result['status'] == 'success'
+        assert 'file_path' in result
+
+    @pytest.mark.asyncio
+    async def test_add_conversation_auto_title_generation(self, server):
+        """Test automatic title generation (lines 107-109)"""
+        # Test with no title provided to trigger auto-generation
+        long_content = "This is a very long first line that should be truncated when used as a title because it exceeds fifty characters in length"
+        result = server.add_conversation(
+            long_content,
+            None,  # No title provided
+            "2025-06-02T10:00:00Z"
+        )
+        
+        # Check that title was auto-generated and truncated
+        import json
+        with open(server.index_file, 'r') as f:
+            index_data = json.load(f)
+        
+        title = index_data["conversations"][-1]["title"]
+        assert len(title) <= 53  # 50 chars + "..."
+        assert title.endswith("...")
+
+    @pytest.mark.asyncio
+    async def test_get_preview_private_method(self, server):
+        """Test _get_preview private method (lines 207-228)"""
+        # Create a test file with content
+        test_content = """Line 1: Introduction
+Line 2: This contains search terms
+Line 3: More context
+Line 4: Additional info
+Line 5: Final line"""
+        
+        result = server.add_conversation(test_content, "Preview Test", "2025-06-02T10:00:00Z")
+        file_path = Path(result['file_path'])
+        
+        # Test _get_preview method directly
+        preview = server._get_preview(file_path, ["search", "terms"])
+        
+        # Should include context around the matching line
+        assert "search terms" in preview.lower()
+        assert len(preview) > 0
+
+    @pytest.mark.asyncio  
+    async def test_get_preview_exception_handling_private(self, server):
+        """Test _get_preview exception handling (lines 227-228)"""
+        # Test with non-existent file to trigger exception
+        fake_path = Path("/nonexistent/file.json")
+        preview = server._get_preview(fake_path, ["test"])
+        
+        assert preview == "Preview unavailable"
+
+    @pytest.mark.asyncio
+    async def test_weekly_summary_file_read_exception(self, server):
+        """Test weekly summary file read exception (lines 348-349)"""
+        from datetime import datetime, timezone
+        
+        # Add a conversation first 
+        result = server.add_conversation(
+            "Test conversation for read exception",
+            "Read Exception Test",
+            datetime.now(timezone.utc).isoformat()
+        )
+        
+        # Make the conversation file unreadable to trigger exception during reading
+        file_path = Path(result['file_path'])
+        file_path.chmod(0o000)
+        
+        try:
+            summary = server.generate_weekly_summary(0)
+            # Should complete without crashing despite file read error
+            assert isinstance(summary, str)
+            
+        finally:
+            file_path.chmod(0o644)
+    
+    @pytest.mark.asyncio
+    async def test_weekly_summary_file_read_exception_corrupted(self, server):
+        """Test weekly summary with corrupted conversation file (lines 348-349)"""
+        from datetime import datetime, timezone
+        
+        # Add a conversation first
+        result = server.add_conversation(
+            "Test conversation for corruption test",
+            "Corruption Test",
+            datetime.now(timezone.utc).isoformat()
+        )
+        
+        # Corrupt the conversation file to trigger exception during JSON parsing
+        file_path = Path(result['file_path'])
+        with open(file_path, 'w') as f:
+            f.write("invalid json content that will cause parsing to fail")
+        
+        try:
+            summary = server.generate_weekly_summary(0)
+            # Should complete without crashing despite file corruption
+            assert isinstance(summary, str)
+            
+        finally:
+            # Restore a valid JSON file
+            import json
+            with open(file_path, 'w') as f:
+                json.dump({"content": "restored content", "topics": []}, f)
+
+    @pytest.mark.asyncio
+    async def test_weekly_summary_index_entry_exception(self, server):
+        """Test weekly summary with malformed index entry (lines 348-349)"""
+        from datetime import datetime, timezone
+        import json
+        
+        # First add a normal conversation
+        server.add_conversation(
+            "Test conversation",
+            "Test",
+            datetime.now(timezone.utc).isoformat()
+        )
+        
+        # Manually corrupt the index with malformed entry to trigger exception on lines 348-349
+        fake_index = {
+            "conversations": [
+                # This entry is missing required fields and will cause an exception
+                {"malformed": "entry"},
+                # Another problematic entry
+                {"file_path": None, "date": "bad_date"},
+            ],
+            "last_updated": "2025-06-01T10:00:00Z"
+        }
+        
+        with open(server.index_file, 'w') as f:
+            json.dump(fake_index, f)
+        
+        # This should trigger exception handling on lines 348-349 and continue processing
+        summary = server.generate_weekly_summary(0)
+        assert isinstance(summary, str)
+
+    @pytest.mark.asyncio
+    async def test_weekly_summary_no_conversations_found(self, server):
+        """Test weekly summary when no conversations found (line 352)"""
+        # Generate summary for a week with no conversations (far in future)
+        summary = server.generate_weekly_summary(52)  # 52 weeks from now
+        
+        # Should return "No conversations found" message
+        assert "No conversations found for week of" in summary
+
 
 class TestMCPToolWrapperFunctions:
     """Test the MCP tool wrapper functions for complete coverage"""
+
+    def test_mcp_imports(self):
+        """Test that MCP imports are available (skipped if not in Python 3.11+)"""
+        import sys
+        if sys.version_info < (3, 11):
+            pytest.skip("MCP requires Python 3.11+")
+        
+        try:
+            import mcp.types
+            import mcp
+            assert True
+        except ImportError as e:
+            pytest.fail(f"MCP import failed: {e}")
 
     @pytest.mark.asyncio
     async def test_mcp_search_tool_no_results(self):
@@ -368,7 +646,7 @@ class TestMCPToolWrapperFunctions:
         from server_fastmcp import search_conversations as mcp_search
         
         # Add test data
-        await server.add_conversation(
+        server.add_conversation(
             "Test conversation for MCP search formatting",
             "Test Formatting",
             "2025-06-02T10:00:00Z"
@@ -404,7 +682,7 @@ class TestMCPToolWrapperFunctions:
         
         # Add some test data
         current_time = datetime.now().isoformat()
-        await server.add_conversation(
+        server.add_conversation(
             "Weekly summary test conversation",
             "Weekly Test",
             current_time
@@ -424,7 +702,7 @@ class TestMCPToolWrapperFunctions:
         now = datetime.now(timezone.utc)
         current_week_date = now.strftime("%Y-%m-%dT%H:%M:%S+00:00")
         
-        await server.add_conversation(
+        server.add_conversation(
             "Test with many topics for truncation",
             "Many Topics Test",
             current_week_date
@@ -435,15 +713,25 @@ class TestMCPToolWrapperFunctions:
         with open(server.index_file, 'r') as f:
             index_data = json.load(f)
         
-        # Update the conversation to have more than 3 topics
+        # Update both the conversation file and index to have more than 3 topics
         if index_data["conversations"]:
-            index_data["conversations"][-1]["topics"] = ["topic1", "topic2", "topic3", "topic4", "topic5"]
+            conv_info = index_data["conversations"][-1]
+            conv_file_path = server.storage_path / conv_info["file_path"]
             
+            # Update the actual conversation file
+            with open(conv_file_path, 'r') as f:
+                conv_data = json.load(f)
+            conv_data["topics"] = ["topic1", "topic2", "topic3", "topic4", "topic5"]
+            with open(conv_file_path, 'w') as f:
+                json.dump(conv_data, f)
+            
+            # Update the index as well
+            index_data["conversations"][-1]["topics"] = ["topic1", "topic2", "topic3", "topic4", "topic5"]
             with open(server.index_file, 'w') as f:
                 json.dump(index_data, f)
         
         # Generate summary to trigger line 343 (topics truncation)
-        summary = await server.generate_weekly_summary(0)
+        summary = server.generate_weekly_summary(0)
         assert "..." in summary  # Should show truncated topics
         
         # Test lines 359-360: Exception handling in generate_weekly_summary
@@ -451,7 +739,7 @@ class TestMCPToolWrapperFunctions:
         with open(server.index_file, 'w') as f:
             f.write("invalid json")
         
-        summary_with_error = await server.generate_weekly_summary(0)
+        summary_with_error = server.generate_weekly_summary(0)
         assert "Failed to generate weekly summary" in summary_with_error
         
         # Test lines 378-379: Error handling in MCP search tool
@@ -461,7 +749,7 @@ class TestMCPToolWrapperFunctions:
         # Backup original method
         original_search = memory_server.search_conversations
         
-        async def mock_error_search(query, limit):
+        def mock_error_search(query, limit):
             return [{"error": "Test search error"}]
         
         # Replace the method on the global memory_server instance
