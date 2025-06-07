@@ -303,7 +303,6 @@ class ConversationMemoryServer:
     def _categorize_conversation(self, conv_info: dict) -> tuple:
         """Categorize a single conversation into coding/decisions/learning"""
         file_path = self.storage_path / conv_info["file_path"]
-        title = conv_info["title"]
         
         if not file_path.exists():
             return False, False, False
