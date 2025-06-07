@@ -88,7 +88,7 @@ class ConversationMemoryServer:
         
         return found_topics[:10]  # Limit to top 10 topics
     
-    def add_conversation(self, content: str, title: str = None, conversation_date: str = None) -> str:
+    def add_conversation(self, content: str, title: str = None, conversation_date: str = None) -> Dict[str, Any]:
         """Add a new conversation to storage"""
         try:
             # Parse date or use current
@@ -142,12 +142,52 @@ class ConversationMemoryServer:
                 "message": f"Conversation saved successfully with ID: {conversation_id}"
             }
             
-        except Exception as e:
+        except (IOError, OSError, ValueError, TypeError) as e:
             return {
                 "status": "error",
                 "message": f"Failed to save conversation: {str(e)}"
             }
     
+    def _calculate_search_score(self, query_terms: List[str], content: str, title: str, topics: List[str]) -> int:
+        """Calculate relevance score for a conversation based on query terms"""
+        score = 0
+        for term in query_terms:
+            score += content.count(term) * 1
+            score += title.count(term) * 3
+            if term in topics:
+                score += 5
+        return score
+    
+    def _process_conversation_for_search(self, conv_info: dict, query_terms: List[str]) -> Optional[dict]:
+        """Process a single conversation for search results"""
+        try:
+            file_path = self.storage_path / conv_info["file_path"]
+            if not file_path.exists():
+                return None
+                
+            with open(file_path, 'r', encoding='utf-8') as f:
+                conv_data = json.load(f)
+            
+            content = conv_data.get("content", "").lower()
+            title = conv_data.get("title", "").lower()
+            topics = [t.lower() for t in conv_data.get("topics", [])]
+            
+            score = self._calculate_search_score(query_terms, content, title, topics)
+            
+            if score > 0:
+                return {
+                    "id": conv_data["id"],
+                    "title": conv_data["title"],
+                    "date": conv_data["date"],
+                    "topics": conv_data["topics"],
+                    "score": score,
+                    "preview": content[:200] + "..." if len(content) > 200 else content
+                }
+            return None
+            
+        except (IOError, UnicodeDecodeError, ValueError, KeyError, TypeError):
+            return None
+
     def search_conversations(self, query: str, limit: int = 10) -> List[Dict[str, Any]]:
         """Search conversations by content and topics"""
         try:
@@ -156,49 +196,19 @@ class ConversationMemoryServer:
                 index_data = json.load(f)
             
             conversations = index_data.get("conversations", [])
-            query_lower = query.lower()
-            query_terms = query_lower.split()
+            query_terms = query.lower().split()
             
             results = []
-            
             for conv_info in conversations:
-                score = 0
-                
-                # Search in content
-                try:
-                    file_path = self.storage_path / conv_info["file_path"]
-                    if file_path.exists():
-                        with open(file_path, 'r', encoding='utf-8') as f:
-                            conv_data = json.load(f)
-                        
-                        content = conv_data.get("content", "").lower()
-                        title = conv_data.get("title", "").lower()
-                        topics = [t.lower() for t in conv_data.get("topics", [])]
-                        
-                        # Score based on query term matches
-                        for term in query_terms:
-                            score += content.count(term) * 1
-                            score += title.count(term) * 3
-                            if term in topics:
-                                score += 5
-                        
-                        if score > 0:
-                            results.append({
-                                "id": conv_data["id"],
-                                "title": conv_data["title"],
-                                "date": conv_data["date"],
-                                "topics": conv_data["topics"],
-                                "score": score,
-                                "preview": content[:200] + "..." if len(content) > 200 else content
-                            })
-                except (IOError, UnicodeDecodeError, Exception):
-                    continue
+                result = self._process_conversation_for_search(conv_info, query_terms)
+                if result:
+                    results.append(result)
             
             # Sort by score and return top results
             results.sort(key=lambda x: x["score"], reverse=True)
             return results[:limit]
             
-        except Exception as e:
+        except (IOError, OSError, ValueError, KeyError, TypeError) as e:
             return [{"error": f"Search failed: {str(e)}"}]
     
     def _get_preview(self, file_path: Path, query_terms: List[str]) -> str:
@@ -223,7 +233,7 @@ class ConversationMemoryServer:
             preview = '\n'.join(preview_lines[:10])  # Limit preview length
             return preview[:500] + "..." if len(preview) > 500 else preview
             
-        except (IOError, UnicodeDecodeError, Exception):
+        except (IOError, UnicodeDecodeError, ValueError, KeyError, TypeError):
             return "Preview unavailable"
     
     def get_preview(self, conversation_id: str) -> str:
@@ -250,7 +260,7 @@ class ConversationMemoryServer:
             
             return "Conversation not found"
             
-        except Exception as e:
+        except (IOError, OSError, ValueError, KeyError, TypeError) as e:
             return f"Error retrieving conversation: {str(e)}"
     
     def _update_index(self, conversation_data: Dict, file_path: Path):
@@ -278,7 +288,7 @@ class ConversationMemoryServer:
             with open(self.index_file, 'w') as f:
                 json.dump(index_data, f, indent=2)
                 
-        except Exception as e:
+        except (IOError, OSError, ValueError, KeyError, TypeError) as e:
             print(f"Error updating index: {e}")
     
     def _update_topics_index(self, topics: List[str], conversation_id: str):
@@ -307,7 +317,7 @@ class ConversationMemoryServer:
             with open(self.topics_file, 'w') as f:
                 json.dump(topics_data, f, indent=2)
                 
-        except Exception as e:
+        except (IOError, OSError, ValueError, KeyError, TypeError) as e:
             print(f"Error updating topics index: {e}")
     
     def generate_weekly_summary(self, week_offset: int = 0) -> str:
@@ -337,14 +347,14 @@ class ConversationMemoryServer:
                                 with open(file_path, 'r', encoding='utf-8') as f:
                                     conv_data = json.load(f)
                                 week_conversations.append(conv_data)
-                            except (IOError, UnicodeDecodeError, Exception):
+                            except (IOError, UnicodeDecodeError, ValueError, KeyError, TypeError):
                                 # If file read fails, use index data
                                 week_conversations.append({
                                     "title": conv_info.get("title", "Untitled"),
                                     "date": conv_info["date"],
                                     "topics": conv_info.get("topics", [])
                                 })
-                except (IOError, UnicodeDecodeError, Exception):
+                except (IOError, UnicodeDecodeError, ValueError, KeyError, TypeError):
                     continue
             
             if not week_conversations:
@@ -396,5 +406,5 @@ class ConversationMemoryServer:
             
             return summary_text
             
-        except Exception as e:
+        except (IOError, OSError, ValueError, KeyError, TypeError) as e:
             return f"Failed to generate weekly summary: {str(e)}"
