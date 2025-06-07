@@ -292,37 +292,51 @@ class ConversationMemoryServer:
                 week_conversations.append(conv_info)
         return week_conversations
     
+    def _count_topics(self, week_conversations: List[dict]) -> dict:
+        """Count frequency of topics across conversations"""
+        topics_count = {}
+        for conv_info in week_conversations:
+            for topic in conv_info.get("topics", []):
+                topics_count[topic] = topics_count.get(topic, 0) + 1
+        return topics_count
+
+    def _categorize_conversation(self, conv_info: dict) -> tuple:
+        """Categorize a single conversation into coding/decisions/learning"""
+        file_path = self.storage_path / conv_info["file_path"]
+        title = conv_info["title"]
+        
+        if not file_path.exists():
+            return False, False, False
+            
+        try:
+            with open(file_path, 'r', encoding='utf-8') as f:
+                content = f.read().lower()
+            
+            is_coding = any(term in content for term in ['code', 'function', 'class', 'def ', 'import ', 'git', 'repository'])
+            is_decision = any(term in content for term in ['decided', 'chosen', 'selected', 'recommendation', 'approach'])
+            is_learning = any(term in content for term in ['learn', 'tutorial', 'how to', 'explain', 'understand'])
+            
+            return is_coding, is_decision, is_learning
+            
+        except (OSError, ValueError):
+            return False, False, False
+
     def _analyze_conversations(self, week_conversations: List[dict]) -> tuple:
         """Analyze conversations to extract topics and categorize content"""
-        topics_count = {}
+        topics_count = self._count_topics(week_conversations)
         coding_tasks = []
         decisions_made = []
         learning_topics = []
         
         for conv_info in week_conversations:
-            # Count topics
-            for topic in conv_info.get("topics", []):
-                topics_count[topic] = topics_count.get(topic, 0) + 1
+            is_coding, is_decision, is_learning = self._categorize_conversation(conv_info)
             
-            # Analyze conversation content
-            file_path = self.storage_path / conv_info["file_path"]
-            if file_path.exists():
-                try:
-                    with open(file_path, 'r', encoding='utf-8') as f:
-                        content = f.read().lower()
-                    
-                    # Categorize conversations
-                    if any(term in content for term in ['code', 'function', 'class', 'def ', 'import ', 'git', 'repository']):
-                        coding_tasks.append(conv_info["title"])
-                    
-                    if any(term in content for term in ['decided', 'chosen', 'selected', 'recommendation', 'approach']):
-                        decisions_made.append(conv_info["title"])
-                    
-                    if any(term in content for term in ['learn', 'tutorial', 'how to', 'explain', 'understand']):
-                        learning_topics.append(conv_info["title"])
-                        
-                except (OSError, ValueError):
-                    continue
+            if is_coding:
+                coding_tasks.append(conv_info["title"])
+            if is_decision:
+                decisions_made.append(conv_info["title"])
+            if is_learning:
+                learning_topics.append(conv_info["title"])
         
         return topics_count, coding_tasks, decisions_made, learning_topics
     
