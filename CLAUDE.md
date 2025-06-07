@@ -57,3 +57,7 @@ source .venv/bin/activate
 pip install -e .
 pip install pytest pytest-cov pytest-asyncio
 ```
+
+## Project Management
+
+**Task Tracking:** All todos and project tasks are maintained in `todos.md` for persistence across Claude Code sessions. This includes pending improvements, completed work, and priority classifications.
