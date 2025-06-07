@@ -7,7 +7,6 @@ shared between the FastMCP server and standalone implementations.
 """
 
 import json
-import os
 from datetime import datetime, timedelta
 from pathlib import Path
 import re
@@ -192,7 +191,7 @@ class ConversationMemoryServer:
                                 "score": score,
                                 "preview": content[:200] + "..." if len(content) > 200 else content
                             })
-                except:
+                except (IOError, UnicodeDecodeError, Exception):
                     continue
             
             # Sort by score and return top results
@@ -224,7 +223,7 @@ class ConversationMemoryServer:
             preview = '\n'.join(preview_lines[:10])  # Limit preview length
             return preview[:500] + "..." if len(preview) > 500 else preview
             
-        except:
+        except (IOError, UnicodeDecodeError, Exception):
             return "Preview unavailable"
     
     def get_preview(self, conversation_id: str) -> str:
@@ -338,14 +337,14 @@ class ConversationMemoryServer:
                                 with open(file_path, 'r', encoding='utf-8') as f:
                                     conv_data = json.load(f)
                                 week_conversations.append(conv_data)
-                            except:
+                            except (IOError, UnicodeDecodeError, Exception):
                                 # If file read fails, use index data
                                 week_conversations.append({
                                     "title": conv_info.get("title", "Untitled"),
                                     "date": conv_info["date"],
                                     "topics": conv_info.get("topics", [])
                                 })
-                except:
+                except (IOError, UnicodeDecodeError, Exception):
                     continue
             
             if not week_conversations:

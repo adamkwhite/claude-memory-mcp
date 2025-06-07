@@ -7,7 +7,6 @@ Supports storing conversations locally and retrieving context for current sessio
 """
 
 import json
-import os
 from datetime import datetime, timedelta
 from pathlib import Path
 import re
@@ -98,7 +97,7 @@ class ConversationMemoryServer:
                         content = f.read().lower()
                         for term in query_terms:
                             score += content.count(term)
-                except:
+                except (IOError, UnicodeDecodeError):
                     continue
                 
                 if score > 0:
@@ -140,7 +139,7 @@ class ConversationMemoryServer:
             preview = '\n'.join(preview_lines[:10])  # Limit preview length
             return preview[:500] + "..." if len(preview) > 500 else preview
             
-        except:
+        except (IOError, UnicodeDecodeError):
             return "Preview unavailable"
     
     async def add_conversation(self, content: str, title: str = None, date: str = None) -> Dict[str, str]:
@@ -295,7 +294,7 @@ class ConversationMemoryServer:
                         if any(term in content for term in ['learn', 'tutorial', 'how to', 'explain', 'understand']):
                             learning_topics.append(conv_info["title"])
                             
-                    except:
+                    except (IOError, UnicodeDecodeError):
                         continue
             
             # Generate summary
