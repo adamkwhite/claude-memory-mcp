@@ -326,55 +326,64 @@ class ConversationMemoryServer:
         
         return topics_count, coding_tasks, decisions_made, learning_topics
     
-    def _format_weekly_summary(self, week_conversations: List[dict], target_week_start: datetime, 
-                              target_week_end: datetime, week_offset: int, topics_count: dict,
-                              coding_tasks: List[str], decisions_made: List[str], learning_topics: List[str]) -> str:
-        """Format the weekly summary content"""
+    def _format_summary_header(self, target_week_start: datetime, target_week_end: datetime, 
+                              week_offset: int, week_conversations: List[dict]) -> str:
+        """Format the weekly summary header"""
         week_desc = "Current Week" if week_offset == 0 else f"Week of {target_week_start.strftime('%B %d, %Y')}"
         summary = f"# Weekly Summary: {week_desc}\n\n"
         summary += f"**Period:** {target_week_start.strftime('%Y-%m-%d')} to {target_week_end.strftime('%Y-%m-%d')}\n"
         summary += f"**Conversations:** {len(week_conversations)}\n\n"
+        return summary
+
+    def _format_topics_section(self, topics_count: dict) -> str:
+        """Format the topics section"""
+        if not topics_count:
+            return ""
         
-        # Top topics
-        if topics_count:
-            summary += "## 🏷️ Most Discussed Topics\n\n"
-            sorted_topics = sorted(topics_count.items(), key=lambda x: x[1], reverse=True)
-            for topic, count in sorted_topics[:MAX_RESULTS_DISPLAY]:
-                summary += f"• **{topic}** ({count} conversation{'s' if count > 1 else ''})\n"
-            summary += "\n"
+        section = "## 🏷️ Most Discussed Topics\n\n"
+        sorted_topics = sorted(topics_count.items(), key=lambda x: x[1], reverse=True)
+        for topic, count in sorted_topics[:MAX_RESULTS_DISPLAY]:
+            section += f"• **{topic}** ({count} conversation{'s' if count > 1 else ''})\n"
+        section += "\n"
+        return section
+
+    def _format_category_section(self, title: str, emoji: str, items: List[str]) -> str:
+        """Format a category section (coding, decisions, learning)"""
+        if not items:
+            return ""
         
-        # Coding tasks
-        if coding_tasks:
-            summary += "## 💻 Coding & Development\n\n"
-            for task in coding_tasks[:MAX_RESULTS_DISPLAY]:
-                summary += f"• {task}\n"
-            summary += "\n"
-        
-        # Decisions made
-        if decisions_made:
-            summary += "## 🎯 Decisions & Recommendations\n\n"
-            for decision in decisions_made[:MAX_RESULTS_DISPLAY]:
-                summary += f"• {decision}\n"
-            summary += "\n"
-        
-        # Learning topics
-        if learning_topics:
-            summary += "## 📚 Learning & Exploration\n\n"
-            for topic in learning_topics[:MAX_RESULTS_DISPLAY]:
-                summary += f"• {topic}\n"
-            summary += "\n"
-        
-        # Conversation list
-        summary += "## 📝 All Conversations\n\n"
+        section = f"## {emoji} {title}\n\n"
+        for item in items[:MAX_RESULTS_DISPLAY]:
+            section += f"• {item}\n"
+        section += "\n"
+        return section
+
+    def _format_conversations_list(self, week_conversations: List[dict]) -> str:
+        """Format the conversations list section"""
+        section = "## 📝 All Conversations\n\n"
         sorted_convs = sorted(week_conversations, key=lambda x: x["date"], reverse=True)
+        
         for conv in sorted_convs:
             date_str = datetime.fromisoformat(conv["date"].replace('Z', '+00:00')).strftime('%m/%d %H:%M')
             topics_str = ', '.join(conv.get("topics", [])[:3])
             if len(conv.get("topics", [])) > 3:
                 topics_str += "..."
-            summary += f"• **{date_str}** - {conv['title']}\n"
+            section += f"• **{date_str}** - {conv['title']}\n"
             if topics_str:
-                summary += f"  *Topics: {topics_str}*\n"
+                section += f"  *Topics: {topics_str}*\n"
+        
+        return section
+
+    def _format_weekly_summary(self, week_conversations: List[dict], target_week_start: datetime, 
+                              target_week_end: datetime, week_offset: int, topics_count: dict,
+                              coding_tasks: List[str], decisions_made: List[str], learning_topics: List[str]) -> str:
+        """Format the weekly summary content"""
+        summary = self._format_summary_header(target_week_start, target_week_end, week_offset, week_conversations)
+        summary += self._format_topics_section(topics_count)
+        summary += self._format_category_section("Coding & Development", "💻", coding_tasks)
+        summary += self._format_category_section("Decisions & Recommendations", "🎯", decisions_made)
+        summary += self._format_category_section("Learning & Exploration", "📚", learning_topics)
+        summary += self._format_conversations_list(week_conversations)
         
         return summary
     
