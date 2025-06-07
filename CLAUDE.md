@@ -58,6 +58,25 @@ pip install -e .
 pip install pytest pytest-cov pytest-asyncio
 ```
 
+## Git Workflow
+
+**Important:** This repository has automated SonarQube badge updates that require special git workflow:
+
+```bash
+# Recommended workflow for commits
+git pull                    # Always pull first (badges may have updated)
+git add <files>
+git commit -m "message"
+git pull                    # Pull again before push (in case badges updated during commit)
+git push
+```
+
+**Why this is needed:**
+- GitHub Actions automatically updates `.badges/*.svg` files after each push
+- SonarQube analysis runs and commits updated metrics badges
+- Without pulling first, pushes will be rejected with "fetch first" errors
+- This is normal behavior and indicates SonarQube improvements are working
+
 ## Project Management
 
 **Task Tracking:** All todos and project tasks are maintained in `todos.md` for persistence across Claude Code sessions. This includes pending improvements, completed work, and priority classifications.
