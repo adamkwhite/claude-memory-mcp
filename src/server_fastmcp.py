@@ -13,10 +13,27 @@ import re
 from typing import Dict, List, Optional, Any, Union
 from mcp.server.fastmcp import FastMCP
 
+# Constants
+DEFAULT_PREVIEW_LENGTH = 500
+DEFAULT_CONTENT_PREVIEW = 200
+MAX_PREVIEW_LINES = 10
+CONTEXT_LINES_BEFORE = 2
+CONTEXT_LINES_AFTER = 3
+DEFAULT_SEARCH_LIMIT = 5
+MAX_RESULTS_DISPLAY = 10
+
+COMMON_TECH_TERMS = [
+    'python', 'javascript', 'react', 'node', 'aws', 'docker', 'kubernetes',
+    'terraform', 'mcp', 'api', 'database', 'sql', 'mongodb', 'redis',
+    'git', 'github', 'vscode', 'linux', 'ubuntu', 'windows', 'wsl',
+    'authentication', 'security', 'testing', 'deployment', 'ci/cd'
+]
+
 
 class ConversationMemoryServer:
     def __init__(self, storage_path: str = "~/claude-memory"):
-        self.storage_path = Path(storage_path).expanduser()
+        self.storage_path = Path(storage_path).expanduser().resolve()
+        self._validate_storage_path()
         self.conversations_path = self.storage_path / "conversations"
         self.summaries_path = self.storage_path / "summaries"
         self.index_file = self.conversations_path / "index.json"
@@ -29,6 +46,25 @@ class ConversationMemoryServer:
         
         # Initialize index files if they don't exist
         self._init_index_files()
+    
+    def _validate_storage_path(self):
+        """Validate storage path for security"""
+        # Ensure path doesn't contain traversal attempts
+        if '..' in str(self.storage_path):
+            raise ValueError("Storage path cannot contain '..' for security reasons")
+        
+        # Ensure path is within user's home directory or explicit allowed paths
+        home = Path.home().resolve()
+        if not str(self.storage_path).startswith(str(home)):
+            raise ValueError("Storage path must be within user's home directory")
+    
+    def _validate_file_path(self, file_path: Path) -> bool:
+        """Validate that file path is within allowed storage directory"""
+        try:
+            file_path.resolve().relative_to(self.storage_path.resolve())
+            return True
+        except ValueError:
+            return False
     
     def _init_index_files(self):
         """Initialize index and topics files if they don't exist"""
@@ -49,18 +85,10 @@ class ConversationMemoryServer:
     
     def _extract_topics(self, content: str) -> List[str]:
         """Extract topics from conversation content using simple keyword extraction"""
-        # This is a basic implementation - can be enhanced with more sophisticated NLP
-        common_tech_terms = [
-            'python', 'javascript', 'react', 'node', 'aws', 'docker', 'kubernetes',
-            'terraform', 'mcp', 'api', 'database', 'sql', 'mongodb', 'redis',
-            'git', 'github', 'vscode', 'linux', 'ubuntu', 'windows', 'wsl',
-            'authentication', 'security', 'testing', 'deployment', 'ci/cd'
-        ]
-        
         topics = []
         content_lower = content.lower()
         
-        for term in common_tech_terms:
+        for term in COMMON_TECH_TERMS:
             if term in content_lower:
                 topics.append(term)
         
@@ -70,7 +98,7 @@ class ConversationMemoryServer:
         
         return list(set(topics))  # Remove duplicates
     
-    async def search_conversations(self, query: str, limit: int = 5) -> List[Dict[str, Any]]:
+    async def search_conversations(self, query: str, limit: int = DEFAULT_SEARCH_LIMIT) -> List[Dict[str, Any]]:
         """Search conversations for relevant content"""
         try:
             with open(self.index_file, 'r') as f:
@@ -83,7 +111,7 @@ class ConversationMemoryServer:
                 score = 0
                 file_path = self.storage_path / conv_info["file_path"]
                 
-                if not file_path.exists():
+                if not file_path.exists() or not self._validate_file_path(file_path):
                     continue
                 
                 # Check topics match
@@ -130,14 +158,14 @@ class ConversationMemoryServer:
                 line_lower = line.lower()
                 if any(term in line_lower for term in query_terms):
                     # Include context lines around the match
-                    start = max(0, i - 2)
-                    end = min(len(lines), i + 3)
+                    start = max(0, i - CONTEXT_LINES_BEFORE)
+                    end = min(len(lines), i + CONTEXT_LINES_AFTER)
                     context = lines[start:end]
                     preview_lines.extend(context)
                     break
             
-            preview = '\n'.join(preview_lines[:10])  # Limit preview length
-            return preview[:500] + "..." if len(preview) > 500 else preview
+            preview = '\n'.join(preview_lines[:MAX_PREVIEW_LINES])
+            return preview[:DEFAULT_PREVIEW_LENGTH] + "..." if len(preview) > DEFAULT_PREVIEW_LENGTH else preview
             
         except (IOError, UnicodeDecodeError):
             return "Preview unavailable"
@@ -235,114 +263,137 @@ class ConversationMemoryServer:
         except Exception as e:
             print(f"Failed to update topics index: {e}")
     
+    def _calculate_week_range(self, week_offset: int = 0) -> tuple:
+        """Calculate the date range for a specific week"""
+        from datetime import timezone
+        now = datetime.now(timezone.utc)
+        start_of_current_week = now - timedelta(days=now.weekday())
+        target_week_start = start_of_current_week - timedelta(weeks=week_offset)
+        target_week_end = target_week_start + timedelta(days=6, hours=23, minutes=59)
+        return target_week_start, target_week_end
+    
+    def _filter_conversations_by_week(self, index_data: dict, target_week_start: datetime, target_week_end: datetime) -> List[dict]:
+        """Filter conversations that fall within the specified week"""
+        week_conversations = []
+        for conv_info in index_data.get("conversations", []):
+            conv_date = datetime.fromisoformat(conv_info["date"].replace('Z', '+00:00'))
+            # Convert to timezone-naive for comparison
+            conv_date_naive = conv_date.replace(tzinfo=None)
+            target_start_naive = target_week_start.replace(tzinfo=None)
+            target_end_naive = target_week_end.replace(tzinfo=None)
+            if target_start_naive <= conv_date_naive <= target_end_naive:
+                week_conversations.append(conv_info)
+        return week_conversations
+    
+    def _analyze_conversations(self, week_conversations: List[dict]) -> tuple:
+        """Analyze conversations to extract topics and categorize content"""
+        topics_count = {}
+        coding_tasks = []
+        decisions_made = []
+        learning_topics = []
+        
+        for conv_info in week_conversations:
+            # Count topics
+            for topic in conv_info.get("topics", []):
+                topics_count[topic] = topics_count.get(topic, 0) + 1
+            
+            # Analyze conversation content
+            file_path = self.storage_path / conv_info["file_path"]
+            if file_path.exists():
+                try:
+                    with open(file_path, 'r', encoding='utf-8') as f:
+                        content = f.read().lower()
+                    
+                    # Categorize conversations
+                    if any(term in content for term in ['code', 'function', 'class', 'def ', 'import ', 'git', 'repository']):
+                        coding_tasks.append(conv_info["title"])
+                    
+                    if any(term in content for term in ['decided', 'chosen', 'selected', 'recommendation', 'approach']):
+                        decisions_made.append(conv_info["title"])
+                    
+                    if any(term in content for term in ['learn', 'tutorial', 'how to', 'explain', 'understand']):
+                        learning_topics.append(conv_info["title"])
+                        
+                except (IOError, UnicodeDecodeError):
+                    continue
+        
+        return topics_count, coding_tasks, decisions_made, learning_topics
+    
+    def _format_weekly_summary(self, week_conversations: List[dict], target_week_start: datetime, 
+                              target_week_end: datetime, week_offset: int, topics_count: dict,
+                              coding_tasks: List[str], decisions_made: List[str], learning_topics: List[str]) -> str:
+        """Format the weekly summary content"""
+        week_desc = "Current Week" if week_offset == 0 else f"Week of {target_week_start.strftime('%B %d, %Y')}"
+        summary = f"# Weekly Summary: {week_desc}\n\n"
+        summary += f"**Period:** {target_week_start.strftime('%Y-%m-%d')} to {target_week_end.strftime('%Y-%m-%d')}\n"
+        summary += f"**Conversations:** {len(week_conversations)}\n\n"
+        
+        # Top topics
+        if topics_count:
+            summary += "## 🏷️ Most Discussed Topics\n\n"
+            sorted_topics = sorted(topics_count.items(), key=lambda x: x[1], reverse=True)
+            for topic, count in sorted_topics[:MAX_RESULTS_DISPLAY]:
+                summary += f"• **{topic}** ({count} conversation{'s' if count > 1 else ''})\n"
+            summary += "\n"
+        
+        # Coding tasks
+        if coding_tasks:
+            summary += "## 💻 Coding & Development\n\n"
+            for task in coding_tasks[:MAX_RESULTS_DISPLAY]:
+                summary += f"• {task}\n"
+            summary += "\n"
+        
+        # Decisions made
+        if decisions_made:
+            summary += "## 🎯 Decisions & Recommendations\n\n"
+            for decision in decisions_made[:MAX_RESULTS_DISPLAY]:
+                summary += f"• {decision}\n"
+            summary += "\n"
+        
+        # Learning topics
+        if learning_topics:
+            summary += "## 📚 Learning & Exploration\n\n"
+            for topic in learning_topics[:MAX_RESULTS_DISPLAY]:
+                summary += f"• {topic}\n"
+            summary += "\n"
+        
+        # Conversation list
+        summary += "## 📝 All Conversations\n\n"
+        sorted_convs = sorted(week_conversations, key=lambda x: x["date"], reverse=True)
+        for conv in sorted_convs:
+            date_str = datetime.fromisoformat(conv["date"].replace('Z', '+00:00')).strftime('%m/%d %H:%M')
+            topics_str = ', '.join(conv.get("topics", [])[:3])
+            if len(conv.get("topics", [])) > 3:
+                topics_str += "..."
+            summary += f"• **{date_str}** - {conv['title']}\n"
+            if topics_str:
+                summary += f"  *Topics: {topics_str}*\n"
+        
+        return summary
+    
     async def generate_weekly_summary(self, week_offset: int = 0) -> str:
         """Generate a summary of conversations from a specific week"""
         try:
-            # Calculate date range for the target week (timezone-aware)
-            from datetime import timezone
-            now = datetime.now(timezone.utc)
-            start_of_current_week = now - timedelta(days=now.weekday())
-            target_week_start = start_of_current_week - timedelta(weeks=week_offset)
-            target_week_end = target_week_start + timedelta(days=6, hours=23, minutes=59)
+            # Calculate date range
+            target_week_start, target_week_end = self._calculate_week_range(week_offset)
             
             # Load conversations from index
             with open(self.index_file, 'r') as f:
                 index_data = json.load(f)
             
             # Filter conversations for the target week
-            week_conversations = []
-            for conv_info in index_data.get("conversations", []):
-                conv_date = datetime.fromisoformat(conv_info["date"].replace('Z', '+00:00'))
-                # Convert to timezone-naive for comparison
-                conv_date_naive = conv_date.replace(tzinfo=None)
-                target_start_naive = target_week_start.replace(tzinfo=None)
-                target_end_naive = target_week_end.replace(tzinfo=None)
-                if target_start_naive <= conv_date_naive <= target_end_naive:
-                    week_conversations.append(conv_info)
+            week_conversations = self._filter_conversations_by_week(index_data, target_week_start, target_week_end)
             
             if not week_conversations:
                 week_desc = "current week" if week_offset == 0 else f"{week_offset} week(s) ago"
                 return f"No conversations found for {week_desc} ({target_week_start.strftime('%Y-%m-%d')} to {target_week_end.strftime('%Y-%m-%d')})"
             
             # Analyze conversations
-            topics_count = {}
-            coding_tasks = []
-            decisions_made = []
-            learning_topics = []
+            topics_count, coding_tasks, decisions_made, learning_topics = self._analyze_conversations(week_conversations)
             
-            for conv_info in week_conversations:
-                # Count topics
-                for topic in conv_info.get("topics", []):
-                    topics_count[topic] = topics_count.get(topic, 0) + 1
-                
-                # Try to identify coding tasks and decisions by loading conversation content
-                file_path = self.storage_path / conv_info["file_path"]
-                if file_path.exists():
-                    try:
-                        with open(file_path, 'r', encoding='utf-8') as f:
-                            content = f.read().lower()
-                        
-                        # Look for coding indicators
-                        if any(term in content for term in ['code', 'function', 'class', 'def ', 'import ', 'git', 'repository']):
-                            coding_tasks.append(conv_info["title"])
-                        
-                        # Look for decision indicators
-                        if any(term in content for term in ['decided', 'chosen', 'selected', 'recommendation', 'approach']):
-                            decisions_made.append(conv_info["title"])
-                        
-                        # Look for learning indicators
-                        if any(term in content for term in ['learn', 'tutorial', 'how to', 'explain', 'understand']):
-                            learning_topics.append(conv_info["title"])
-                            
-                    except (IOError, UnicodeDecodeError):
-                        continue
-            
-            # Generate summary
-            week_desc = "Current Week" if week_offset == 0 else f"Week of {target_week_start.strftime('%B %d, %Y')}"
-            summary = f"# Weekly Summary: {week_desc}\n\n"
-            summary += f"**Period:** {target_week_start.strftime('%Y-%m-%d')} to {target_week_end.strftime('%Y-%m-%d')}\n"
-            summary += f"**Conversations:** {len(week_conversations)}\n\n"
-            
-            # Top topics
-            if topics_count:
-                summary += "## 🏷️ Most Discussed Topics\n\n"
-                sorted_topics = sorted(topics_count.items(), key=lambda x: x[1], reverse=True)
-                for topic, count in sorted_topics[:10]:
-                    summary += f"• **{topic}** ({count} conversation{'s' if count > 1 else ''})\n"
-                summary += "\n"
-            
-            # Coding tasks
-            if coding_tasks:
-                summary += "## 💻 Coding & Development\n\n"
-                for task in coding_tasks[:10]:
-                    summary += f"• {task}\n"
-                summary += "\n"
-            
-            # Decisions made
-            if decisions_made:
-                summary += "## 🎯 Decisions & Recommendations\n\n"
-                for decision in decisions_made[:10]:
-                    summary += f"• {decision}\n"
-                summary += "\n"
-            
-            # Learning topics
-            if learning_topics:
-                summary += "## 📚 Learning & Exploration\n\n"
-                for topic in learning_topics[:10]:
-                    summary += f"• {topic}\n"
-                summary += "\n"
-            
-            # Conversation list
-            summary += "## 📝 All Conversations\n\n"
-            sorted_convs = sorted(week_conversations, key=lambda x: x["date"], reverse=True)
-            for conv in sorted_convs:
-                date_str = datetime.fromisoformat(conv["date"].replace('Z', '+00:00')).strftime('%m/%d %H:%M')
-                topics_str = ', '.join(conv.get("topics", [])[:3])
-                if len(conv.get("topics", [])) > 3:
-                    topics_str += "..."
-                summary += f"• **{date_str}** - {conv['title']}\n"
-                if topics_str:
-                    summary += f"  *Topics: {topics_str}*\n"
+            # Format summary
+            summary = self._format_weekly_summary(week_conversations, target_week_start, target_week_end, 
+                                                week_offset, topics_count, coding_tasks, decisions_made, learning_topics)
             
             # Save summary to file
             summary_filename = f"week-{target_week_start.strftime('%Y-%m-%d')}.md"
@@ -364,7 +415,7 @@ mcp = FastMCP("claude-memory")
 memory_server = ConversationMemoryServer()
 
 @mcp.tool()
-async def search_conversations(query: str, limit: int = 5) -> str:
+async def search_conversations(query: str, limit: int = DEFAULT_SEARCH_LIMIT) -> str:
     """Search through stored Claude conversations for relevant content"""
     results = await memory_server.search_conversations(query, limit)
     
