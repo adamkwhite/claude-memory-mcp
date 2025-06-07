@@ -29,10 +29,21 @@ This file maintains persistent todos across Claude Code sessions.
   - Verify all quality gates are now passing
   - Confirm coverage metrics are accurate with archive/scripts exclusions
   - Check that all recent fixes resolved the "8 Issues > 0" condition
-- [ ] **Consider improving test coverage from 80.2% to 85%+**
-  - Current: 80.2% coverage
-  - Target: 85%+ for better code reliability
+- [x] **Consider improving test coverage from 80.2% to 85%+**
+  - Current: 90.75% coverage (improved from 80.2%)
+  - Target: 85%+ for better code reliability ✅ ACHIEVED
   - Focus on testing edge cases and error handling paths
+- [ ] **Achieve 100% test coverage**
+  - Current: 90.75% coverage (47 lines missing)
+  - Target: 100% for complete code reliability
+  - Missing coverage areas:
+    - conversation_memory.py: 18 lines (153-159, 169-186, 205, 353-354)
+    - server_fastmcp.py: 29 lines (54, 59, 66-67, 72-73, 76-77, 115, 128-129, etc.)
+  - Required tests:
+    - Security validation errors (path traversal, home directory validation)
+    - Search edge cases (empty results, malformed data, file corruption)
+    - Exception handling paths (permission errors, invalid JSON)
+    - All code branches and error conditions
 - [ ] Implement conversation data encryption for security
 - [ ] Add caching strategy for file I/O operations to improve performance
 - [ ] Migrate from JSON files to SQLite database for better performance and indexing
