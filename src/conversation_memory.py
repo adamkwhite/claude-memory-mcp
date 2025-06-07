@@ -142,7 +142,7 @@ class ConversationMemoryServer:
                 "message": f"Conversation saved successfully with ID: {conversation_id}"
             }
             
-        except (IOError, OSError, ValueError, TypeError) as e:
+        except (OSError, ValueError, TypeError) as e:
             return {
                 "status": "error",
                 "message": f"Failed to save conversation: {str(e)}"
@@ -185,7 +185,7 @@ class ConversationMemoryServer:
                 }
             return None
             
-        except (IOError, ValueError, KeyError, TypeError):
+        except (OSError, ValueError, KeyError, TypeError):
             return None
 
     def search_conversations(self, query: str, limit: int = 10) -> List[Dict[str, Any]]:
@@ -208,7 +208,7 @@ class ConversationMemoryServer:
             results.sort(key=lambda x: x["score"], reverse=True)
             return results[:limit]
             
-        except (IOError, OSError, ValueError, KeyError, TypeError) as e:
+        except (OSError, ValueError, KeyError, TypeError) as e:
             return [{"error": f"Search failed: {str(e)}"}]
     
     def _get_preview(self, file_path: Path, query_terms: List[str]) -> str:
@@ -233,7 +233,7 @@ class ConversationMemoryServer:
             preview = '\n'.join(preview_lines[:10])  # Limit preview length
             return preview[:500] + "..." if len(preview) > 500 else preview
             
-        except (IOError, ValueError, KeyError, TypeError):
+        except (OSError, ValueError, KeyError, TypeError):
             return "Preview unavailable"
     
     def get_preview(self, conversation_id: str) -> str:
@@ -260,7 +260,7 @@ class ConversationMemoryServer:
             
             return "Conversation not found"
             
-        except (IOError, OSError, ValueError, KeyError, TypeError) as e:
+        except (OSError, ValueError, KeyError, TypeError) as e:
             return f"Error retrieving conversation: {str(e)}"
     
     def _update_index(self, conversation_data: Dict, file_path: Path):
@@ -288,7 +288,7 @@ class ConversationMemoryServer:
             with open(self.index_file, 'w') as f:
                 json.dump(index_data, f, indent=2)
                 
-        except (IOError, OSError, ValueError, KeyError, TypeError) as e:
+        except (OSError, ValueError, KeyError, TypeError) as e:
             print(f"Error updating index: {e}")
     
     def _update_topics_index(self, topics: List[str], conversation_id: str):
@@ -317,7 +317,7 @@ class ConversationMemoryServer:
             with open(self.topics_file, 'w') as f:
                 json.dump(topics_data, f, indent=2)
                 
-        except (IOError, OSError, ValueError, KeyError, TypeError) as e:
+        except (OSError, ValueError, KeyError, TypeError) as e:
             print(f"Error updating topics index: {e}")
     
     def generate_weekly_summary(self, week_offset: int = 0) -> str:
@@ -341,7 +341,7 @@ class ConversationMemoryServer:
             summary_text += f"\n---\n*Summary saved to {summary_file}*"
             return summary_text
 
-        except (IOError, OSError, ValueError, KeyError, TypeError) as e:
+        except (OSError, ValueError, KeyError, TypeError) as e:
             return f"Failed to generate weekly summary: {str(e)}"
 
     def _get_week_conversations(self, start_of_week: datetime, end_of_week: datetime) -> List[dict]:
@@ -350,7 +350,7 @@ class ConversationMemoryServer:
             with open(self.index_file, 'r') as f:
                 index_data = json.load(f)
             conversations = index_data.get("conversations", [])
-        except (IOError, OSError, ValueError, KeyError, TypeError):
+        except (OSError, ValueError, KeyError, TypeError):
             return []
 
         week_conversations = []
@@ -364,7 +364,7 @@ class ConversationMemoryServer:
                             with open(file_path, 'r', encoding='utf-8') as f:
                                 conv_data = json.load(f)
                             week_conversations.append(conv_data)
-                        except (IOError, UnicodeDecodeError, ValueError, KeyError, TypeError):
+                        except (OSError, UnicodeDecodeError, ValueError, KeyError, TypeError):
                             week_conversations.append({
                                 "title": conv_info.get("title", "Untitled"),
                                 "date": conv_info["date"],
