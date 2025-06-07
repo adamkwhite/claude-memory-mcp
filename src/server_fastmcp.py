@@ -98,6 +98,26 @@ class ConversationMemoryServer:
         
         return list(set(topics))  # Remove duplicates
     
+    def _calculate_conversation_score(self, conv_info: dict, query_terms: List[str], file_path: Path) -> int:
+        """Calculate relevance score for a conversation"""
+        score = 0
+        
+        # Check topics match
+        for term in query_terms:
+            if term in conv_info.get("topics", []):
+                score += 3
+        
+        # Check content match
+        try:
+            with open(file_path, 'r', encoding='utf-8') as f:
+                content = f.read().lower()
+                for term in query_terms:
+                    score += content.count(term)
+        except (OSError, ValueError):
+            return 0
+            
+        return score
+
     async def search_conversations(self, query: str, limit: int = DEFAULT_SEARCH_LIMIT) -> List[Dict[str, Any]]:
         """Search conversations for relevant content"""
         try:
@@ -108,25 +128,12 @@ class ConversationMemoryServer:
             query_terms = query.lower().split()
             
             for conv_info in index_data.get("conversations", []):
-                score = 0
                 file_path = self.storage_path / conv_info["file_path"]
                 
                 if not file_path.exists() or not self._validate_file_path(file_path):
                     continue
                 
-                # Check topics match
-                for term in query_terms:
-                    if term in conv_info.get("topics", []):
-                        score += 3
-                
-                # Check content match
-                try:
-                    with open(file_path, 'r', encoding='utf-8') as f:
-                        content = f.read().lower()
-                        for term in query_terms:
-                            score += content.count(term)
-                except (OSError, ValueError):
-                    continue
+                score = self._calculate_conversation_score(conv_info, query_terms, file_path)
                 
                 if score > 0:
                     results.append({
