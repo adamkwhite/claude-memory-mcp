@@ -125,7 +125,7 @@ class ConversationMemoryServer:
                         content = f.read().lower()
                         for term in query_terms:
                             score += content.count(term)
-                except (IOError, UnicodeDecodeError):
+                except (OSError, ValueError):
                     continue
                 
                 if score > 0:
@@ -167,7 +167,7 @@ class ConversationMemoryServer:
             preview = '\n'.join(preview_lines[:MAX_PREVIEW_LINES])
             return preview[:DEFAULT_PREVIEW_LENGTH] + "..." if len(preview) > DEFAULT_PREVIEW_LENGTH else preview
             
-        except (IOError, UnicodeDecodeError):
+        except (OSError, ValueError):
             return "Preview unavailable"
     
     async def add_conversation(self, content: str, title: str = None, date: str = None) -> Dict[str, str]:
@@ -314,7 +314,7 @@ class ConversationMemoryServer:
                     if any(term in content for term in ['learn', 'tutorial', 'how to', 'explain', 'understand']):
                         learning_topics.append(conv_info["title"])
                         
-                except (IOError, UnicodeDecodeError):
+                except (OSError, ValueError):
                     continue
         
         return topics_count, coding_tasks, decisions_made, learning_topics

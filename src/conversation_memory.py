@@ -364,7 +364,7 @@ class ConversationMemoryServer:
                             with open(file_path, 'r', encoding='utf-8') as f:
                                 conv_data = json.load(f)
                             week_conversations.append(conv_data)
-                        except (OSError, UnicodeDecodeError, ValueError, KeyError, TypeError):
+                        except (OSError, ValueError, KeyError, TypeError):
                             week_conversations.append({
                                 "title": conv_info.get("title", "Untitled"),
                                 "date": conv_info["date"],
