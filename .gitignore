@@ -72,3 +72,6 @@ coverage.xml
 
 # Personal todos
 todos.md
+claude-memory-mcp-venv/
+__pycache__/
+*.pyc
