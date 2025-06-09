@@ -48,7 +48,9 @@ from server_fastmcp import ConversationMemoryServer
 @pytest.fixture
 def temp_storage():
     """Create a temporary storage directory for testing"""
-    temp_dir = tempfile.mkdtemp(prefix="claude_memory_test_")
+    # Create temp dir in home directory to pass security validation
+    home_dir = Path.home()
+    temp_dir = tempfile.mkdtemp(prefix="claude_memory_test_", dir=str(home_dir))
     yield temp_dir
     shutil.rmtree(temp_dir, ignore_errors=True)
 
@@ -302,8 +304,9 @@ Line 4: More content"""
     @pytest.mark.asyncio
     async def test_generate_weekly_summary_with_data(self, server):
         """Test weekly summary with conversation data"""
-        # Add conversations for current week
-        current_time = datetime.now()
+        # Add conversations for current week (use UTC to match _calculate_week_range)
+        from datetime import timezone
+        current_time = datetime.now(timezone.utc)
         
         await server.add_conversation(
             "Python code development with git repository",

@@ -45,7 +45,9 @@ from conversation_memory import ConversationMemoryServer
 @pytest.fixture
 def temp_storage():
     """Create a temporary storage directory for testing"""
-    temp_dir = tempfile.mkdtemp(prefix="claude_memory_test_")
+    # Create temp dir in home directory to pass security validation
+    home_dir = Path.home()
+    temp_dir = tempfile.mkdtemp(prefix="claude_memory_test_", dir=str(home_dir))
     yield temp_dir
     shutil.rmtree(temp_dir, ignore_errors=True)
 
@@ -260,8 +262,9 @@ class TestCompleteEdgeCaseCoverage:
     async def test_weekly_summary_with_topics_count(self, server):
         """Test weekly summary topic counting and top topics section"""
         # Add conversations with topics to test counting
-        from datetime import datetime, timezone
-        current_week_date = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%S+00:00")
+        from datetime import datetime
+        # Use local time to match generate_weekly_summary behavior
+        current_week_date = datetime.now().strftime("%Y-%m-%dT%H:%M:%S")
         server.add_conversation(
             "Python programming discussion", 
             "Python Talk", 
@@ -294,9 +297,9 @@ class TestCompleteEdgeCaseCoverage:
         """Test weekly summary includes all expected sections"""
         from datetime import datetime, timezone, timedelta
         
-        # Get current time in the proper timezone
-        now = datetime.now(timezone.utc)
-        current_week_date = now.strftime("%Y-%m-%dT%H:%M:%S+00:00")
+        # Get current time in local timezone to match generate_weekly_summary
+        now = datetime.now()
+        current_week_date = now.strftime("%Y-%m-%dT%H:%M:%S")
         
         # Add test conversation for current week
         server.add_conversation(
@@ -699,8 +702,8 @@ class TestMCPToolWrapperFunctions:
         from server_fastmcp import search_conversations as mcp_search
         
         # Test line 343: topics_str += "..." when more than 3 topics
-        now = datetime.now(timezone.utc)
-        current_week_date = now.strftime("%Y-%m-%dT%H:%M:%S+00:00")
+        now = datetime.now()
+        current_week_date = now.strftime("%Y-%m-%dT%H:%M:%S")
         
         server.add_conversation(
             "Test with many topics for truncation",

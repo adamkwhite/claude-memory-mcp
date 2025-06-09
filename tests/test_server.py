@@ -28,6 +28,10 @@ async def test_server():
     
     print(f"📁 Using test directory: {test_path}")
     
+    # Initialize variables for test results
+    add_result = None
+    search_results = None
+    
     # Test 1: Add a conversation
     print("\n1️⃣ Testing conversation addition...")
     test_content = """
@@ -44,18 +48,18 @@ async def test_server():
     The key is to implement the @app.list_tools() and @app.call_tool() decorators properly.
     """
     
-    result = await server.add_conversation(
+    add_result = await server.add_conversation(
         content=test_content,
         title="MCP Server Setup Discussion",
         date="2025-01-15T10:30:00"
     )
     
-    print(f"✅ Add conversation result: {result['status']}")
-    if result['status'] == 'success':
-        print(f"   📄 File: {result['file_path']}")
-        print(f"   🏷️  Topics: {result['topics']}")
+    print(f"✅ Add conversation result: {add_result['status']}")
+    if add_result['status'] == 'success':
+        print(f"   📄 File: {add_result['file_path']}")
+        print(f"   🏷️  Topics: {add_result['topics']}")
     else:
-        print(f"❌ Error: {result['message']}")
+        print(f"❌ Error: {add_result['message']}")
         return False
     
     # Test 2: Search conversations
@@ -107,7 +111,7 @@ async def test_server():
     
     # Summary
     print("\n📊 Test Summary:")
-    if all_exist and result['status'] == 'success' and search_results:
+    if all_exist and add_result['status'] == 'success' and search_results:
         print("✅ All tests passed! Your MCP server is working correctly.")
         print(f"\n🗂️  Test files created in: {test_path}")
         print("   You can now configure Claude Desktop to use this server.")

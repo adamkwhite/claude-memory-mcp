@@ -28,7 +28,9 @@ except ImportError:
 @pytest.fixture
 def temp_storage():
     """Create a temporary storage directory for testing"""
-    temp_dir = tempfile.mkdtemp(prefix="claude_memory_test_")
+    # Create temp dir in home directory to pass security validation
+    home_dir = Path.home()
+    temp_dir = tempfile.mkdtemp(prefix="claude_memory_test_", dir=str(home_dir))
     yield temp_dir
     shutil.rmtree(temp_dir, ignore_errors=True)
 
@@ -53,8 +55,9 @@ class TestWeeklySummaryGeneration:
     @pytest.mark.asyncio
     async def test_weekly_summary_with_conversations(self, server):
         """Test weekly summary generation with conversations"""
-        # Add conversations for current week
-        current_time = datetime.now().isoformat()
+        # Add conversations for current week (use UTC to match _calculate_week_range)
+        from datetime import timezone
+        current_time = datetime.now(timezone.utc).isoformat()
         
         await server.add_conversation(
             "Python coding discussion about functions and classes",
@@ -86,7 +89,9 @@ class TestWeeklySummaryGeneration:
     @pytest.mark.asyncio
     async def test_weekly_summary_topic_analysis(self, server):
         """Test that weekly summary analyzes topics correctly"""
-        current_time = datetime.now().isoformat()
+        # Use UTC time to match _calculate_week_range
+        from datetime import timezone
+        current_time = datetime.now(timezone.utc).isoformat()
         
         # Add conversation with multiple python mentions
         await server.add_conversation(
@@ -103,7 +108,9 @@ class TestWeeklySummaryGeneration:
     @pytest.mark.asyncio
     async def test_weekly_summary_categorization(self, server):
         """Test that conversations are categorized correctly"""
-        current_time = datetime.now().isoformat()
+        # Use UTC time to match _calculate_week_range
+        from datetime import timezone
+        current_time = datetime.now(timezone.utc).isoformat()
         
         # Add coding conversation
         await server.add_conversation(
@@ -144,7 +151,9 @@ class TestWeeklySummaryGeneration:
     @pytest.mark.asyncio
     async def test_weekly_summary_file_saving(self, server, temp_storage):
         """Test that weekly summary is saved to file"""
-        current_time = datetime.now().isoformat()
+        # Use UTC time to match _calculate_week_range
+        from datetime import timezone
+        current_time = datetime.now(timezone.utc).isoformat()
         
         await server.add_conversation(
             "Test conversation for file saving",
@@ -232,7 +241,9 @@ class TestMCPToolFunctions:
     async def test_mcp_weekly_summary_tool(self, server):
         """Test the MCP weekly summary tool"""
         # Add some test data
-        current_time = datetime.now().isoformat()
+        # Use UTC time to match _calculate_week_range
+        from datetime import timezone
+        current_time = datetime.now(timezone.utc).isoformat()
         await server.add_conversation(
             "Weekly summary test conversation",
             "Weekly Test",

@@ -275,9 +275,11 @@ class ConversationMemoryServer:
         """Calculate the date range for a specific week"""
         from datetime import timezone
         now = datetime.now(timezone.utc)
+        # Get start of current week (Monday at midnight)
         start_of_current_week = now - timedelta(days=now.weekday())
+        start_of_current_week = start_of_current_week.replace(hour=0, minute=0, second=0, microsecond=0)
         target_week_start = start_of_current_week - timedelta(weeks=week_offset)
-        target_week_end = target_week_start + timedelta(days=6, hours=23, minutes=59)
+        target_week_end = target_week_start + timedelta(days=6, hours=23, minutes=59, seconds=59)
         return target_week_start, target_week_end
     
     def _filter_conversations_by_week(self, index_data: dict, target_week_start: datetime, target_week_end: datetime) -> List[dict]:
