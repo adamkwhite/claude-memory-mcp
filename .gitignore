@@ -72,6 +72,13 @@ coverage.xml
 
 # Personal todos
 todos.md
+
+# Virtual environments (additional)
 claude-memory-mcp-venv/
-__pycache__/
-*.pyc
+
+# Performance testing artifacts
+benchmark_results/
+performance_benchmark_plan.md
+
+# Test data directories
+~/claude-memory-test/

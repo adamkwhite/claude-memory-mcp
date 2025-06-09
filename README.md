@@ -180,10 +180,15 @@ claude-memory-mcp/
 
 ## Performance
 
-- **Search Speed**: Sub-5 second response time
-- **Capacity**: Tested with 159 conversations (8.8MB)
+Performance validated through automated benchmarks:
+
+- **Search Speed**: 0.05s average (159 conversations)
+- **Capacity**: Tested with 159 conversations (7.8MB)
+- **Memory Usage**: 40MB peak during operations
 - **Accuracy**: 80%+ search relevance
-- **Memory**: Minimal RAM usage with file-based storage
+- **Write Performance**: 1-12MB/s throughput
+
+*Last benchmarked: June 2025 | [Detailed Report](docs/PERFORMANCE_BENCHMARKS.md)*
 
 ## Search Examples
 

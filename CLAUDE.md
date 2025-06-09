@@ -58,6 +58,21 @@ pip install -e .
 pip install pytest pytest-cov pytest-asyncio
 ```
 
+## Testing Strategy
+
+**Test Suite Organization:**
+- `test_100_percent_coverage.py` - Essential for edge cases, error handling, and security validation. DO NOT remove.
+- `test_memory_server.py` - Functional testing of core memory server features
+- `test_direct_coverage.py` - Direct testing of server components
+- `test_fastmcp_coverage.py` - FastMCP-specific functionality testing
+- `test_server.py` - Integration testing of complete server functionality
+- `standalone_test.py` - Manual test script (excluded from pytest)
+
+**Coverage Monitoring:**
+- Local: Run `pytest tests/ --ignore=tests/standalone_test.py --cov=src --cov-report=term`
+- CI: GitHub Actions runs all tests and reports to SonarCloud
+- Target: 90%+ coverage maintained through layered testing approach
+
 ## Git Workflow
 
 **Important:** This repository has automated SonarQube badge updates that require special git workflow:

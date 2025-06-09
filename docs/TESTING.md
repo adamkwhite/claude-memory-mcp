@@ -1,3 +1,157 @@
+# Testing Strategy Documentation
+
+## Test Suite Organization
+
+### Current Test Files and Purposes
+
+#### Core Functional Tests
+- **test_memory_server.py** - Basic functionality and happy path scenarios
+- **test_direct_coverage.py** - Core functionality testing targeting 50% coverage
+- **test_fastmcp_coverage.py** - FastMCP-specific functionality and weekly summaries
+
+#### Comprehensive Coverage Tests  
+- **test_100_percent_coverage.py** - Edge cases, exception handling, and specific coverage gaps
+  - **Purpose**: Achieve 100% line coverage by testing error paths and edge cases
+  - **Focus**: File system errors, corrupted data, security scenarios, exception handling
+  - **Unique Value**: Tests code paths that functional tests don't exercise
+
+#### Validation and Integration
+- **test_server.py** - Integration testing and system validation
+- **validate_system.py** - Post-import system validation
+- **standalone_test.py** - Alternative implementation for testing without MCP dependencies
+
+#### Utilities
+- **analyze_json.py** - JSON structure analysis utility
+
+## Test Categories
+
+### 1. Functional Tests (Happy Path)
+- Basic CRUD operations
+- Search functionality
+- Topic extraction
+- Date handling
+- File organization
+
+### 2. Edge Case & Error Handling Tests
+- File permission errors
+- Corrupted JSON files  
+- Missing files
+- Invalid date formats
+- Network/filesystem failures
+- Security boundary validation
+
+### 3. Integration Tests
+- End-to-end workflows
+- MCP tool integration
+- System validation
+- Performance verification
+
+## Coverage Strategy
+
+### Current Coverage: 91.46%
+
+The test suite is designed with a layered approach:
+
+1. **Base Layer** (test_memory_server.py, test_direct_coverage.py)
+   - Covers primary functionality
+   - Ensures basic operations work
+   - Achieves ~50-70% coverage
+
+2. **Comprehensive Layer** (test_100_percent_coverage.py)
+   - Targets remaining uncovered lines
+   - Tests exception paths
+   - Handles edge cases
+   - Brings coverage to 91.46%
+
+3. **Integration Layer** (test_server.py, validate_system.py)
+   - End-to-end validation
+   - System health checks
+   - Real-world scenario testing
+
+## Running Tests
+
+### All Tests
+```bash
+python3.11 -m pytest tests/ --cov=src --cov-report=html --cov-report=term -v
+```
+
+### Specific Test Categories
+```bash
+# Functional tests only
+python3.11 -m pytest tests/test_memory_server.py tests/test_direct_coverage.py -v
+
+# Coverage-focused tests
+python3.11 -m pytest tests/test_100_percent_coverage.py --cov=src --cov-report=term -v
+
+# Integration tests
+python3.11 -m pytest tests/test_server.py tests/validate_system.py -v
+```
+
+### FastMCP-specific Tests
+```bash
+python3.11 -m pytest tests/test_fastmcp_coverage.py -v
+```
+
+## Recommendations for Future Test Development
+
+### Do Not Remove test_100_percent_coverage.py
+This file is essential for maintaining high test coverage and ensuring robust error handling.
+
+### Potential Improvements
+
+1. **Split test_100_percent_coverage.py** into focused modules:
+   - `test_error_handling.py` - File system and permission errors
+   - `test_edge_cases.py` - Data validation and boundary conditions  
+   - `test_mcp_tools.py` - MCP tool wrapper testing
+   - `test_security.py` - Security boundary validation
+
+2. **Add Performance Tests**:
+   - Large dataset handling
+   - Search performance with many conversations
+   - Memory usage validation
+
+3. **Add Regression Tests**:
+   - Tests for specific bug fixes
+   - Previously failing scenarios
+
+4. **Improve Test Data Management**:
+   - Shared test fixtures
+   - Test data generation utilities
+   - Cleanup automation
+
+## Test Maintenance Guidelines
+
+### When Adding New Features
+1. Add functional tests first (happy path)
+2. Add edge case tests for error conditions
+3. Update integration tests if needed
+4. Verify coverage remains above 90%
+
+### When Fixing Bugs
+1. Add regression test that reproduces the bug
+2. Fix the bug
+3. Verify test passes
+4. Ensure coverage is maintained
+
+### Code Review Checklist
+- [ ] New code has corresponding tests
+- [ ] Edge cases are covered
+- [ ] Error conditions are tested
+- [ ] Integration scenarios work
+- [ ] Coverage percentage is maintained
+- [ ] Tests run in CI/CD pipeline
+
+## SonarQube Integration
+
+Tests are integrated with SonarQube quality gates:
+- Coverage threshold: 80% minimum
+- Current coverage: 91.46%
+- Quality gate status: Passing
+
+The comprehensive test suite ensures code quality and maintainability while supporting the project's goal of reliable conversation memory management.
+
+---
+
 # Testing Framework for Claude Conversation Memory MCP Server
 
 A comprehensive testing framework based on established methodologies including Heuristic Test Strategy Model (HTSM), Session-Based Test Management (SBTM), and Rapid Software Testing (RST).
