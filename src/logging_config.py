@@ -7,6 +7,9 @@ import sys
 from pathlib import Path
 from typing import Optional
 
+# Control character removal pattern for log injection prevention
+CONTROL_CHAR_PATTERN = r'[\x00-\x08\x0B\x0C\x0E-\x1F\x7F-\x9F]'
+
 
 class ColoredFormatter(logging.Formatter):
     """Colored log formatter for console output"""
@@ -128,8 +131,8 @@ def log_security_event(event_type: str, details: str, severity: str = "WARNING")
         level = getattr(logging, severity.upper())
         
         # Sanitize event_type and details to prevent log injection
-        safe_event_type = re.sub(r'[\x00-\x08\x0B\x0C\x0E-\x1F\x7F-\x9F]', '', str(event_type))
-        safe_details = re.sub(r'[\x00-\x08\x0B\x0C\x0E-\x1F\x7F-\x9F]', '', str(details))
+        safe_event_type = re.sub(CONTROL_CHAR_PATTERN, '', str(event_type))
+        safe_details = re.sub(CONTROL_CHAR_PATTERN, '', str(details))
         
         # For path-related events, use relative paths to avoid information disclosure
         if 'path' in safe_details.lower():
@@ -159,12 +162,12 @@ def log_validation_failure(field: str, value: str, reason: str):
         # Comprehensive sanitization to prevent log injection
         safe_value = str(value)[:100]
         # Remove all control characters except safe whitespace
-        safe_value = re.sub(r'[\x00-\x08\x0B\x0C\x0E-\x1F\x7F-\x9F]', '', safe_value)
+        safe_value = re.sub(CONTROL_CHAR_PATTERN, '', safe_value)
         # Escape remaining newlines and carriage returns for visibility
         safe_value = safe_value.replace('\n', '\\n').replace('\r', '\\r')
         # Sanitize field and reason as well
-        safe_field = re.sub(r'[\x00-\x08\x0B\x0C\x0E-\x1F\x7F-\x9F]', '', str(field))
-        safe_reason = re.sub(r'[\x00-\x08\x0B\x0C\x0E-\x1F\x7F-\x9F]', '', str(reason))
+        safe_field = re.sub(CONTROL_CHAR_PATTERN, '', str(field))
+        safe_reason = re.sub(CONTROL_CHAR_PATTERN, '', str(reason))
         logger.warning(f"Validation failed: {safe_field}='{safe_value}' | Reason: {safe_reason}")
     except Exception:
         # Fail silently to prevent logging from crashing the application
@@ -192,8 +195,8 @@ def log_file_operation(operation: str, file_path: str, success: bool, **details)
         # Sanitize details
         safe_details = {}
         for k, v in details.items():
-            safe_k = re.sub(r'[\x00-\x08\x0B\x0C\x0E-\x1F\x7F-\x9F]', '', str(k))
-            safe_v = re.sub(r'[\x00-\x08\x0B\x0C\x0E-\x1F\x7F-\x9F]', '', str(v))
+            safe_k = re.sub(CONTROL_CHAR_PATTERN, '', str(k))
+            safe_v = re.sub(CONTROL_CHAR_PATTERN, '', str(v))
             safe_details[safe_k] = safe_v
         
         detail_str = ", ".join(f"{k}={v}" for k, v in safe_details.items())
