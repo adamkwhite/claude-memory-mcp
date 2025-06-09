@@ -7,6 +7,7 @@ Supports storing conversations locally and retrieving context for current sessio
 """
 
 import json
+import time
 from datetime import datetime, timedelta
 from pathlib import Path
 import re
@@ -22,6 +23,15 @@ try:
         validate_limit
     )
     from .exceptions import ValidationError
+    from .logging_config import (
+        get_logger,
+        log_function_call,
+        log_performance,
+        log_security_event,
+        log_validation_failure,
+        log_file_operation,
+        init_default_logging
+    )
 except ImportError:
     # For direct imports during testing
     from validators import (
@@ -32,6 +42,15 @@ except ImportError:
         validate_limit
     )
     from exceptions import ValidationError
+    from logging_config import (
+        get_logger,
+        log_function_call,
+        log_performance,
+        log_security_event,
+        log_validation_failure,
+        log_file_operation,
+        init_default_logging
+    )
 
 # Constants
 DEFAULT_PREVIEW_LENGTH = 500
@@ -53,94 +72,156 @@ COMMON_TECH_TERMS = [
 
 class ConversationMemoryServer:
     def __init__(self, storage_path: str = "~/claude-memory"):
-        self.storage_path = Path(storage_path).expanduser().resolve()
-        self._validate_storage_path()
-        self.conversations_path = self.storage_path / "conversations"
-        self.summaries_path = self.storage_path / "summaries"
-        self.index_file = self.conversations_path / "index.json"
-        self.topics_file = self.conversations_path / "topics.json"
+        # Initialize logging first
+        init_default_logging()
+        self.logger = get_logger("claude_memory_mcp.server")
         
-        # Ensure directories exist
-        self.conversations_path.mkdir(parents=True, exist_ok=True)
-        self.summaries_path.mkdir(parents=True, exist_ok=True)
-        (self.summaries_path / "weekly").mkdir(exist_ok=True)
+        log_function_call("ConversationMemoryServer.__init__", storage_path=storage_path)
+        
+        self.storage_path = Path(storage_path).expanduser().resolve()
+        
+        try:
+            self._validate_storage_path()
+            self.conversations_path = self.storage_path / "conversations"
+            self.summaries_path = self.storage_path / "summaries"
+            self.index_file = self.conversations_path / "index.json"
+            self.topics_file = self.conversations_path / "topics.json"
+            
+            # Ensure directories exist
+            self.conversations_path.mkdir(parents=True, exist_ok=True)
+            self.summaries_path.mkdir(parents=True, exist_ok=True)
+            (self.summaries_path / "weekly").mkdir(exist_ok=True)
+            
+            self.logger.info(f"Server initialized successfully with storage: {self.storage_path}")
+        except Exception as e:
+            self.logger.error(f"Failed to initialize server: {str(e)}")
+            raise
         
         # Initialize index files if they don't exist
         self._init_index_files()
     
     def _validate_storage_path(self):
         """Validate storage path for security"""
+        log_function_call("_validate_storage_path", storage_path=str(self.storage_path))
+        
         # Ensure path doesn't contain traversal attempts
         if '..' in str(self.storage_path):
+            log_security_event("PATH_TRAVERSAL_ATTEMPT", f"Storage path contains '..' traversal: {self.storage_path}", "ERROR")
             raise ValueError("Storage path cannot contain '..' for security reasons")
         
         # Ensure path is within user's home directory or explicit allowed paths
         home = Path.home().resolve()
         if not str(self.storage_path).startswith(str(home)):
+            log_security_event("PATH_OUTSIDE_HOME", f"Storage path outside home directory: {self.storage_path}", "ERROR")
             raise ValueError("Storage path must be within user's home directory")
+        
+        self.logger.debug(f"Storage path validation passed: {self.storage_path}")
     
     def _validate_file_path(self, file_path: Path) -> bool:
         """Validate that file path is within allowed storage directory"""
         try:
             file_path.resolve().relative_to(self.storage_path.resolve())
+            self.logger.debug(f"File path validation passed: {file_path}")
             return True
         except ValueError:
+            log_security_event("PATH_OUTSIDE_STORAGE", f"File path outside storage directory: {file_path}", "WARNING")
+            self.logger.warning(f"File path validation failed: {file_path}")
             return False
     
     def _init_index_files(self):
         """Initialize index and topics files if they don't exist"""
+        log_function_call("_init_index_files", index_exists=self.index_file.exists(), topics_exists=self.topics_file.exists())
+        
         if not self.index_file.exists():
             with open(self.index_file, 'w') as f:
                 json.dump({"conversations": [], "last_updated": datetime.now().isoformat()}, f)
+            log_file_operation("create", str(self.index_file), True, file_type="index")
+            self.logger.info(f"Created index file: {self.index_file}")
         
         if not self.topics_file.exists():
             with open(self.topics_file, 'w') as f:
                 json.dump({"topics": {}, "last_updated": datetime.now().isoformat()}, f)
+            log_file_operation("create", str(self.topics_file), True, file_type="topics")
+            self.logger.info(f"Created topics file: {self.topics_file}")
     
     def _get_date_folder(self, date: datetime) -> Path:
         """Get the folder path for a given date"""
         year_folder = self.conversations_path / str(date.year)
         month_folder = year_folder / f"{date.month:02d}-{date.strftime('%B').lower()}"
+        
+        # Log if we're creating new directories
+        creating_dirs = not month_folder.exists()
         month_folder.mkdir(parents=True, exist_ok=True)
+        
+        if creating_dirs:
+            log_file_operation("create_directory", str(month_folder), True, date=date.strftime('%Y-%m'))
+            self.logger.debug(f"Created date folder: {month_folder}")
+        
         return month_folder
     
     def _extract_topics(self, content: str) -> List[str]:
         """Extract topics from conversation content using simple keyword extraction"""
+        start_time = time.time()
         topics = []
         content_lower = content.lower()
         
+        tech_terms_found = 0
         for term in COMMON_TECH_TERMS:
             if term in content_lower:
                 topics.append(term)
+                tech_terms_found += 1
         
         # Extract quoted terms as potential topics
         quoted_terms = re.findall(r'"([^"]*)"', content)
-        topics.extend([term.lower() for term in quoted_terms if len(term) > 2])
+        quoted_topics = [term.lower() for term in quoted_terms if len(term) > 2]
+        topics.extend(quoted_topics)
         
-        return list(set(topics))  # Remove duplicates
+        unique_topics = list(set(topics))  # Remove duplicates
+        
+        # Log topic extraction metrics
+        duration = time.time() - start_time
+        log_performance("_extract_topics", duration,
+                       content_size=len(content),
+                       tech_terms_found=tech_terms_found,
+                       quoted_terms_found=len(quoted_topics),
+                       total_topics=len(unique_topics))
+        
+        self.logger.debug(f"Extracted {len(unique_topics)} topics from {len(content)} chars")
+        return unique_topics
     
     def _calculate_conversation_score(self, conv_info: dict, query_terms: List[str], file_path: Path) -> int:
         """Calculate relevance score for a conversation"""
         score = 0
+        topics_matched = 0
+        content_matches = 0
         
         # Check topics match
         for term in query_terms:
             if term in conv_info.get("topics", []):
                 score += 3
+                topics_matched += 1
         
         # Check content match
         try:
             with open(file_path, 'r', encoding='utf-8') as f:
                 content = f.read().lower()
                 for term in query_terms:
-                    score += content.count(term)
-        except (OSError, ValueError):
+                    term_count = content.count(term)
+                    score += term_count
+                    content_matches += term_count
+        except (OSError, ValueError) as e:
+            log_file_operation("read", str(file_path), False, error=str(e))
+            self.logger.warning(f"Failed to read conversation file for scoring: {file_path}")
             return 0
-            
+        
+        self.logger.debug(f"Conversation scored: {score} (topics: {topics_matched}, content: {content_matches})")
         return score
 
     async def search_conversations(self, query: str, limit: int = DEFAULT_SEARCH_LIMIT) -> List[Dict[str, Any]]:
         """Search conversations for relevant content"""
+        start_time = time.time()
+        log_function_call("search_conversations", query=query[:50], limit=limit)
+        
         try:
             # Validate inputs
             query = validate_search_query(query)
@@ -172,11 +253,24 @@ class ConversationMemoryServer:
             
             # Sort by score and return top results
             results.sort(key=lambda x: x["score"], reverse=True)
-            return results[:limit]
+            final_results = results[:limit]
+            
+            # Log performance and results
+            duration = time.time() - start_time
+            log_performance("search_conversations", duration, 
+                          results_found=len(final_results), 
+                          total_conversations=len(index_data.get("conversations", [])),
+                          query_length=len(query))
+            
+            self.logger.info(f"Search completed: '{query[:50]}' -> {len(final_results)} results")
+            return final_results
             
         except ValidationError as e:
+            log_validation_failure("search_query", query, str(e))
+            self.logger.warning(f"Search validation failed: {str(e)}")
             return [{"error": f"Validation error: {str(e)}"}]
         except Exception as e:
+            self.logger.error(f"Search failed for query '{query[:50]}': {str(e)}")
             return [{"error": f"Search failed: {str(e)}"}]
     
     def _get_preview(self, file_path: Path, query_terms: List[str]) -> str:
@@ -187,6 +281,7 @@ class ConversationMemoryServer:
             
             lines = content.split('\n')
             preview_lines = []
+            match_found = False
             
             for i, line in enumerate(lines):
                 line_lower = line.lower()
@@ -196,16 +291,26 @@ class ConversationMemoryServer:
                     end = min(len(lines), i + CONTEXT_LINES_AFTER)
                     context = lines[start:end]
                     preview_lines.extend(context)
+                    match_found = True
                     break
             
             preview = '\n'.join(preview_lines[:MAX_PREVIEW_LINES])
-            return preview[:DEFAULT_PREVIEW_LENGTH] + "..." if len(preview) > DEFAULT_PREVIEW_LENGTH else preview
+            final_preview = preview[:DEFAULT_PREVIEW_LENGTH] + "..." if len(preview) > DEFAULT_PREVIEW_LENGTH else preview
             
-        except (OSError, ValueError):
+            self.logger.debug(f"Generated preview for {file_path}: {len(final_preview)} chars, match_found={match_found}")
+            return final_preview
+            
+        except (OSError, ValueError) as e:
+            log_file_operation("read", str(file_path), False, error=str(e))
+            self.logger.warning(f"Failed to generate preview for {file_path}: {str(e)}")
             return "Preview unavailable"
     
     async def add_conversation(self, content: str, title: str = None, date: str = None) -> Dict[str, str]:
         """Add a new conversation to the memory system"""
+        start_time = time.time()
+        log_function_call("add_conversation", title=title, 
+                         content_length=len(content) if content else 0, date=date)
+        
         try:
             # Validate inputs
             content = validate_content(content)
@@ -239,6 +344,17 @@ class ConversationMemoryServer:
             # Update index
             await self._update_index(file_path, conv_date, topics, title)
             
+            # Log successful operation
+            duration = time.time() - start_time
+            log_performance("add_conversation", duration, 
+                          content_size=len(content), 
+                          topics_extracted=len(topics),
+                          file_path=str(file_path))
+            log_file_operation("create", str(file_path), True, 
+                             size_bytes=len(content), topics=len(topics))
+            
+            self.logger.info(f"Conversation saved: '{title}' -> {filename} ({len(content)} chars)")
+            
             return {
                 "status": "success",
                 "file_path": str(file_path),
@@ -247,11 +363,15 @@ class ConversationMemoryServer:
             }
             
         except ValidationError as e:
+            log_validation_failure("conversation_input", title or "untitled", str(e))
+            self.logger.warning(f"Conversation validation failed: {str(e)}")
             return {
                 "status": "error",
                 "message": f"Validation error: {str(e)}"
             }
         except Exception as e:
+            log_file_operation("create", title or "unknown", False, error=str(e))
+            self.logger.error(f"Failed to save conversation '{title}': {str(e)}")
             return {
                 "status": "error",
                 "message": f"Failed to save conversation: {str(e)}"
@@ -259,6 +379,8 @@ class ConversationMemoryServer:
     
     async def _update_index(self, file_path: Path, date: datetime, topics: List[str], title: str):
         """Update the conversation index"""
+        log_function_call("_update_index", file_path=str(file_path), topics_count=len(topics), title=title)
+        
         try:
             with open(self.index_file, 'r') as f:
                 index_data = json.load(f)
@@ -273,37 +395,63 @@ class ConversationMemoryServer:
                 "added": datetime.now().isoformat()
             }
             
+            old_count = len(index_data["conversations"])
             index_data["conversations"].append(conv_entry)
             index_data["last_updated"] = datetime.now().isoformat()
             
             with open(self.index_file, 'w') as f:
                 json.dump(index_data, f, indent=2)
             
+            log_file_operation("update", str(self.index_file), True, 
+                             conversations_before=old_count, 
+                             conversations_after=len(index_data["conversations"]))
+            
             # Update topics index
             await self._update_topics_index(topics)
             
+            self.logger.info(f"Index updated: added conversation '{title}' ({len(topics)} topics)")
+            
         except Exception as e:
-            print(f"Failed to update index: {e}")
+            log_file_operation("update", str(self.index_file), False, error=str(e))
+            self.logger.error(f"Failed to update index: {e}")
+            raise
     
     async def _update_topics_index(self, topics: List[str]):
         """Update the topics index"""
+        if not topics:
+            return
+            
+        log_function_call("_update_topics_index", topics_count=len(topics), topics=topics[:5])
+        
         try:
             with open(self.topics_file, 'r') as f:
                 topics_data = json.load(f)
             
+            new_topics = 0
+            updated_topics = 0
+            
             for topic in topics:
                 if topic in topics_data["topics"]:
                     topics_data["topics"][topic] += 1
+                    updated_topics += 1
                 else:
                     topics_data["topics"][topic] = 1
+                    new_topics += 1
             
             topics_data["last_updated"] = datetime.now().isoformat()
             
             with open(self.topics_file, 'w') as f:
                 json.dump(topics_data, f, indent=2)
+            
+            log_file_operation("update", str(self.topics_file), True, 
+                             new_topics=new_topics, updated_topics=updated_topics)
+            
+            self.logger.debug(f"Topics index updated: {new_topics} new, {updated_topics} updated")
                 
         except Exception as e:
-            print(f"Failed to update topics index: {e}")
+            log_file_operation("update", str(self.topics_file), False, error=str(e))
+            self.logger.error(f"Failed to update topics index: {e}")
+            raise
     
     def _calculate_week_range(self, week_offset: int = 0) -> tuple:
         """Calculate the date range for a specific week"""
@@ -342,6 +490,7 @@ class ConversationMemoryServer:
         file_path = self.storage_path / conv_info["file_path"]
         
         if not file_path.exists():
+            self.logger.debug(f"Conversation file missing for categorization: {file_path}")
             return False, False, False
             
         try:
@@ -352,9 +501,12 @@ class ConversationMemoryServer:
             is_decision = any(term in content for term in ['decided', 'chosen', 'selected', 'recommendation', 'approach'])
             is_learning = any(term in content for term in ['learn', 'tutorial', 'how to', 'explain', 'understand'])
             
+            self.logger.debug(f"Conversation categorized: {conv_info['title']} -> coding={is_coding}, decision={is_decision}, learning={is_learning}")
             return is_coding, is_decision, is_learning
             
-        except (OSError, ValueError):
+        except (OSError, ValueError) as e:
+            log_file_operation("read", str(file_path), False, error=str(e))
+            self.logger.warning(f"Failed to categorize conversation {file_path}: {str(e)}")
             return False, False, False
 
     def _analyze_conversations(self, week_conversations: List[dict]) -> tuple:
@@ -439,6 +591,9 @@ class ConversationMemoryServer:
     
     async def generate_weekly_summary(self, week_offset: int = 0) -> str:
         """Generate a summary of conversations from a specific week"""
+        start_time = time.time()
+        log_function_call("generate_weekly_summary", week_offset=week_offset)
+        
         try:
             # Calculate date range
             target_week_start, target_week_end = self._calculate_week_range(week_offset)
@@ -452,7 +607,9 @@ class ConversationMemoryServer:
             
             if not week_conversations:
                 week_desc = "current week" if week_offset == 0 else f"{week_offset} week(s) ago"
-                return f"No conversations found for {week_desc} ({target_week_start.strftime('%Y-%m-%d')} to {target_week_end.strftime('%Y-%m-%d')})"
+                result = f"No conversations found for {week_desc} ({target_week_start.strftime('%Y-%m-%d')} to {target_week_end.strftime('%Y-%m-%d')})"
+                self.logger.info(f"Weekly summary: no conversations found for {week_desc}")
+                return result
             
             # Analyze conversations
             topics_count, coding_tasks, decisions_made, learning_topics = self._analyze_conversations(week_conversations)
@@ -468,11 +625,28 @@ class ConversationMemoryServer:
             with open(summary_path, 'w', encoding='utf-8') as f:
                 f.write(summary)
             
+            log_file_operation("create", str(summary_path), True, 
+                             conversations=len(week_conversations),
+                             topics=len(topics_count),
+                             summary_length=len(summary))
+            
             summary += f"\n---\n*Summary saved to {summary_path}*"
             
+            # Log performance metrics
+            duration = time.time() - start_time
+            log_performance("generate_weekly_summary", duration,
+                          week_offset=week_offset,
+                          conversations_analyzed=len(week_conversations),
+                          topics_found=len(topics_count),
+                          coding_tasks=len(coding_tasks),
+                          decisions=len(decisions_made),
+                          learning_topics=len(learning_topics))
+            
+            self.logger.info(f"Weekly summary generated: {len(week_conversations)} conversations, {len(summary)} chars")
             return summary
             
         except Exception as e:
+            self.logger.error(f"Failed to generate weekly summary: {str(e)}")
             return f"Failed to generate weekly summary: {str(e)}"
 
 
