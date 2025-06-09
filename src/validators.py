@@ -29,7 +29,7 @@ MAX_QUERY_LENGTH = 500
 MIN_CONTENT_LENGTH = 1
 
 # Dangerous patterns to prevent security issues
-PATH_TRAVERSAL_PATTERN = re.compile(r'(?:\.{2}[/\\])|(?:[/\\]\.{2})')
+PATH_TRAVERSAL_PATTERN = re.compile(r'\.{2}[/\\]|[/\\]\.{2}')
 NULL_BYTE_PATTERN = re.compile(r'\x00')
 CONTROL_CHAR_PATTERN = re.compile(r'[\x00-\x1F\x7F]')  # Except newline, tab, CR
 SAFE_CONTROL_CHARS = {'\n', '\r', '\t'}
