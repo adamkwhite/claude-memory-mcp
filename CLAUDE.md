@@ -106,16 +106,45 @@ pip install pytest pytest-cov pytest-asyncio
 
 ## Git Workflow
 
-**Important:** This repository has automated SonarQube badge updates that require special git workflow:
+**MANDATORY:** This repository has branch protection rules that REQUIRE pull requests for all changes to main:
 
+### **Standard Development Workflow (REQUIRED):**
 ```bash
-# Recommended workflow for commits
-git pull                    # Always pull first (badges may have updated)
+# 1. Create feature branch
+git checkout -b feature/your-feature-name
+
+# 2. Make changes and commit
 git add <files>
-git commit -m "message"
-git pull                    # Pull again before push (in case badges updated during commit)
-git push
+git commit -m "descriptive message"
+
+# 3. Push branch to GitHub
+git push origin feature/your-feature-name
+
+# 4. Open Pull Request on GitHub
+# - PR triggers automated testing and SonarQube analysis
+# - Must pass all quality gates before merge is allowed
+# - Coverage on new code must be ≥ 90%
+
+# 5. Merge PR (only after quality gates pass)
+# - Tests must pass ✅
+# - SonarQube quality gate must pass ✅
+# - PR conversations must be resolved ✅
 ```
+
+### **Direct Push Protection:**
+- ❌ **Direct pushes to main are BLOCKED**
+- ❌ **Force pushes are BLOCKED** 
+- ❌ **Quality gate failures block merges**
+- ✅ **All changes must go through PR process**
+
+### **Quality Gate Requirements:**
+- All tests must pass
+- SonarQube analysis must pass
+- Coverage on new code ≥ 90%
+- No unresolved PR conversations
+- Linear history maintained
+
+**Note:** Even repository owners cannot bypass these rules - this ensures enterprise-grade quality standards.
 
 **Why this is needed:**
 - GitHub Actions automatically updates `.badges/*.svg` files after each push
