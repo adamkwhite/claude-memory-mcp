@@ -56,13 +56,13 @@ jobs:
         python scripts/generate_performance_report.py "$RESULTS_FILE"
         
     - name: Upload performance report
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: performance-report
         path: docs/PERFORMANCE_BENCHMARKS.md
         
     - name: Upload benchmark results
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: benchmark-results
         path: benchmark_results/
