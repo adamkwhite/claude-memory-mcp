@@ -2,7 +2,7 @@
 
 This file maintains persistent todos across Claude Code sessions.
 
-## High Priority - Critical Issues
+## High Priority - Critical Issues ✅ ALL COMPLETED
 
 - [x] Fix Python environment - upgrade to 3.11+ and install missing MCP dependencies (mcp[cli]>=1.9.2)
 - [x] Remove code duplication - extract common ConversationMemoryServer class from server_fastmcp.py and standalone_test.py (~400 lines)
@@ -10,6 +10,16 @@ This file maintains persistent todos across Claude Code sessions.
 - [x] Fix path security vulnerability - add path validation and sanitization to prevent path traversal attacks
 - [x] Replace bare exception handling - use specific exceptions instead of bare 'except:' blocks
 - [x] Fix failing tests - resolve 4 test failures related to imports and date-sensitive assertions
+- [x] **Implement PR-blocking workflow with SonarQube quality gate enforcement**
+  - Added pull_request trigger to GitHub Actions workflow
+  - Removed continue-on-error to enforce test failures
+  - Added SonarQube Quality Gate check that blocks builds on quality failures
+  - Enforces coverage on new code ≥ 90% before allowing PR merges
+- [x] **Repository security audit and public transition**
+  - Conducted comprehensive security audit (no secrets or API keys found)
+  - Fixed hardcoded personal paths in scripts for portability
+  - Successfully transitioned repository to public visibility
+  - Enabled GitHub branch protection rules with quality gate enforcement
 
 ## Medium Priority - Code Quality & Performance
 
