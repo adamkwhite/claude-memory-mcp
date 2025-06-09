@@ -2,7 +2,7 @@
 # MCP Server Management Script for Claude Memory System
 
 SERVER_NAME="server_fastmcp.py"
-PROJECT_DIR="/home/adam/Code/claude-memory-mcp"
+PROJECT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 LOGFILE="$PROJECT_DIR/mcp-server.log"
 PIDFILE="$PROJECT_DIR/mcp-server.pid"
 
