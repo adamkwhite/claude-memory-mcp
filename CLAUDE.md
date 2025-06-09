@@ -44,9 +44,26 @@ Recent fixes applied to resolve SonarQube issues:
 **SonarQube Configuration:**
 - Instance: http://44.206.255.230:9000/
 - Project Key: Claude-MCP
-- Exclusions: `**/*test*/**,**/__pycache__/**,htmlcov/**,archive/**,scripts/**`
+- Exclusions: `tests/**,**/*test*.py,**/test_*.py,**/*benchmark*.py,**/*performance*.py,scripts/**,**/__pycache__/**,htmlcov/**,archive/**,examples/**,docs/generated/**,benchmark_results/**`
 
-Current test coverage: **91.46%**
+Current test coverage: **94%+**
+
+**SonarQube Exclusion Workflow:**
+When creating new files, automatically check if they need SonarQube coverage analysis:
+
+**Files that DON'T need coverage (auto-exclude):**
+- Tests: `tests/*`, `test_*.py`, `*_test.py`, `*benchmark*.py`, `*performance*.py`
+- Scripts: `scripts/*`, `*.sh`, utility files  
+- Generated: `docs/generated/*`, `benchmark_results/*`
+- Examples: `examples/*`
+- Build artifacts: `build/*`, `dist/*`, `__pycache__/*`
+
+**Process:**
+1. Before creating files, identify if they need coverage analysis
+2. If not, immediately update sonar-project.properties exclusions
+3. Use descriptive naming that fits existing exclusion patterns
+4. Commit exclusion updates with main file changes
+5. This prevents coverage drops and eliminates reactive fixes
 
 ### Environment Setup
 
