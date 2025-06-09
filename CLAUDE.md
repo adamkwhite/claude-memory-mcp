@@ -97,6 +97,13 @@ pip install pytest pytest-cov pytest-asyncio
 - CI: GitHub Actions runs all tests and reports to SonarCloud
 - Target: 90%+ coverage maintained through layered testing approach
 
+**PR Quality Gate Enforcement:**
+- All PRs trigger GitHub Actions workflow with SonarQube analysis
+- PRs are blocked if tests fail or SonarQube quality gate fails
+- Quality gate enforces: Coverage on New Code ≥ 90%
+- Failed quality gates prevent PR merging (requires branch protection rules)
+- This ensures all new code meets quality standards before merge
+
 ## Git Workflow
 
 **Important:** This repository has automated SonarQube badge updates that require special git workflow:
