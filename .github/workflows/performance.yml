@@ -9,6 +9,10 @@ on:
     # Run weekly on Sundays at 6 AM UTC
     - cron: '0 6 * * 0'
 
+permissions:
+  contents: read
+  pull-requests: write
+
 jobs:
   performance-tests:
     runs-on: ubuntu-latest
