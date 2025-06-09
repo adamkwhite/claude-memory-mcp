@@ -33,6 +33,10 @@ This file maintains persistent todos across Claude Code sessions.
 
 ## Low Priority - Enhancements
 
+- [x] **Fix GitHub Actions coverage reporting**
+  - Updated CI to run all tests instead of just test_100_percent_coverage.py
+  - SonarCloud coverage should now match local 93.96% instead of 70.9%
+  - Verified that test_100_percent_coverage.py serves unique purpose for edge cases
 - [ ] **Monitor SonarQube quality gate status after latest fixes**
   - Verify all quality gates are now passing
   - Confirm coverage metrics are accurate with archive/scripts exclusions
@@ -56,6 +60,10 @@ This file maintains persistent todos across Claude Code sessions.
 - [ ] Add caching strategy for file I/O operations to improve performance
 - [ ] Migrate from JSON files to SQLite database for better performance and indexing
 - [ ] Clean up project structure - consolidate duplicate scripts and remove archive files
+- [ ] **Consider refactoring test_100_percent_coverage.py** (future improvement)
+  - File is essential and should be kept for edge case testing
+  - Could potentially split into focused modules: test_error_handling.py, test_edge_cases.py, test_mcp_tools.py
+  - Current organization is functional and serves its purpose well
 
 ## Completed Todos
 
@@ -79,7 +87,16 @@ This file maintains persistent todos across Claude Code sessions.
   - Fixed date/timezone issues in weekly summary tests
   - Fixed week calculation to use Monday midnight as start
   - Fixed variable scope issue in test_server.py
-  - All 83 tests now passing (excluding standalone)
+  - All 92 tests now passing (excluding standalone)
+
+- [x] **Implemented comprehensive performance benchmarking system (6/9/2025):**
+  - Created realistic test data generator (159 conversations, 7.8MB)
+  - Built performance test suite measuring search, write, and summary operations
+  - Generated detailed performance reports with analysis and recommendations
+  - Added GitHub Actions CI integration for automated performance monitoring
+  - **Validated README claims**: Search performs 100x faster than claimed (0.05s vs <5s)
+  - Updated README with actual measured performance metrics
+  - Created HTML-formatted results viewer for better data visualization
 
 ---
-*Last updated: 2025-06-08*
+*Last updated: 2025-06-09*
