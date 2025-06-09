@@ -1,0 +1,227 @@
+"""Test input validation for security and data integrity"""
+
+import pytest
+from datetime import datetime, timezone
+
+from src.validators import (
+    validate_title,
+    validate_content,
+    validate_date,
+    validate_search_query,
+    validate_limit
+)
+from src.exceptions import (
+    TitleValidationError,
+    ContentValidationError,
+    DateValidationError,
+    QueryValidationError,
+    ValidationError
+)
+
+
+class TestTitleValidation:
+    """Test title validation for security and correctness"""
+    
+    def test_valid_titles(self):
+        """Test normal valid titles pass validation"""
+        assert validate_title("My Conversation") == "My Conversation"
+        assert validate_title("Test-123") == "Test-123"
+        assert validate_title("AI & Machine Learning") == "AI & Machine Learning"
+        
+    def test_empty_title_returns_default(self):
+        """Test empty/None titles return default"""
+        assert validate_title(None) == "Untitled Conversation"
+        assert validate_title("") == "Untitled Conversation"
+        assert validate_title("   ") == "Untitled Conversation"
+        
+    def test_title_length_limit(self):
+        """Test title length validation"""
+        # Max length title should pass
+        long_title = "A" * 200
+        assert validate_title(long_title) == long_title
+        
+        # Over max length should fail
+        too_long = "A" * 201
+        with pytest.raises(TitleValidationError, match="Title too long"):
+            validate_title(too_long)
+            
+    def test_path_traversal_prevention(self):
+        """Test path traversal attempts are blocked"""
+        with pytest.raises(TitleValidationError, match="invalid path characters"):
+            validate_title("../../etc/passwd")
+        with pytest.raises(TitleValidationError, match="invalid path characters"):
+            validate_title("..\\windows\\system32")
+            
+    def test_null_byte_prevention(self):
+        """Test null bytes are blocked"""
+        with pytest.raises(TitleValidationError, match="null bytes"):
+            validate_title("test\x00malicious")
+            
+    def test_dangerous_characters_removed(self):
+        """Test dangerous file characters are sanitized"""
+        assert validate_title('test<script>alert("xss")</script>') == "testscriptalert(xss)/script"
+        assert validate_title('file:name|test') == "filenametest"
+        assert validate_title('test*file?name') == "testfilename"
+        
+    def test_control_characters_removed(self):
+        """Test control characters are removed except safe ones"""
+        # Tab and newline should be preserved
+        assert validate_title("test\ttab") == "test\ttab"
+        assert validate_title("test\nnewline") == "test\nnewline"
+        
+        # Other control chars should be removed
+        assert validate_title("test\x01\x02\x03") == "test"
+        assert validate_title("test\x7F") == "test"
+
+
+class TestContentValidation:
+    """Test content validation"""
+    
+    def test_valid_content(self):
+        """Test normal content passes validation"""
+        content = "This is a normal conversation about AI and programming."
+        assert validate_content(content) == content
+        
+    def test_empty_content_fails(self):
+        """Test empty content is rejected"""
+        with pytest.raises(ContentValidationError, match="Content cannot be empty"):
+            validate_content("")
+        with pytest.raises(ContentValidationError, match="Content cannot be empty"):
+            validate_content(None)
+            
+    def test_content_length_limits(self):
+        """Test content length validation"""
+        # Empty content
+        with pytest.raises(ContentValidationError, match="Content cannot be empty"):
+            validate_content("")
+            
+        # Maximum length
+        huge_content = "A" * 1_000_001
+        with pytest.raises(ContentValidationError, match="Content too long"):
+            validate_content(huge_content)
+            
+        # Just under max should pass
+        ok_content = "A" * 1_000_000
+        assert validate_content(ok_content) == ok_content
+        
+    def test_null_bytes_removed_from_content(self):
+        """Test null bytes are removed from content"""
+        content = "Normal text\x00with null byte"
+        assert validate_content(content) == "Normal textwith null byte"
+        
+    def test_formatting_preserved(self):
+        """Test that formatting characters are preserved"""
+        content = "Line 1\nLine 2\tTabbed\rCarriage return"
+        assert validate_content(content) == content
+
+
+class TestDateValidation:
+    """Test date validation"""
+    
+    def test_valid_iso_dates(self):
+        """Test valid ISO format dates"""
+        # With Z suffix
+        date = validate_date("2025-06-09T12:00:00Z")
+        assert date.year == 2025
+        assert date.month == 6
+        assert date.day == 9
+        
+        # With timezone offset
+        date = validate_date("2025-06-09T12:00:00+00:00")
+        assert date.year == 2025
+        
+        # Without timezone
+        date = validate_date("2025-06-09T12:00:00")
+        assert date.year == 2025
+        
+    def test_none_date_returns_none(self):
+        """Test None/empty date returns None"""
+        assert validate_date(None) is None
+        assert validate_date("") is None
+        
+    def test_invalid_date_format_fails(self):
+        """Test invalid date formats fail"""
+        with pytest.raises(DateValidationError, match="Invalid date format"):
+            validate_date("not-a-date")
+        with pytest.raises(DateValidationError, match="Invalid date format"):
+            validate_date("2025-13-01")  # Invalid month
+        with pytest.raises(DateValidationError, match="Invalid date format"):
+            validate_date("2025-06-32")  # Invalid day
+            
+    def test_unrealistic_dates_fail(self):
+        """Test dates too far in past/future fail"""
+        # 200 years in future
+        with pytest.raises(DateValidationError, match="Date is unrealistic"):
+            validate_date("2225-01-01T00:00:00Z")
+            
+        # 200 years in past
+        with pytest.raises(DateValidationError, match="Date is unrealistic"):
+            validate_date("1825-01-01T00:00:00Z")
+
+
+class TestQueryValidation:
+    """Test search query validation"""
+    
+    def test_valid_queries(self):
+        """Test normal queries pass validation"""
+        assert validate_search_query("python programming") == "python programming"
+        assert validate_search_query("AI") == "AI"
+        assert validate_search_query("test 123") == "test 123"
+        
+    def test_empty_query_fails(self):
+        """Test empty queries fail"""
+        with pytest.raises(QueryValidationError, match="Query cannot be empty"):
+            validate_search_query("")
+        with pytest.raises(QueryValidationError, match="Query cannot be empty"):
+            validate_search_query("   ")
+            
+    def test_query_length_limit(self):
+        """Test query length validation"""
+        # Max length should pass
+        long_query = "A" * 500
+        assert validate_search_query(long_query) == long_query
+        
+        # Over max should fail
+        too_long = "A" * 501
+        with pytest.raises(QueryValidationError, match="Query too long"):
+            validate_search_query(too_long)
+            
+    def test_dangerous_characters_removed(self):
+        """Test dangerous regex characters are sanitized"""
+        assert validate_search_query("test<script>") == "testscript"
+        assert validate_search_query("path\\test") == "pathtest"
+        assert validate_search_query("test>output") == "testoutput"
+        
+    def test_null_bytes_blocked(self):
+        """Test null bytes in queries"""
+        with pytest.raises(QueryValidationError, match="null bytes"):
+            validate_search_query("test\x00query")
+
+
+class TestLimitValidation:
+    """Test search limit validation"""
+    
+    def test_valid_limits(self):
+        """Test normal limits pass"""
+        assert validate_limit(10) == 10
+        assert validate_limit(50) == 50
+        assert validate_limit(100) == 100
+        
+    def test_limit_bounds(self):
+        """Test limit bounds enforcement"""
+        # Below minimum
+        assert validate_limit(0) == 1
+        assert validate_limit(-10) == 1
+        
+        # Above maximum
+        assert validate_limit(101) == 100
+        assert validate_limit(1000) == 100
+        
+    def test_non_integer_limit_fails(self):
+        """Test non-integer limits fail"""
+        with pytest.raises(ValidationError, match="Limit must be an integer"):
+            validate_limit("10")
+        with pytest.raises(ValidationError, match="Limit must be an integer"):
+            validate_limit(10.5)
+        with pytest.raises(ValidationError, match="Limit must be an integer"):
+            validate_limit(None)

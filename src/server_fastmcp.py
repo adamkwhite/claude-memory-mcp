@@ -13,6 +13,26 @@ import re
 from typing import Dict, List, Optional, Any, Union
 from mcp.server.fastmcp import FastMCP
 
+try:
+    from .validators import (
+        validate_title,
+        validate_content,
+        validate_date,
+        validate_search_query,
+        validate_limit
+    )
+    from .exceptions import ValidationError
+except ImportError:
+    # For direct imports during testing
+    from validators import (
+        validate_title,
+        validate_content,
+        validate_date,
+        validate_search_query,
+        validate_limit
+    )
+    from exceptions import ValidationError
+
 # Constants
 DEFAULT_PREVIEW_LENGTH = 500
 DEFAULT_CONTENT_PREVIEW = 200
@@ -122,6 +142,10 @@ class ConversationMemoryServer:
     async def search_conversations(self, query: str, limit: int = DEFAULT_SEARCH_LIMIT) -> List[Dict[str, Any]]:
         """Search conversations for relevant content"""
         try:
+            # Validate inputs
+            query = validate_search_query(query)
+            limit = validate_limit(limit)
+            
             with open(self.index_file, 'r') as f:
                 index_data = json.load(f)
             
@@ -150,6 +174,8 @@ class ConversationMemoryServer:
             results.sort(key=lambda x: x["score"], reverse=True)
             return results[:limit]
             
+        except ValidationError as e:
+            return [{"error": f"Validation error: {str(e)}"}]
         except Exception as e:
             return [{"error": f"Search failed: {str(e)}"}]
     
@@ -181,14 +207,17 @@ class ConversationMemoryServer:
     async def add_conversation(self, content: str, title: str = None, date: str = None) -> Dict[str, str]:
         """Add a new conversation to the memory system"""
         try:
-            # Parse date or use current date
-            if date:
-                conv_date = datetime.fromisoformat(date.replace('Z', UTC_OFFSET_REPLACEMENT))
-            else:
+            # Validate inputs
+            content = validate_content(content)
+            title = validate_title(title)
+            conv_date = validate_date(date)
+            
+            # Use current date if not provided
+            if not conv_date:
                 conv_date = datetime.now()
             
-            # Generate filename
-            title_slug = re.sub(r'[^\w\s-]', '', title or "conversation").strip()
+            # Generate filename from sanitized title
+            title_slug = re.sub(r'[^\w\s-]', '', title).strip()
             title_slug = re.sub(r'[-\s]+', '-', title_slug).lower()
             filename = f"{conv_date.strftime('%Y-%m-%d')}_{title_slug}.md"
             
@@ -201,7 +230,7 @@ class ConversationMemoryServer:
             
             # Create conversation file
             with open(file_path, 'w', encoding='utf-8') as f:
-                f.write(f"# {title or 'Claude Conversation'}\n\n")
+                f.write(f"# {title}\n\n")
                 f.write(f"**Date:** {conv_date.strftime('%Y-%m-%d %H:%M:%S')}\n")
                 f.write(f"**Topics:** {', '.join(topics)}\n\n")
                 f.write("---\n\n")
@@ -217,6 +246,11 @@ class ConversationMemoryServer:
                 "message": f"Conversation saved successfully to {filename}"
             }
             
+        except ValidationError as e:
+            return {
+                "status": "error",
+                "message": f"Validation error: {str(e)}"
+            }
         except Exception as e:
             return {
                 "status": "error",
