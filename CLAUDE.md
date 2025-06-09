@@ -46,7 +46,7 @@ Recent fixes applied to resolve SonarQube issues:
 - Project Key: Claude-MCP
 - Exclusions: `tests/**,**/*test*.py,**/test_*.py,**/*benchmark*.py,**/*performance*.py,scripts/**,**/__pycache__/**,htmlcov/**,archive/**,examples/**,docs/generated/**,benchmark_results/**`
 
-Current test coverage: **94%+**
+Current test coverage: **94%+** | Duplications: **7%**
 
 **SonarQube Exclusion Workflow:**
 When creating new files, automatically check if they need SonarQube coverage analysis:
@@ -62,8 +62,15 @@ When creating new files, automatically check if they need SonarQube coverage ana
 1. Before creating files, identify if they need coverage analysis
 2. If not, immediately update sonar-project.properties exclusions
 3. Use descriptive naming that fits existing exclusion patterns
-4. Commit exclusion updates with main file changes
-5. This prevents coverage drops and eliminates reactive fixes
+4. **Update ALL GitHub workflow actions** that run tests to exclude non-coverage files
+5. Commit exclusion updates with main file changes
+6. This prevents coverage drops and eliminates reactive fixes
+
+**GitHub Workflow Update Requirements:**
+When adding exclusions, also update these workflow files:
+- `.github/workflows/build.yml` - Main coverage workflow (exclude from `--ignore` in pytest)
+- `.github/workflows/performance.yml` - Performance testing (runs separately)
+- Any other workflows running pytest with coverage
 
 ### Environment Setup
 
