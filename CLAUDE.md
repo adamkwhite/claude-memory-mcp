@@ -110,14 +110,14 @@ pip install pytest pytest-cov pytest-asyncio
 
 ### **Standard Development Workflow (REQUIRED):**
 ```bash
-# 1. Create feature branch
+# 1. Create feature branch (ALWAYS REQUIRED - even for documentation changes)
 git checkout -b feature/your-feature-name
 
 # 2. Make changes and commit
 git add <files>
 git commit -m "descriptive message"
 
-# 3. Push branch to GitHub
+# 3. Push branch to GitHub (NEVER push directly to main)
 git push origin feature/your-feature-name
 
 # 4. Open Pull Request on GitHub
@@ -131,11 +131,12 @@ git push origin feature/your-feature-name
 # - PR conversations must be resolved ✅
 ```
 
-### **Direct Push Protection:**
-- ❌ **Direct pushes to main are BLOCKED**
+### **CRITICAL: No Direct Pushes to Main**
+- ❌ **ALL direct pushes to main are BLOCKED** - even for simple documentation updates
 - ❌ **Force pushes are BLOCKED** 
 - ❌ **Quality gate failures block merges**
-- ✅ **All changes must go through PR process**
+- ✅ **EVERY change must go through feature branch + PR process**
+- ⚠️ **This applies to todos.md, README.md, and ALL files without exception**
 
 ### **Quality Gate Requirements:**
 - All tests must pass
@@ -155,3 +156,17 @@ git push origin feature/your-feature-name
 ## Project Management
 
 **Task Tracking:** All todos and project tasks are maintained in `todos.md` for persistence across Claude Code sessions. This includes pending improvements, completed work, and priority classifications.
+
+**Implementation Plans:** Major features use Cornell numbering system for systematic implementation:
+- **Format**: `1.1.1`, `2.3.2`, etc. for hierarchical task organization
+- **Structure**: 9 major sections, each with 2-4 subsections, each with 3-5 specific tasks
+- **Purpose**: Enables intermediate developers to implement complex features step-by-step
+- **Examples**: Encryption (69 tasks), Path Portability (46 tasks), SonarQube Workflow (46 tasks), Project Cleanup (57 tasks)
+- **Benefits**: Clear progress tracking, logical task dependencies, comprehensive coverage
+
+**Plan Creation Guidelines:**
+- Use Cornell numbering for all multi-step implementation plans
+- Break complex features into 9 logical sections
+- Provide 40-70 specific, actionable subtasks
+- Include testing, documentation, and validation requirements
+- Maintain quality standards throughout implementation
