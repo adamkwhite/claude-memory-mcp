@@ -1,9 +1,4 @@
 #!/usr/bin/env python3
-
-# Add src directory to path
-import sys
-import os
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "src"))
 """
 Direct tests for ConversationMemoryServer to achieve 50% coverage
 without requiring FastMCP imports
@@ -38,8 +33,9 @@ class MockFastMCP:
 sys.modules['mcp.server.fastmcp'] = type(sys)('mcp.server.fastmcp')
 sys.modules['mcp.server.fastmcp'].FastMCP = MockFastMCP
 
-# Add the server path for imports
-sys.path.append('/home/adam/Code/claude-memory-mcp')
+# Add the project root to path using dynamic resolution
+project_root = Path(__file__).parent.parent
+sys.path.insert(0, str(project_root))
 
 # Now import with mocked dependencies
 from server_fastmcp import ConversationMemoryServer

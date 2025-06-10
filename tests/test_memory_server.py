@@ -1,9 +1,5 @@
 #!/usr/bin/env python3
 
-# Add src directory to path
-import sys
-import os
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "src"))
 """
 Pytest-compatible tests for Claude Memory MCP Server
 """
@@ -13,21 +9,22 @@ import asyncio
 import json
 import tempfile
 import shutil
+import sys
+import os
 from pathlib import Path
 from datetime import datetime
-import sys
 
-# Add the server path for imports
-sys.path.append('/home/adam/Code/claude-memory-mcp')
+# Add project root and src directory to path using dynamic resolution
+project_root = Path(__file__).parent.parent
+sys.path.insert(0, str(project_root))
+sys.path.insert(0, str(project_root / 'src'))
+sys.path.insert(0, str(project_root / 'tests'))
 
 try:
     from server_fastmcp import ConversationMemoryServer
     FASTMCP_AVAILABLE = True
 except ImportError:
     FASTMCP_AVAILABLE = False
-
-# Import the standalone server for testing core functionality
-sys.path.append('/home/adam/Code/claude-memory-mcp/tests')
 from standalone_test import ConversationMemoryServer as StandaloneServer
 
 

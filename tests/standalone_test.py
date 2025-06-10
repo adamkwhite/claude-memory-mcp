@@ -237,8 +237,8 @@ async def test_conversation_memory():
     """Test the conversation memory system"""
     print("🧪 Testing Claude Conversation Memory System...")
     
-    # Initialize server with test directory
-    test_path = "/home/adam/claude-memory-test"
+    # Initialize server with test directory in user's home
+    test_path = str(Path.home() / "claude-memory-test")
     server = ConversationMemoryServer(test_path)
     
     print(f"📁 Using test directory: {test_path}")

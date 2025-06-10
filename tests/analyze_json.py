@@ -76,7 +76,9 @@ def analyze_json_structure(file_path):
         print(f"❌ Error analyzing file: {e}")
 
 def main():
-    data_dir = Path("/home/adam/Code/claude-memory-mcp/data")
+    # Use dynamic path resolution to find project data directory
+    project_root = Path(__file__).parent.parent
+    data_dir = project_root / "data"
     
     # Check what files exist
     print("📂 Files in data directory:")

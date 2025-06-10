@@ -33,12 +33,10 @@ class MockFastMCP:
 sys.modules['mcp.server.fastmcp'] = type(sys)('mcp.server.fastmcp')
 sys.modules['mcp.server.fastmcp'].FastMCP = MockFastMCP
 
-# Add the server path for imports
-sys.path.append('/home/adam/Code/claude-memory-mcp')
-
-# Now import with mocked dependencies
-# Add src directory to path
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'src'))
+# Add the project root and src directory to path using dynamic resolution
+project_root = Path(__file__).parent.parent
+sys.path.insert(0, str(project_root))
+sys.path.insert(0, str(project_root / 'src'))
 from conversation_memory import ConversationMemoryServer
 
 
