@@ -448,185 +448,105 @@ This file maintains persistent todos across Claude Code sessions.
   - Focus on testing edge cases and error handling paths
 - [ ] **Achieve 100% test coverage**
 
-  ### 1. Coverage Analysis and Gap Identification
+  ### 1. Pre-Implementation and Foundation (CRITICAL PREREQUISITE)
 
-  **1.1** Current Coverage Assessment
-  - 1.1.1 Run comprehensive coverage analysis with detailed line-by-line reporting
-  - 1.1.2 Generate HTML coverage reports for visual gap identification
-  - 1.1.3 Document exact missing lines in conversation_memory.py (2 lines: 353-354)
-  - 1.1.4 Document exact missing lines in server_fastmcp.py (26 lines: 25-26, 96-98, 109-110, 115-116, 126-129, 212-215, 272-274, 493-494, 507-510)
+  **1.1** Path Portability Resolution (Must Complete First)
+  - 1.1.1 Fix hardcoded paths in test_100_percent_coverage.py (line 37: sys.path.append)
+  - 1.1.2 Fix hardcoded paths in test_memory_server.py (line 21: sys.path.append)  
+  - 1.1.3 Implement dynamic path resolution using Path(__file__).parent.parent
+  - 1.1.4 Verify all tests pass after path portability fixes
 
-  **1.2** Gap Categorization Analysis
-  - 1.2.1 Categorize missing coverage by code type (error handling, edge cases, validation)
-  - 1.2.2 Identify security-critical paths requiring coverage
-  - 1.2.3 Assess complexity and risk level of uncovered code paths
-  - 1.2.4 Prioritize coverage gaps by impact and difficulty
+  **1.2** Current Coverage Assessment
+  - 1.2.1 Run comprehensive coverage analysis with detailed line-by-line reporting
+  - 1.2.2 Generate HTML coverage reports for visual gap identification
+  - 1.2.3 Document exact missing lines in conversation_memory.py (2 lines: 353-354)
+  - 1.2.4 Document exact missing lines in server_fastmcp.py (26 lines: ImportError blocks, exception handling)
 
-  **1.3** Test Strategy Planning
-  - 1.3.1 Map each missing line to required test scenario
-  - 1.3.2 Identify dependencies between uncovered code paths
-  - 1.3.3 Plan test data requirements for each coverage gap
-  - 1.3.4 Design test isolation strategies for complex scenarios
+  **1.3** Phased Implementation Strategy
+  - 1.3.1 Phase 1: Exception handling quick wins (Target: 97-98% coverage, 2-4 hours)
+  - 1.3.2 Phase 2: Edge cases and validation (Target: 98-99% coverage, 4-6 hours)
+  - 1.3.3 Phase 3: Integration testing (Target: 100% coverage, 8-12 hours)
+  - 1.3.4 Map each missing line to specific test scenario and phase
 
-  ### 2. Security Validation Error Testing
+  ### 2. Phase 1: Exception Handling Quick Wins (2-4 hours target)
 
-  **2.1** Path Traversal Attack Testing
-  - 2.1.1 Test conversation titles with "../" path traversal attempts
-  - 2.1.2 Test content with null byte injection attempts
-  - 2.1.3 Verify home directory validation prevents unauthorized access
-  - 2.1.4 Test edge cases with mixed path separators and encodings
+  **2.1** ImportError Exception Handling (server_fastmcp.py lines 25-26, 35-50)
+  - 2.1.1 Test relative import failures in server_fastmcp.py
+  - 2.1.2 Test fallback to absolute imports when relative imports fail
+  - 2.1.3 Mock import failures to trigger except ImportError blocks
+  - 2.1.4 Verify server functionality with both import paths
 
-  **2.2** Input Validation Error Paths
-  - 2.2.1 Test oversized content validation (>1MB limit)
-  - 2.2.2 Test invalid date format handling
-  - 2.2.3 Test malformed search query rejection
+  **2.2** Input Validation Error Paths (Leverage existing test_input_validation.py)
+  - 2.2.1 Test oversized content validation (>1MB limit) - extend existing tests
+  - 2.2.2 Test invalid date format handling - build on existing validators
+  - 2.2.3 Test malformed search query rejection - use existing patterns
   - 2.2.4 Test boundary conditions for all validation limits
 
-  **2.3** Authentication and Authorization Edge Cases
-  - 2.3.1 Test file permission denial scenarios
-  - 2.3.2 Test directory access restriction enforcement
-  - 2.3.3 Test security logging for failed validation attempts
-  - 2.3.4 Verify error messages don't leak sensitive information
+  **2.3** JSON Processing Exception Handling
+  - 2.3.1 Test malformed JSON index file handling (conversation_memory.py lines 353-354)
+  - 2.3.2 Test JSON decoding errors with corrupted conversation files
+  - 2.3.3 Test incomplete JSON writes during system interruption
+  - 2.3.4 Test OSError, ValueError, KeyError, TypeError exception paths
 
-  ### 3. Search Edge Cases and Error Conditions
+  ### 3. Phase 2: Edge Cases and Validation (4-6 hours target)
 
-  **3.1** Empty and Malformed Data Handling
-  - 3.1.1 Test search with completely empty conversation index
-  - 3.1.2 Test search with corrupted JSON index files
-  - 3.1.3 Test search with missing conversation files referenced in index
-  - 3.1.4 Test search behavior with zero-length conversation files
+  **3.1** Server Initialization Exception Handling  
+  - 3.1.1 Test server initialization failures (server_fastmcp.py lines 96-98)
+  - 3.1.2 Test index file creation exceptions (lines 109-110)
+  - 3.1.3 Test topics file creation exceptions (lines 115-116)
+  - 3.1.4 Test memory server initialization failures (lines 126-129)
 
-  **3.2** Search Query Edge Cases
-  - 3.2.1 Test extremely long search queries (>1000 characters)
-  - 3.2.2 Test search queries with special regex characters
-  - 3.2.3 Test unicode and emoji handling in search terms
-  - 3.2.4 Test search with malformed or binary data inputs
+  **3.2** Search and Validation Exception Paths
+  - 3.2.1 Test search validation failures (server_fastmcp.py lines 212-215)
+  - 3.2.2 Test conversation validation failures (lines 272-274)
+  - 3.2.3 Test weekly summary exceptions (lines 493-494, 507-510)
+  - 3.2.4 Test validators.py edge case (line 104)
 
-  **3.3** Search Performance and Limits
-  - 3.3.1 Test search with maximum limit values
-  - 3.3.2 Test search performance with large conversation datasets
-  - 3.3.3 Test search timeout and resource exhaustion scenarios
-  - 3.3.4 Test concurrent search request handling
+  **3.3** Search Edge Cases (Build on existing test infrastructure)
+  - 3.3.1 Test search with completely empty conversation index
+  - 3.3.2 Test search with corrupted JSON index files
+  - 3.3.3 Test search with missing conversation files referenced in index
+  - 3.3.4 Test extremely long search queries and special characters
 
-  ### 4. File I/O and Exception Handling
+  ### 4. Phase 3: Integration and Advanced Testing (8-12 hours target)
 
-  **4.1** File System Error Conditions
-  - 4.1.1 Test conversation storage with disk full scenarios
-  - 4.1.2 Test file corruption during read/write operations
-  - 4.1.3 Test permission denied errors for conversation files
-  - 4.1.4 Test network filesystem interruptions and timeouts
+  **4.1** MCP Tool Integration Testing (Leverage existing test_fastmcp_coverage.py)
+  - 4.1.1 Test MCP tool parameter validation edge cases
+  - 4.1.2 Test async operation error handling and cancellation
+  - 4.1.3 Test tool boundary serialization and error transmission
+  - 4.1.4 Test concurrent tool execution scenarios
 
-  **4.2** JSON Processing Error Handling
-  - 4.2.1 Test malformed JSON conversation file handling
-  - 4.2.2 Test incomplete JSON writes during system interruption
-  - 4.2.3 Test JSON encoding/decoding errors with special characters
-  - 4.2.4 Test extremely large JSON file processing limits
+  **4.2** Advanced File I/O and Resource Testing
+  - 4.2.1 Test file permission denial and disk full scenarios
+  - 4.2.2 Test large conversation content handling and memory limits
+  - 4.2.3 Test network filesystem interruptions and recovery
+  - 4.2.4 Test resource cleanup after processing failures
 
-  **4.3** Memory and Resource Constraints
-  - 4.3.1 Test behavior with limited available memory
-  - 4.3.2 Test handling of extremely large conversation content
-  - 4.3.3 Test resource cleanup after processing failures
-  - 4.3.4 Test graceful degradation under resource pressure
+  **4.3** Data Integrity and Consistency
+  - 4.3.1 Test index corruption detection and recovery mechanisms
+  - 4.3.2 Test topic extraction edge cases and consistency
+  - 4.3.3 Test timezone handling and date parsing variations
+  - 4.3.4 Test conversation file and index synchronization
 
-  ### 5. Server and MCP Integration Testing
+  ### 5. Validation and Maintenance
 
-  **5.1** FastMCP Server Edge Cases
-  - 5.1.1 Test server startup with invalid configuration
-  - 5.1.2 Test tool invocation with malformed parameters
-  - 5.1.3 Test server shutdown during active operations
-  - 5.1.4 Test concurrent tool execution scenarios
+  **5.1** Coverage Verification and Regression Testing
+  - 5.1.1 Run coverage analysis after each phase completion
+  - 5.1.2 Verify 100% coverage achievement across all modules
+  - 5.1.3 Ensure all existing 155 tests continue passing
+  - 5.1.4 Validate test execution time remains under 30 seconds
 
-  **5.2** Async Operation Error Handling
-  - 5.2.1 Test async conversation processing with cancellation
-  - 5.2.2 Test timeout handling for long-running operations
-  - 5.2.3 Test error propagation through async call chains
-  - 5.2.4 Test resource cleanup after async operation failures
+  **5.2** Test Quality Assurance
+  - 5.2.1 Review test code for clarity and maintainability
+  - 5.2.2 Ensure tests run reliably in CI/CD environment
+  - 5.2.3 Validate test isolation and independence
+  - 5.2.4 Check for test flakiness and intermittent failures
 
-  **5.3** Tool Interface Boundary Testing
-  - 5.3.1 Test parameter validation at tool boundaries
-  - 5.3.2 Test return value serialization edge cases
-  - 5.3.3 Test error message formatting and transmission
-  - 5.3.4 Test tool discovery and registration error paths
-
-  ### 6. Data Integrity and Consistency Testing
-
-  **6.1** Index Consistency Validation
-  - 6.1.1 Test index corruption detection and recovery
-  - 6.1.2 Test conversation file and index synchronization
-  - 6.1.3 Test partial update failure recovery mechanisms
-  - 6.1.4 Test index rebuilding from conversation files
-
-  **6.2** Topic Extraction and Management
-  - 6.2.1 Test topic extraction with edge case content
-  - 6.2.2 Test topic index consistency after updates
-  - 6.2.3 Test topic merging and deduplication logic
-  - 6.2.4 Test topic persistence across system restarts
-
-  **6.3** Date and Time Handling Edge Cases
-  - 6.3.1 Test timezone handling across different system configurations
-  - 6.3.2 Test date parsing with various input formats
-  - 6.3.3 Test timestamp consistency during daylight saving transitions
-  - 6.3.4 Test historical date validation and normalization
-
-  ### 7. Test Implementation and Infrastructure
-
-  **7.1** Test Case Development
-  - 7.1.1 Write focused unit tests for each identified coverage gap
-  - 7.1.2 Implement parameterized tests for edge case variations
-  - 7.1.3 Create mock objects for external dependency isolation
-  - 7.1.4 Develop test data generators for complex scenarios
-
-  **7.2** Test Execution and Automation
-  - 7.2.1 Integrate new tests into existing test suite structure
-  - 7.2.2 Ensure tests run reliably in CI/CD environment
-  - 7.2.3 Configure test timeouts and resource limits appropriately
-  - 7.2.4 Add test markers for different test categories
-
-  **7.3** Test Quality and Maintenance
-  - 7.3.1 Review test code for clarity and maintainability
-  - 7.3.2 Document test purpose and expected behaviors
-  - 7.3.3 Establish test data cleanup procedures
-  - 7.3.4 Create guidelines for future test additions
-
-  ### 8. Validation and Quality Assurance
-
-  **8.1** Coverage Verification
-  - 8.1.1 Run coverage analysis after each test addition
-  - 8.1.2 Verify 100% coverage achievement across all modules
-  - 8.1.3 Validate coverage reports exclude appropriate files
-  - 8.1.4 Confirm coverage metrics in CI/CD pipeline
-
-  **8.2** Test Suite Quality Assessment
-  - 8.2.1 Ensure all tests pass consistently
-  - 8.2.2 Verify test execution time remains reasonable
-  - 8.2.3 Check for test flakiness and intermittent failures
-  - 8.2.4 Validate test isolation and independence
-
-  **8.3** Regression Testing
-  - 8.3.1 Run complete test suite to ensure no regressions
-  - 8.3.2 Test all MCP tools with new coverage scenarios
-  - 8.3.3 Verify existing functionality remains intact
-  - 8.3.4 Validate performance impact of additional tests
-
-  ### 9. Documentation and Long-term Maintenance
-
-  **9.1** Test Documentation
-  - 9.1.1 Document new test cases and their coverage targets
-  - 9.1.2 Update testing guide with 100% coverage procedures
-  - 9.1.3 Create troubleshooting guide for coverage issues
-  - 9.1.4 Document test data requirements and setup procedures
-
-  **9.2** Coverage Monitoring Setup
-  - 9.2.1 Configure automated coverage monitoring in CI/CD
-  - 9.2.2 Set up alerts for coverage regression detection
-  - 9.2.3 Establish coverage maintenance procedures for new code
-  - 9.2.4 Document coverage reporting and analysis workflows
-
-  **9.3** Future Test Strategy
-  - 9.3.1 Create guidelines for maintaining 100% coverage
-  - 9.3.2 Establish test review procedures for new features
-  - 9.3.3 Plan for test suite scalability as project grows
-  - 9.3.4 Document testing best practices and standards
+  **5.3** Documentation and Monitoring
+  - 5.3.1 Document new test cases and their coverage targets
+  - 5.3.2 Update testing guide with 100% coverage procedures
+  - 5.3.3 Configure automated coverage monitoring in CI/CD
+  - 5.3.4 Establish coverage maintenance procedures for future code
 - [ ] **Implement conversation data encryption for security**
 
   ### 1. Overview and Preparation
