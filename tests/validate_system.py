@@ -12,8 +12,9 @@ import sys
 import asyncio
 from pathlib import Path
 
-# Add the MCP server path
-sys.path.append('/home/adam/Code/claude-memory-mcp')
+# Add the project root to path using dynamic resolution
+project_root = Path(__file__).parent.parent
+sys.path.insert(0, str(project_root))
 from server_fastmcp import ConversationMemoryServer
 
 async def validate_memory_system():
@@ -165,8 +166,8 @@ async def show_system_stats():
 async def main():
     """Main validation routine"""
     
-    # Check if the memory system components exist
-    memory_dir = Path('/home/adam/Code/claude-memory-mcp')
+    # Check if the memory system components exist using dynamic path resolution
+    memory_dir = Path(__file__).parent.parent
     
     required_files = [
         'server_fastmcp.py',
