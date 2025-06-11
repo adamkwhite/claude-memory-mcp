@@ -154,15 +154,15 @@ git push origin feature/your-feature-name
 
 **Note:** Even repository owners cannot bypass these rules - this ensures enterprise-grade quality standards.
 
-**Why this is needed:**
-- GitHub Actions automatically updates `.badges/*.svg` files after each push
-- SonarQube analysis runs and commits updated metrics badges
-- Without pulling first, pushes will be rejected with "fetch first" errors
-- This is normal behavior and indicates SonarQube improvements are working
+**GitHub Actions Workflow Notes:**
+- ✅ **Fixed**: SonarQube Badge action no longer runs during PR builds (PR #31)
+- **Two build phases**: PR testing (cannot push) + post-merge execution (can push badges)
+- **Badge updates**: Only occur after successful merge to main branch
+- **PR builds**: Test code without attempting repository modifications
 
 ## 100% Test Coverage Initiative
 
-**Current Status: 98.68% coverage (11 lines remaining)**
+**Current Status: 98.68% coverage (SUFFICIENT - no longer pursuing 100%)**
 
 ### Coverage Breakdown by Module
 - `conversation_memory.py`: **100%** ✅ (237 lines, 0 missing)
