@@ -11,6 +11,7 @@ from datetime import datetime, timedelta
 from pathlib import Path
 import re
 from typing import Dict, List, Optional, Any
+import logging
 
 
 class ConversationMemoryServer:
@@ -20,6 +21,9 @@ class ConversationMemoryServer:
         self.summaries_path = self.storage_path / "summaries"
         self.index_file = self.conversations_path / "index.json"
         self.topics_file = self.conversations_path / "topics.json"
+        
+        # Initialize logger
+        self.logger = logging.getLogger(__name__)
         
         # Ensure directories exist
         self.conversations_path.mkdir(parents=True, exist_ok=True)
@@ -289,7 +293,7 @@ class ConversationMemoryServer:
                 json.dump(index_data, f, indent=2)
                 
         except (OSError, ValueError, KeyError, TypeError) as e:
-            print(f"Error updating index: {e}")
+            self.logger.error(f"Error updating index: {e}")
     
     def _update_topics_index(self, topics: List[str], conversation_id: str):
         """Update the topics index with new conversation topics"""
@@ -318,7 +322,7 @@ class ConversationMemoryServer:
                 json.dump(topics_data, f, indent=2)
                 
         except (OSError, ValueError, KeyError, TypeError) as e:
-            print(f"Error updating topics index: {e}")
+            self.logger.error(f"Error updating topics index: {e}")
     
     def generate_weekly_summary(self, week_offset: int = 0) -> str:
         """Generate a weekly summary of conversations"""
