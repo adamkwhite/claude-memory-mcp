@@ -191,6 +191,35 @@ git push origin feature/your-feature-name
 - `test_validator_edge_cases.py` - Input validation boundaries
 - `test_100_percent_coverage.py` - Comprehensive edge case testing
 
+## Recent Changes (June 11, 2025)
+
+### **MCP JSON Parsing Error Fix (PR #33) ✅ CRITICAL**
+- **Problem**: Claude Desktop MCP communication failing with "Unexpected non-whitespace character after JSON" error
+- **Root Cause**: Print statements and console logging writing to stdout, corrupting JSON-RPC protocol
+- **Solution**: 
+  - Replaced `print()` statements with `logger.error()` in conversation_memory.py
+  - Disabled console logging by default in MCP server mode
+  - Added `CLAUDE_MCP_CONSOLE_OUTPUT=true` environment variable for explicit control
+- **Impact**: Fixed MCP server communication, logs now go to `~/.claude-memory/logs/claude-mcp.log`
+- **Tests**: All 175 tests passing locally after fixing logger attribute and test expectations
+
+### **Current Status**
+- **Branch**: `research/mcp-platform-validation` 
+- **Test Coverage**: 98.68% (industry-leading)
+- **Code Quality**: 0 code smells, 0 security hotspots
+- **Production Ready**: MCP server now works correctly with Claude Desktop
+
+### **Next Steps (Medium Priority)**
+1. **Path Portability** - Remove hardcoded `/home/adam/` paths for universal deployment
+2. **Search Optimization** - Replace linear search with SQLite FTS indexing
+3. **Test Consolidation** - Reduce from 17 to ~12-13 focused test files
+4. **Universal Memory MCP** - Expand to support ChatGPT, Cursor, and other AI platforms
+
+### **Known Issues**
+- **Hardcoded Paths**: System-specific paths prevent universal deployment
+- **Search Performance**: Linear search doesn't scale beyond ~500 conversations
+- **Test File Count**: Some redundant test coverage across multiple files
+
 ## Project Management
 
 **Task Tracking:** All todos and project tasks are maintained in `todos.md` for persistence across Claude Code sessions. This includes pending improvements, completed work, and priority classifications.
@@ -208,3 +237,36 @@ git push origin feature/your-feature-name
 - Provide 40-70 specific, actionable subtasks
 - Include testing, documentation, and validation requirements
 - Maintain quality standards throughout implementation
+
+## MCP Server Deployment Notes
+
+### **Local Development**
+```bash
+# Install dependencies
+python3 -m venv claude-memory-mcp-venv
+source claude-memory-mcp-venv/bin/activate
+pip install -e .
+
+# Run server directly
+python3 src/server_fastmcp.py
+
+# Enable console logging for debugging
+CLAUDE_MCP_CONSOLE_OUTPUT=true python3 src/server_fastmcp.py
+```
+
+### **Claude Desktop Integration**
+Add to Claude Desktop MCP configuration:
+```json
+{
+  "mcpServers": {
+    "claude-memory": {
+      "command": "python",
+      "args": ["/absolute/path/to/claude-memory-mcp/src/server_fastmcp.py"],
+      "cwd": "/absolute/path/to/claude-memory-mcp"
+    }
+  }
+}
+```
+
+**Log Location**: `~/.claude-memory/logs/claude-mcp.log`  
+**Storage Location**: `~/claude-memory/conversations/`
