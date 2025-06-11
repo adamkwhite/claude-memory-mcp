@@ -311,6 +311,26 @@ class TestCoverageTarget:
         assert folder.exists()
 
     @pytest.mark.asyncio
+    async def test_invalid_json_handling(self, standalone_server, temp_storage):
+        """Test exception handling for invalid JSON in index file"""
+        # Create an invalid JSON file that will trigger ValueError during json.load()
+        index_file = Path(temp_storage) / "conversations" / "index.json"
+        index_file.parent.mkdir(parents=True, exist_ok=True)
+        
+        # Write invalid JSON that will cause json.load() to raise ValueError
+        with open(index_file, 'w') as f:
+            f.write('{"conversations": [invalid json content}')  # Invalid JSON syntax
+        
+        # This should trigger the exception handling when searching
+        results = await standalone_server.search_conversations("test")
+        
+        # Should handle gracefully and return error or empty results
+        assert isinstance(results, list)
+        if len(results) > 0:
+            # If it returns an error response, that's also acceptable
+            assert 'error' in results[0]
+
+    @pytest.mark.asyncio
     async def test_preview_generation(self, standalone_server, temp_storage):
         """Test conversation preview generation"""
         content = """

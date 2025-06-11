@@ -312,3 +312,82 @@ class TestLoggingIntegration:
                         os.unlink(f"{temp_file.name}{suffix}")
                     except FileNotFoundError:
                         pass
+
+
+class TestLoggingExceptionHandling:
+    """Test exception handling in logging functions for complete coverage"""
+    
+    def test_log_function_call_exception_handling(self):
+        """Test log_function_call exception handling (silent failure)"""
+        # Mock get_logger to raise an exception
+        with patch('src.logging_config.get_logger', side_effect=Exception("Logger error")):
+            # This should trigger the exception handling in log_function_call
+            # The function should fail silently and not crash
+            try:
+                log_function_call("test_function", param1="value1", param2="value2")
+                # Should not raise an exception due to silent failure
+            except Exception as e:
+                pytest.fail(f"log_function_call should fail silently, but raised: {e}")
+    
+    def test_log_performance_exception_handling(self):
+        """Test log_performance exception handling (silent failure)"""
+        # Mock get_logger to raise an exception
+        with patch('src.logging_config.get_logger', side_effect=Exception("Logger error")):
+            # This should trigger the exception handling in log_performance
+            try:
+                log_performance("test_function", 1.234, results=10)
+                # Should not raise an exception due to silent failure
+            except Exception as e:
+                pytest.fail(f"log_performance should fail silently, but raised: {e}")
+    
+    def test_log_security_event_exception_handling(self):
+        """Test log_security_event exception handling (silent failure)"""
+        # Mock get_logger to raise an exception
+        with patch('src.logging_config.get_logger', side_effect=Exception("Logger error")):
+            # This should trigger the exception handling in log_security_event
+            try:
+                log_security_event("TEST_EVENT", "Test message", "ERROR")
+                # Should not raise an exception due to silent failure
+            except Exception as e:
+                pytest.fail(f"log_security_event should fail silently, but raised: {e}")
+    
+    def test_security_event_path_redaction_failure(self):
+        """Test log_security_event path redaction failure handling"""
+        # Mock Path operations to raise ValueError during path redaction
+        with patch('pathlib.Path.is_absolute', side_effect=ValueError("Path operation failed")):
+            # This should trigger the ValueError/OSError handling
+            try:
+                log_security_event(
+                    "PATH_TEST", 
+                    "Testing path /sensitive/path/that/should/be/redacted", 
+                    "ERROR"
+                )
+                # Should not raise an exception - should use fallback path redaction
+            except Exception as e:
+                pytest.fail(f"log_security_event should handle path operation errors, but raised: {e}")
+    
+    def test_security_event_path_redaction_os_error(self):
+        """Test log_security_event path redaction OSError handling"""
+        # Mock Path operations to raise OSError during path redaction  
+        with patch('pathlib.Path.is_relative_to', side_effect=OSError("File system error")):
+            # This should trigger the OSError handling
+            try:
+                log_security_event(
+                    "PATH_ERROR_TEST",
+                    "Path error with /home/user/sensitive/file.txt", 
+                    "WARNING"
+                )
+                # Should not raise an exception - should use fallback
+            except Exception as e:
+                pytest.fail(f"log_security_event should handle OSError, but raised: {e}")
+    
+    def test_file_operation_path_redaction_failure(self):
+        """Test log_file_operation path redaction failure handling"""
+        # Mock Path operations to raise ValueError
+        with patch('pathlib.Path', side_effect=ValueError("Path error")):
+            # This should trigger the exception handling in path redaction
+            try:
+                log_file_operation("read", "/some/file/path.txt", True)
+                # Should not raise an exception
+            except Exception as e:
+                pytest.fail(f"log_file_operation should handle path errors, but raised: {e}")
