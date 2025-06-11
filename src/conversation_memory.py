@@ -11,6 +11,7 @@ from datetime import datetime, timedelta
 from pathlib import Path
 import re
 from typing import Dict, List, Optional, Any
+import logging
 
 
 class ConversationMemoryServer:
@@ -20,6 +21,9 @@ class ConversationMemoryServer:
         self.summaries_path = self.storage_path / "summaries"
         self.index_file = self.conversations_path / "index.json"
         self.topics_file = self.conversations_path / "topics.json"
+        
+        # Initialize logger
+        self.logger = logging.getLogger(__name__)
         
         # Ensure directories exist
         self.conversations_path.mkdir(parents=True, exist_ok=True)

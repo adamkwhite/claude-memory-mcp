@@ -239,7 +239,7 @@ class TestInitDefaultLogging:
         mock_setup.assert_called_once_with(
             log_level="INFO",
             log_file=None,
-            console_output=True
+            console_output=False
         )
     
     @patch.dict(os.environ, {'CLAUDE_MCP_LOG_LEVEL': 'DEBUG', 'CLAUDE_MCP_LOG_FILE': '/tmp/test.log'})
@@ -251,7 +251,7 @@ class TestInitDefaultLogging:
         mock_setup.assert_called_once_with(
             log_level="DEBUG",
             log_file="/tmp/test.log",
-            console_output=True
+            console_output=False
         )
     
     @patch.dict(os.environ, {'HOME': '/home/user'}, clear=True)
@@ -264,6 +264,18 @@ class TestInitDefaultLogging:
         mock_setup.assert_called_once_with(
             log_level="INFO",
             log_file=expected_log_file,
+            console_output=False
+        )
+    
+    @patch.dict(os.environ, {'CLAUDE_MCP_CONSOLE_OUTPUT': 'true'})
+    @patch('src.logging_config.setup_logging')
+    def test_init_default_logging_console_enabled(self, mock_setup):
+        """Test default logging with console output explicitly enabled"""
+        init_default_logging()
+        
+        mock_setup.assert_called_once_with(
+            log_level="INFO",
+            log_file=None,
             console_output=True
         )
 
