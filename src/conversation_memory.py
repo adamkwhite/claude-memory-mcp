@@ -289,7 +289,7 @@ class ConversationMemoryServer:
                 json.dump(index_data, f, indent=2)
                 
         except (OSError, ValueError, KeyError, TypeError) as e:
-            print(f"Error updating index: {e}")
+            self.logger.error(f"Error updating index: {e}")
     
     def _update_topics_index(self, topics: List[str], conversation_id: str):
         """Update the topics index with new conversation topics"""
@@ -318,7 +318,7 @@ class ConversationMemoryServer:
                 json.dump(topics_data, f, indent=2)
                 
         except (OSError, ValueError, KeyError, TypeError) as e:
-            print(f"Error updating topics index: {e}")
+            self.logger.error(f"Error updating topics index: {e}")
     
     def generate_weekly_summary(self, week_offset: int = 0) -> str:
         """Generate a weekly summary of conversations"""

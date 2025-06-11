@@ -217,9 +217,12 @@ def init_default_logging():
     if not log_file and os.getenv("HOME"):
         log_file = os.path.join(os.getenv("HOME"), ".claude-memory", "logs", "claude-mcp.log")
     
+    # Disable console output for MCP server mode to prevent JSON-RPC interference
+    console_output = os.getenv("CLAUDE_MCP_CONSOLE_OUTPUT", "false").lower() == "true"
+    
     # Set up logging
     return setup_logging(
         log_level=log_level,
         log_file=log_file,
-        console_output=True
+        console_output=console_output
     )
