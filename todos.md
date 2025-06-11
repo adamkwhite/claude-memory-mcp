@@ -497,6 +497,164 @@ This file maintains persistent todos across Claude Code sessions.
 
   **2.3** JSON Processing Exception Handling
   - 2.3.1 Test malformed JSON index file handling (conversation_memory.py lines 353-354)
+
+## Universal Memory MCP Implementation
+
+Transform this project from Claude-specific to universal AI assistant memory system.
+
+### 2. **Import/Export Format Support (High Priority)**
+
+**2.1** Format Detection and Parsing
+- [ ] 2.1.1 Create `format_detector.py` module for automatic format recognition
+- [ ] 2.1.2 Implement JSON schema validation for different platforms
+- [ ] 2.1.3 Add format-specific parsers in `importers/` directory
+- [ ] 2.1.4 Create standardized internal conversation format
+
+**2.2** Platform-Specific Importers
+- [ ] 2.2.1 Create `ChatGPTImporter` class for OpenAI exports
+- [ ] 2.2.2 Create `CursorImporter` class for Cursor session exports
+- [ ] 2.2.3 Create `ClaudeImporter` class (refactor existing logic)
+- [ ] 2.2.4 Create `GenericImporter` class for custom formats
+
+**2.3** Export Format Support
+- [ ] 2.3.1 Implement export to ChatGPT-compatible format
+- [ ] 2.3.2 Implement export to standard JSON format
+- [ ] 2.3.3 Add export filtering by date range and platform
+- [ ] 2.3.4 Create export validation and verification
+
+**2.4** Bulk Import Enhancement
+- [ ] 2.4.1 Update bulk import scripts to detect format automatically
+- [ ] 2.4.2 Add progress reporting for large imports
+- [ ] 2.4.3 Implement error handling and rollback for failed imports
+- [ ] 2.4.4 Add import statistics and validation reports
+
+### 3. **Configuration Enhancements (High Priority)**
+
+**3.1** Platform-Specific Configuration
+- [ ] 3.1.1 Create `config.py` module with platform profiles
+- [ ] 3.1.2 Add configuration for topic extraction patterns per platform
+- [ ] 3.1.3 Implement platform-specific date format handling
+- [ ] 3.1.4 Add customizable summary generation templates
+
+**3.2** User Configuration Management
+- [ ] 3.2.1 Create configuration file in user's home directory
+- [ ] 3.2.2 Add CLI commands for configuration management
+- [ ] 3.2.3 Implement configuration validation and defaults
+- [ ] 3.2.4 Add environment variable override support
+
+**3.3** Storage Configuration
+- [ ] 3.3.1 Make storage paths configurable per platform
+- [ ] 3.3.2 Add option for separate storage per AI platform
+- [ ] 3.3.3 Implement storage migration utilities
+- [ ] 3.3.4 Add storage optimization and cleanup options
+
+### 5. **Metadata Fields (High Priority)**
+
+**5.1** Enhanced Conversation Metadata
+- [ ] 5.1.1 Add `platform` field to identify source AI system
+- [ ] 5.1.2 Add `model` field for AI model information
+- [ ] 5.1.3 Add `session_id` for grouping related conversations
+- [ ] 5.1.4 Add `user_id` for multi-user support preparation
+
+**5.2** Platform-Specific Metadata
+- [ ] 5.2.1 Add `tags` array for platform-specific categorization
+- [ ] 5.2.2 Add `project_context` for development-focused platforms
+- [ ] 5.2.3 Add `conversation_type` (chat, code, analysis, etc.)
+- [ ] 5.2.4 Add `custom_fields` JSON object for extensibility
+
+**5.3** Search and Filter Enhancements
+- [ ] 5.3.1 Update search to include metadata filtering
+- [ ] 5.3.2 Add platform-specific search filters
+- [ ] 5.3.3 Implement advanced query syntax for metadata
+- [ ] 5.3.4 Add search result grouping by platform/model
+
+**5.4** Metadata Management
+- [ ] 5.4.1 Create metadata validation and sanitization
+- [ ] 5.4.2 Add metadata updating and editing capabilities
+- [ ] 5.4.3 Implement metadata indexing for performance
+- [ ] 5.4.4 Add metadata export and reporting tools
+
+### 7. **Testing Updates (Medium Priority)**
+
+**7.1** Platform Compatibility Testing
+- [ ] 7.1.1 Create test data sets for each supported platform
+- [ ] 7.1.2 Add integration tests for format importers
+- [ ] 7.1.3 Test metadata handling across platforms
+- [ ] 7.1.4 Add performance tests with multi-platform data
+
+**7.2** Regression Testing
+- [ ] 7.2.1 Ensure existing functionality remains intact
+- [ ] 7.2.2 Test backwards compatibility with existing data
+- [ ] 7.2.3 Validate MCP protocol compliance
+- [ ] 7.2.4 Test configuration changes don't break existing setups
+
+### 8. **Enhanced Import Scripts (Medium Priority)**
+
+**8.1** Platform-Specific Import Scripts
+- [ ] 8.1.1 Create `scripts/import_chatgpt.py`
+- [ ] 8.1.2 Create `scripts/import_cursor.py`
+- [ ] 8.1.3 Refactor existing to `scripts/import_claude.py`
+- [ ] 8.1.4 Create `scripts/import_universal.py` with auto-detection
+
+**8.2** Import Workflow Improvements
+- [ ] 8.2.1 Add interactive import wizard
+- [ ] 8.2.2 Implement preview mode before importing
+- [ ] 8.2.3 Add import scheduling and automation
+- [ ] 8.2.4 Create import validation and cleanup utilities
+
+### 1. **Rebranding (Low Priority)**
+
+**1.1** Project Name and Identity
+- [ ] 1.1.1 Rename project to `universal-memory-mcp`
+- [ ] 1.1.2 Update pyproject.toml name and description
+- [ ] 1.1.3 Update GitHub repository name and description
+- [ ] 1.1.4 Update all file headers and docstrings
+
+**1.2** Documentation Updates
+- [ ] 1.2.1 Replace "Claude" references with "AI Assistant" in README
+- [ ] 1.2.2 Update project description to emphasize universal compatibility
+- [ ] 1.2.3 Add supported platforms section (Claude, ChatGPT, Cursor, etc.)
+- [ ] 1.2.4 Update installation instructions for generic use
+
+**1.3** Code References
+- [ ] 1.3.1 Update logger names from `claude_memory_mcp` to `universal_memory_mcp`
+- [ ] 1.3.2 Update module names and class names
+- [ ] 1.3.3 Update configuration file names and paths
+- [ ] 1.3.4 Update internal variable names and constants
+
+### 4. **Documentation Updates (Low Priority)**
+
+**4.1** Platform-Specific Setup Guides
+- [ ] 4.1.1 Create ChatGPT integration guide
+- [ ] 4.1.2 Create Cursor integration guide
+- [ ] 4.1.3 Create Windsurf integration guide
+- [ ] 4.1.4 Create generic MCP client setup instructions
+
+**4.2** API Documentation
+- [ ] 4.2.1 Document MCP tools with platform examples
+- [ ] 4.2.2 Create format specification documentation
+- [ ] 4.2.3 Add configuration reference guide
+- [ ] 4.2.4 Create troubleshooting guide for different platforms
+
+**4.3** Development Documentation
+- [ ] 4.3.1 Document how to add new platform support
+- [ ] 4.3.2 Create importer development guide
+- [ ] 4.3.3 Add testing guidelines for platform compatibility
+- [ ] 4.3.4 Document architecture decisions for universality
+
+### 6. **Backwards Compatibility (Maintained Throughout)**
+
+**6.1** Existing Data Preservation
+- [ ] 6.1.1 Ensure all existing conversations remain accessible
+- [ ] 6.1.2 Automatically add default metadata to existing conversations
+- [ ] 6.1.3 Maintain existing API compatibility
+- [ ] 6.1.4 Preserve existing file structure and naming
+
+**6.2** Configuration Compatibility
+- [ ] 6.2.1 Use existing storage paths as defaults
+- [ ] 6.2.2 Maintain existing MCP tool signatures
+- [ ] 6.2.3 Keep existing import script functionality
+- [ ] 6.2.4 Preserve existing weekly summary format
   - 2.3.2 Test JSON decoding errors with corrupted conversation files
   - 2.3.3 Test incomplete JSON writes during system interruption
   - 2.3.4 Test OSError, ValueError, KeyError, TypeError exception paths
