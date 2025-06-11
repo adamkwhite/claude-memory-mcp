@@ -1147,6 +1147,60 @@ Transform this project from Claude-specific to universal AI assistant memory sys
 
 Transform this project from Claude-specific to universal AI assistant memory system.
 
+**⚠️ IMPORTANT**: Phase 0 (Technical Validation) must be completed before proceeding with implementation phases. This addresses critical feedback about MCP protocol support verification and platform compatibility assumptions.
+
+### 0. **Technical Validation and Research (Critical Prerequisites)**
+
+**0.1** MCP Protocol Support Verification (MUST COMPLETE FIRST)
+- [ ] 0.1.1 Research and verify ChatGPT's MCP support status and roadmap
+- [ ] 0.1.2 Research and verify Cursor's MCP support status and implementation
+- [ ] 0.1.3 Research and verify Windsurf's MCP support status and timeline
+- [ ] 0.1.4 Document MCP compatibility matrix for target platforms
+
+**0.2** Platform Export Format Analysis
+- [ ] 0.2.1 Obtain and analyze ChatGPT conversation export samples
+- [ ] 0.2.2 Obtain and analyze Cursor session export samples
+- [ ] 0.2.3 Obtain and analyze Windsurf conversation export samples
+- [ ] 0.2.4 Document format variations and standardization challenges
+
+**0.3** Performance and Scaling Validation
+- [ ] 0.3.1 Benchmark current system with 10k+ conversations
+- [ ] 0.3.2 Test search performance with multi-platform metadata
+- [ ] 0.3.3 Analyze storage scaling patterns across platforms
+- [ ] 0.3.4 Document performance baseline and scaling limits
+
+**0.4** Schema Versioning Strategy
+- [ ] 0.4.1 Design conversation format versioning system
+- [ ] 0.4.2 Plan migration strategy for format evolution
+- [ ] 0.4.3 Create schema validation framework
+- [ ] 0.4.4 Document backwards compatibility approach
+
+### 0.5. **Proof of Concept - ChatGPT Integration**
+
+**0.5.1** ChatGPT Export Analysis
+- [ ] 0.5.1.1 Export sample ChatGPT conversations (if MCP supported)
+- [ ] 0.5.1.2 Analyze JSON structure and metadata fields
+- [ ] 0.5.1.3 Identify mapping to internal conversation format
+- [ ] 0.5.1.4 Document conversion challenges and solutions
+
+**0.5.2** Basic ChatGPT Importer Prototype
+- [ ] 0.5.2.1 Create minimal ChatGPT format parser
+- [ ] 0.5.2.2 Implement basic metadata extraction
+- [ ] 0.5.2.3 Test import with sample data
+- [ ] 0.5.2.4 Validate search functionality with imported data
+
+**0.5.3** MCP Integration Test (if supported)
+- [ ] 0.5.3.1 Set up test MCP connection with ChatGPT (if available)
+- [ ] 0.5.3.2 Test bidirectional communication
+- [ ] 0.5.3.3 Verify tool registration and execution
+- [ ] 0.5.3.4 Document integration challenges and solutions
+
+**0.5.4** Feasibility Assessment
+- [ ] 0.5.4.1 Document what works vs. what needs custom bridges
+- [ ] 0.5.4.2 Assess effort vs. benefit for each platform
+- [ ] 0.5.4.3 Recommend go/no-go for each target platform
+- [ ] 0.5.4.4 Update implementation plan based on findings
+
 ### 2. **Import/Export Format Support (High Priority)**
 
 **2.1** Format Detection and Parsing
