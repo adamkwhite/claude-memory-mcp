@@ -236,11 +236,14 @@ class TestInitDefaultLogging:
         """Test default logging with no environment variables"""
         init_default_logging()
         
-        mock_setup.assert_called_once_with(
-            log_level="INFO",
-            log_file=None,
-            console_output=False
-        )
+        # With path_utils, a default log file is now provided
+        mock_setup.assert_called_once()
+        call_args = mock_setup.call_args
+        
+        assert call_args.kwargs['log_level'] == "INFO"
+        assert call_args.kwargs['log_file'] is not None  # Now provides default path
+        assert call_args.kwargs['log_file'].endswith('.claude-memory/logs/claude-mcp.log')
+        assert call_args.kwargs['console_output'] is False
     
     @patch.dict(os.environ, {'CLAUDE_MCP_LOG_LEVEL': 'DEBUG', 'CLAUDE_MCP_LOG_FILE': '/tmp/test.log'})
     @patch('src.logging_config.setup_logging')
@@ -267,7 +270,7 @@ class TestInitDefaultLogging:
             console_output=False
         )
     
-    @patch.dict(os.environ, {'CLAUDE_MCP_CONSOLE_OUTPUT': 'true', 'HOME': '/home/adam'})
+    @patch.dict(os.environ, {'CLAUDE_MCP_CONSOLE_OUTPUT': 'true', 'HOME': '/home/test'})
     @patch('src.logging_config.setup_logging')
     def test_init_default_logging_console_enabled(self, mock_setup):
         """Test default logging with console output explicitly enabled"""
@@ -275,7 +278,7 @@ class TestInitDefaultLogging:
         
         mock_setup.assert_called_once_with(
             log_level="INFO",
-            log_file="/home/adam/.claude-memory/logs/claude-mcp.log",
+            log_file="/home/test/.claude-memory/logs/claude-mcp.log",
             console_output=True
         )
 

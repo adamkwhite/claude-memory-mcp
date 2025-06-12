@@ -7,6 +7,13 @@ import sys
 from pathlib import Path
 from typing import Optional
 
+# Import path utilities for dynamic path resolution
+try:
+    from path_utils import get_default_log_file
+except ImportError:
+    # Fallback if path_utils is not available
+    get_default_log_file = None
+
 # Control character removal pattern for log injection prevention
 CONTROL_CHAR_PATTERN = r'[\x00-\x08\x0B\x0C\x0E-\x1F\x7F-\x9F]'
 
@@ -212,10 +219,15 @@ def init_default_logging():
     # Get log level from environment or default to INFO
     log_level = os.getenv("CLAUDE_MCP_LOG_LEVEL", "INFO")
     
-    # Get log file path from environment
+    # Get log file path from environment or use default
     log_file = os.getenv("CLAUDE_MCP_LOG_FILE")
-    if not log_file and os.getenv("HOME"):
-        log_file = os.path.join(os.getenv("HOME"), ".claude-memory", "logs", "claude-mcp.log")
+    if not log_file:
+        if get_default_log_file:
+            # Use path_utils for dynamic path resolution
+            log_file = str(get_default_log_file())
+        elif os.getenv("HOME"):
+            # Fallback to manual construction
+            log_file = os.path.join(os.getenv("HOME"), ".claude-memory", "logs", "claude-mcp.log")
     
     # Disable console output for MCP server mode to prevent JSON-RPC interference
     console_output = os.getenv("CLAUDE_MCP_CONSOLE_OUTPUT", "false").lower() == "true"
