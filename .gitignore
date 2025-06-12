@@ -78,7 +78,15 @@ claude-memory-mcp-venv/
 
 # Performance testing artifacts
 benchmark_results/
-performance_benchmark_plan.md
 
 # Test data directories
 ~/claude-memory-test/
+
+# Prevent root directory clutter
+/*_env/
+/test_env/
+/*.py
+!setup.py
+/demo_*.py
+/temp_*.py
+/debug_*.py
