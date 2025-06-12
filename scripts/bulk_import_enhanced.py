@@ -11,7 +11,6 @@ Handles Claude conversation exports and provides detailed progress tracking
 
 import os
 import json
-import sys
 from datetime import datetime, timezone
 from pathlib import Path
 import asyncio
@@ -19,8 +18,7 @@ import argparse
 from typing import Dict, List, Any, Optional
 import re
 
-# Add the MCP server path
-sys.path.append('/home/adam/Code/claude-memory-mcp')
+# Import ConversationMemoryServer from src directory (already in path)
 from server_fastmcp import ConversationMemoryServer
 
 class EnhancedBulkImporter:
