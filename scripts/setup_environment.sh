@@ -11,10 +11,15 @@ cd "$SCRIPT_DIR"
 echo "🔧 Claude Memory System - Environment Setup"
 echo "==========================================="
 
+# Navigate to project root
+PROJECT_ROOT="$(dirname "$SCRIPT_DIR")"
+cd "$PROJECT_ROOT"
+
 # Check if we're in the right directory
-if [ ! -f "server_fastmcp.py" ]; then
+if [ ! -f "src/server_fastmcp.py" ]; then
     echo "❌ Error: Not in the claude-memory-mcp directory"
-    echo "💡 Please cd to /home/adam/Code/claude-memory-mcp first"
+    echo "💡 Script should be run from within the project"
+    echo "📂 Current directory: $(pwd)"
     exit 1
 fi
 
@@ -94,7 +99,7 @@ fi
 echo "🧪 Testing memory server..."
 if python3 -c "
 import sys
-sys.path.append('.')
+sys.path.append('./src')
 from server_fastmcp import ConversationMemoryServer
 print('✅ Memory server import successful')
 " 2>/dev/null; then

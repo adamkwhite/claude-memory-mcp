@@ -15,6 +15,7 @@ Things to consider
 - Current Status: Where you are in the development process
 - Current Branch: Which branch we were last working on
 - Technology Stack: Languages, frameworks, and libraries being used, including version information
+- Implementation Details: Current   architecture and design decisions
 - Recent Changes: What you've been working on recently
 - Next Steps: What you plan to implement or change next
 - Dependencies: External services, APIs, or libraries that the project relies on
