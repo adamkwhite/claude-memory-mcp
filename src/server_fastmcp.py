@@ -92,12 +92,12 @@ class ConversationMemoryServer:
                 # New consolidated structure: data/conversations, data/summaries
                 self.conversations_path = self.storage_path / "data" / "conversations"
                 self.summaries_path = self.storage_path / "data" / "summaries"
-                self.logger.info(f"Using new consolidated data/ directory structure")
+                self.logger.info("Using new consolidated data/ directory structure")
             else:
                 # Legacy structure: conversations/, summaries/ in storage root
                 self.conversations_path = self.storage_path / "conversations"
                 self.summaries_path = self.storage_path / "summaries"
-                self.logger.info(f"Using legacy directory structure")
+                self.logger.info("Using legacy directory structure")
             
             self.index_file = self.conversations_path / "index.json"
             self.topics_file = self.conversations_path / "topics.json"
