@@ -167,7 +167,7 @@ class TestWeeklySummaryGeneration:
         assert "Summary saved to" in summary
         
         # Check that file actually exists
-        weekly_dir = Path(temp_storage) / "summaries" / "weekly"
+        weekly_dir = Path(temp_storage) / "data" / "summaries" / "weekly"
         summary_files = list(weekly_dir.glob("*.md"))
         assert len(summary_files) > 0
 
@@ -175,7 +175,7 @@ class TestWeeklySummaryGeneration:
     async def test_weekly_summary_error_handling(self, server, temp_storage):
         """Test weekly summary error handling"""
         # Remove the index file to cause an error
-        index_file = Path(temp_storage) / "conversations" / "index.json"
+        index_file = Path(temp_storage) / "data" / "conversations" / "index.json"
         if index_file.exists():
             index_file.unlink()
         
@@ -284,7 +284,7 @@ class TestErrorHandlingAndEdgeCases:
     async def test_add_conversation_with_file_errors(self, server, temp_storage):
         """Test add_conversation with file system errors"""
         # Make conversations directory read-only to cause write errors
-        conversations_dir = Path(temp_storage) / "conversations"
+        conversations_dir = Path(temp_storage) / "data" / "conversations"
         try:
             conversations_dir.chmod(0o444)  # Read-only
             
@@ -305,7 +305,7 @@ class TestErrorHandlingAndEdgeCases:
     async def test_index_update_with_corrupted_files(self, server, temp_storage):
         """Test index updates with corrupted JSON files"""
         # Corrupt the index file
-        index_file = Path(temp_storage) / "conversations" / "index.json"
+        index_file = Path(temp_storage) / "data" / "conversations" / "index.json"
         with open(index_file, 'w') as f:
             f.write("invalid json content")
         
