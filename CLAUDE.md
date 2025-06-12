@@ -1,5 +1,26 @@
 # Claude Memory MCP - Local Development Notes
 
+## Project Structure
+
+**As of June 2025, the project uses a consolidated data/ directory structure:**
+
+```
+claude-memory-mcp/
+├── data/                    # Consolidated application data
+│   ├── conversations/       # Local conversation storage  
+│   ├── summaries/          # Weekly summary storage
+│   └── config/             # Project configuration files
+├── pyproject.toml          # Symlink to data/config/pyproject.toml
+├── pytest.ini             # Symlink to data/config/pytest.ini
+├── src/                    # Source code
+├── tests/                  # Test suite
+└── docs/                   # Documentation
+```
+
+**Backward Compatibility**: The ConversationMemoryServer automatically detects whether to use the new `data/` structure or legacy structure for existing installations.
+
+**External Storage**: Claude Desktop integration still uses `~/claude-memory/` (outside project) for user conversation storage.
+
 ## Python Version Management
 
 This project uses **Python 3.11** to match the CI environment, but the local system defaults to Python 3.8.10.
@@ -123,16 +144,21 @@ git checkout -b feature/your-feature-name
 git add <files>
 git commit -m "descriptive message"
 
-# 3. Push branch to GitHub (NEVER push directly to main)
+# 3. **MANDATORY: Run full test suite after major changes**
+# Activate virtual environment and run tests
+source claude-memory-mcp-venv/bin/activate
+python -m pytest tests/ --ignore=tests/standalone_test.py --cov=src --cov-report=term -v
+
+# 4. Push branch to GitHub (NEVER push directly to main)
 git push origin feature/your-feature-name
 
-# 4. Open Pull Request on GitHub
+# 5. Open Pull Request on GitHub
 # - ALWAYS mention @claude in PR body or comments for review
 # - PR triggers automated testing and SonarQube analysis
 # - Must pass all quality gates before merge is allowed
 # - Coverage on new code must be ≥ 90%
 
-# 5. Merge PR (only after quality gates pass)
+# 6. Merge PR (only after quality gates pass)
 # - Tests must pass ✅
 # - SonarQube quality gate must pass ✅
 # - PR conversations must be resolved ✅
@@ -153,6 +179,34 @@ git push origin feature/your-feature-name
 - Linear history maintained
 
 **Note:** Even repository owners cannot bypass these rules - this ensures enterprise-grade quality standards.
+
+### **Mandatory Testing Requirements**
+
+**ALWAYS run full test suite for these changes:**
+- Any code changes to `src/` directory
+- Directory structure modifications
+- Configuration file updates (`pyproject.toml`, `pytest.ini`)
+- Database schema changes
+- API endpoint modifications
+- New feature implementations
+- Bug fixes involving core functionality
+
+**Testing Command (Copy-Paste Ready):**
+```bash
+source claude-memory-mcp-venv/bin/activate && python -m pytest tests/ --ignore=tests/standalone_test.py --cov=src --cov-report=term -v
+```
+
+**Expected Results:**
+- ✅ All tests must pass (191/191 or more)
+- ✅ Coverage should be ≥ 94% (current baseline)
+- ✅ No failing tests before creating PR
+
+**If tests fail:**
+1. Fix failing tests immediately
+2. Re-run test suite until all pass
+3. Only then proceed with PR creation
+
+This prevents back-and-forth in PRs due to test failures.
 
 **GitHub Actions Workflow Notes:**
 - ✅ **Fixed**: SonarQube Badge action no longer runs during PR builds (PR #31)

@@ -43,12 +43,14 @@ Thumbs.db
 # Conversation Data (keep structure, not content)
 ~/claude-memory/conversations/*/
 ~/claude-memory/summaries/*/
-conversations/2*/
-summaries/*/
+~/claude-memory/data/conversations/*/
+~/claude-memory/data/summaries/*/
+data/conversations/2*/
+data/summaries/*/
 
 # But keep example files and indexes
-!conversations/index.json.example
-!summaries/README.md
+!data/conversations/index.json.example
+!data/summaries/README.md
 
 # Batch import files (these contain personal conversations)
 import_batches/

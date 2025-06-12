@@ -71,19 +71,34 @@ COMMON_TECH_TERMS = [
 
 
 class ConversationMemoryServer:
-    def __init__(self, storage_path: str = "~/claude-memory"):
+    def __init__(self, storage_path: str = "~/claude-memory", use_data_dir: bool = None):
         # Initialize logging first
         init_default_logging()
         self.logger = get_logger("claude_memory_mcp.server")
         
-        log_function_call("ConversationMemoryServer.__init__", storage_path=storage_path)
+        log_function_call("ConversationMemoryServer.__init__", storage_path=storage_path, use_data_dir=use_data_dir)
         
         self.storage_path = Path(storage_path).expanduser().resolve()
         
         try:
             self._validate_storage_path()
-            self.conversations_path = self.storage_path / "conversations"
-            self.summaries_path = self.storage_path / "summaries"
+            
+            # Auto-detect directory structure if not specified
+            if use_data_dir is None:
+                use_data_dir = self._detect_data_directory_structure()
+            
+            # Configure paths based on structure
+            if use_data_dir:
+                # New consolidated structure: data/conversations, data/summaries
+                self.conversations_path = self.storage_path / "data" / "conversations"
+                self.summaries_path = self.storage_path / "data" / "summaries"
+                self.logger.info(f"Using new consolidated data/ directory structure")
+            else:
+                # Legacy structure: conversations/, summaries/ in storage root
+                self.conversations_path = self.storage_path / "conversations"
+                self.summaries_path = self.storage_path / "summaries"
+                self.logger.info(f"Using legacy directory structure")
+            
             self.index_file = self.conversations_path / "index.json"
             self.topics_file = self.conversations_path / "topics.json"
             
@@ -116,6 +131,31 @@ class ConversationMemoryServer:
             raise ValueError("Storage path must be within user's home directory")
         
         self.logger.debug(f"Storage path validation passed: {self.storage_path}")
+    
+    def _detect_data_directory_structure(self) -> bool:
+        """
+        Auto-detect whether to use new data/ structure or legacy structure.
+        
+        Returns:
+            True if data/ directory exists and contains conversations/
+            False for legacy structure (conversations/ in storage root)
+        """
+        data_conversations = self.storage_path / "data" / "conversations"
+        legacy_conversations = self.storage_path / "conversations"
+        
+        # If data/conversations exists, use new structure
+        if data_conversations.exists():
+            self.logger.debug("Detected new data/ directory structure")
+            return True
+        
+        # If conversations exists in root, use legacy structure  
+        if legacy_conversations.exists():
+            self.logger.debug("Detected legacy directory structure")
+            return False
+        
+        # If neither exists, default to new structure for new installations
+        self.logger.debug("No existing structure found, defaulting to new data/ structure")
+        return True
     
     def _validate_file_path(self, file_path: Path) -> bool:
         """Validate that file path is within allowed storage directory"""

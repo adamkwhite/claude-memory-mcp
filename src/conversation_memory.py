@@ -15,10 +15,23 @@ import logging
 
 
 class ConversationMemoryServer:
-    def __init__(self, storage_path: str = "~/claude-memory"):
+    def __init__(self, storage_path: str = "~/claude-memory", use_data_dir: bool = None):
         self.storage_path = Path(storage_path).expanduser()
-        self.conversations_path = self.storage_path / "conversations"
-        self.summaries_path = self.storage_path / "summaries"
+        
+        # Auto-detect directory structure if not specified
+        if use_data_dir is None:
+            use_data_dir = self._detect_data_directory_structure()
+        
+        # Configure paths based on structure
+        if use_data_dir:
+            # New consolidated structure: data/conversations, data/summaries
+            self.conversations_path = self.storage_path / "data" / "conversations"
+            self.summaries_path = self.storage_path / "data" / "summaries"
+        else:
+            # Legacy structure: conversations/, summaries/ in storage root
+            self.conversations_path = self.storage_path / "conversations"
+            self.summaries_path = self.storage_path / "summaries"
+        
         self.index_file = self.conversations_path / "index.json"
         self.topics_file = self.conversations_path / "topics.json"
         
@@ -32,6 +45,28 @@ class ConversationMemoryServer:
         
         # Initialize index files if they don't exist
         self._init_index_files()
+    
+    def _detect_data_directory_structure(self) -> bool:
+        """
+        Auto-detect whether to use new data/ structure or legacy structure.
+        
+        Returns:
+            True if data/ directory exists and contains conversations/
+            False for legacy structure (conversations/ in storage root)
+        """
+        data_conversations = self.storage_path / "data" / "conversations"
+        legacy_conversations = self.storage_path / "conversations"
+        
+        # If data/conversations exists, use new structure
+        if data_conversations.exists():
+            return True
+        
+        # If conversations exists in root, use legacy structure  
+        if legacy_conversations.exists():
+            return False
+        
+        # If neither exists, default to new structure for new installations
+        return True
     
     def _init_index_files(self):
         """Initialize index and topics files if they don't exist"""

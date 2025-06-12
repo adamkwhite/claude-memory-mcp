@@ -97,17 +97,7 @@ def search_conversations(self, query: str, limit: int = 10) -> List[Dict[str, An
 ### 1.1.3 Functional Limitations
 
 **Search Quality Issues**:
-- No relevance ranking beyond simple counting
-- No phrase or proximity matching
-- No typo tolerance or fuzzy matching
-- No synonym or semantic matching
-
-**Search Features Missing**:
-- No boolean operators (AND, OR, NOT)
-- No field-specific searching (title:, content:, topic:)
-- No date range filtering
-- No result highlighting or snippets
-- No search suggestions or autocomplete
+- No relevanHow about 
 
 **Technical Limitations**:
 - No concurrent search support
