@@ -357,6 +357,59 @@ Line 5: Final line
         assert "search term" in preview.lower() or "term" in preview.lower()
 
 
+class TestServerIntegration:
+    """Integration tests for the memory server"""
+    
+    @pytest.mark.asyncio
+    async def test_server_basic_functionality(self, temp_storage):
+        """Test basic server functionality end-to-end"""
+        # Initialize server with test directory
+        test_path = Path(temp_storage)
+        server = ConversationMemoryServer(str(test_path))
+        
+        # Test adding conversation
+        test_conversation = {
+            "content": "This is a test conversation about Python programming",
+            "title": "Python Test",
+            "date": "2024-01-01T10:00:00Z"
+        }
+        
+        result = await server.add_conversation(**test_conversation)
+        assert result["status"] == "success"
+        assert "file_path" in result
+        
+        # Test searching for the conversation  
+        search_results = await server.search_conversations("Python", limit=5)
+        assert len(search_results) > 0
+        
+        found = False
+        for conversation in search_results:
+            if "Python" in conversation.get("title", ""):
+                found = True
+                break
+        assert found, "Added conversation should be found in search results"
+    
+    def test_imports_available(self):
+        """Test that all required imports are available"""
+        # Test core imports
+        try:
+            from src.conversation_memory import ConversationMemoryServer
+            from src.validators import validate_content, validate_title
+            from src.exceptions import ValidationError
+            assert True, "Core imports successful"
+        except ImportError as e:
+            pytest.fail(f"Import failed: {e}")
+        
+        # Test optional imports
+        try:
+            import asyncio
+            import json
+            from pathlib import Path
+            assert True, "Standard library imports successful"
+        except ImportError as e:
+            pytest.fail(f"Standard library import failed: {e}")
+
+
 if __name__ == "__main__":
     # Run tests with coverage
     pytest.main([__file__, "-v", "--cov=.", "--cov-report=html", "--cov-report=term"])

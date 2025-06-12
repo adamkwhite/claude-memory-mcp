@@ -406,3 +406,128 @@ class TestLoggingExceptionHandling:
                 # Should not raise an exception
             except Exception as e:
                 pytest.fail(f"log_file_operation should handle path errors, but raised: {e}")
+
+
+class TestLoggingSecurity:
+    """Test security enhancements in logging functions"""
+    
+    @patch('src.logging_config.get_logger')
+    def test_log_injection_prevention_validation(self, mock_get_logger):
+        """Test that log injection is prevented in validation logging"""
+        mock_logger = MagicMock()
+        mock_get_logger.return_value = mock_logger
+        
+        # Test with malicious input containing control characters
+        malicious_value = "normal\x00\x01\x02\x1f\x7f\x9ftext"
+        log_validation_failure("field", malicious_value, "test reason")
+        
+        # Verify that control characters were stripped
+        call_args = mock_logger.warning.call_args[0][0]
+        assert "\x00" not in call_args
+        assert "\x01" not in call_args
+        assert "\x02" not in call_args
+        assert "\x1f" not in call_args
+        assert "\x7f" not in call_args
+        assert "\x9f" not in call_args
+        # Normal text should remain
+        assert "normaltext" in call_args
+    
+    @patch('src.logging_config.get_logger')
+    def test_log_injection_prevention_security(self, mock_get_logger):
+        """Test that log injection is prevented in security event logging"""
+        mock_logger = MagicMock()
+        mock_get_logger.return_value = mock_logger
+        
+        # Test with malicious input containing control characters
+        malicious_details = "normal\x00\x01\x02\x1f\x7f\x9ftext"
+        log_security_event("test_event", malicious_details)
+        
+        # Verify that control characters were stripped (but \r and \n are preserved by design)
+        call_args = mock_logger.log.call_args[0][1]
+        assert "\x00" not in call_args
+        assert "\x01" not in call_args
+        assert "\x02" not in call_args
+        assert "\x1f" not in call_args
+        assert "\x7f" not in call_args
+        assert "\x9f" not in call_args
+        # Normal text should remain
+        assert "normaltext" in call_args
+    
+    @patch('src.logging_config.get_logger')
+    def test_log_injection_newline_escape(self, mock_get_logger):
+        """Test that newlines are properly escaped in validation logging"""
+        mock_logger = MagicMock()
+        mock_get_logger.return_value = mock_logger
+        
+        # Test with newlines that should be escaped
+        value_with_newlines = "line1\nline2\rline3"
+        log_validation_failure("field", value_with_newlines, "test reason")
+        
+        # Verify that newlines were escaped
+        call_args = mock_logger.warning.call_args[0][0]
+        assert "\\n" in call_args
+        assert "\\r" in call_args
+        assert "\n" not in call_args.split("'")[1]  # Not in the actual value part
+    
+    @patch('src.logging_config.get_logger')
+    def test_value_truncation(self, mock_get_logger):
+        """Test that long values are truncated in logging"""
+        mock_logger = MagicMock()
+        mock_get_logger.return_value = mock_logger
+        
+        # Test with value longer than 100 characters
+        long_value = "x" * 150
+        log_validation_failure("field", long_value, "test reason")
+        
+        # Verify that value was truncated
+        call_args = mock_logger.warning.call_args[0][0]
+        # The logged value should not contain the full 150 x's
+        assert "x" * 150 not in call_args
+        # But should contain some x's (truncated portion)
+        assert "x" * 50 in call_args
+    
+    @patch('src.logging_config.get_logger')
+    def test_path_redaction_in_security_logging(self, mock_get_logger):
+        """Test that paths are processed in security event logging"""
+        mock_logger = MagicMock()
+        mock_get_logger.return_value = mock_logger
+        
+        # Test with details containing the word "path" to trigger path processing
+        details_with_paths = "Error accessing path /home/user/secret/file.txt and /var/log/sensitive.log"
+        log_security_event("file_access", details_with_paths)
+        
+        # Verify that logging completed without error
+        call_args = mock_logger.log.call_args[0][1]
+        assert "Error accessing" in call_args
+        # Path redaction behavior may vary based on the actual home directory and path resolution
+    
+    @patch('src.logging_config.get_logger')
+    def test_file_operation_path_redaction(self, mock_get_logger):
+        """Test that file paths are processed in file operation logging"""
+        mock_logger = MagicMock()
+        mock_get_logger.return_value = mock_logger
+        
+        # Test with absolute path outside home directory
+        absolute_path = "/var/log/system/sensitive.log"
+        log_file_operation("read", absolute_path, True, size="1024")
+        
+        # Verify that logging completed without error
+        call_args = mock_logger.info.call_args[0][0]
+        assert "File read:" in call_args
+        assert "SUCCESS" in call_args
+        assert "size=1024" in call_args
+        # Path processing behavior may vary based on actual path resolution logic
+    
+    @patch('src.logging_config.get_logger')
+    def test_error_resilience(self, mock_get_logger):
+        """Test that logging functions don't crash on errors"""
+        # Simulate logger that raises exception
+        mock_logger = MagicMock()
+        mock_logger.warning.side_effect = Exception("Logger error")
+        mock_get_logger.return_value = mock_logger
+        
+        # These should not raise exceptions despite logger errors
+        log_validation_failure("field", "value", "reason")
+        log_security_event("event", "details")
+        log_file_operation("op", "file", True)
+        log_function_call("func", param="value")

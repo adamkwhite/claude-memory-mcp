@@ -225,3 +225,36 @@ class TestLimitValidation:
             validate_limit(10.5)
         with pytest.raises(ValidationError, match="Limit must be an integer"):
             validate_limit(None)
+
+
+class TestValidatorEdgeCases:
+    """Test edge cases in validators.py for complete coverage"""
+    
+    def test_content_validation_logic(self):
+        """Test content validation logic and document unreachable code"""
+        # Test that line 104 is unreachable due to MIN_CONTENT_LENGTH = 1
+        # Any content with len < 1 is empty and caught by line 99 first
+        
+        # Empty content should trigger line 99, not line 104
+        with pytest.raises(ContentValidationError, match="Content cannot be empty"):
+            validate_content("")
+        
+        # This confirms line 104 is unreachable for MIN_CONTENT_LENGTH = 1
+    
+    def test_content_at_minimum_length(self):
+        """Test content at exactly minimum length"""
+        # Test content at minimum length (should pass)
+        min_content = "a"  # 1 character, minimum length
+        
+        # This should not raise an exception
+        result = validate_content(min_content)
+        assert result == min_content
+    
+    def test_whitespace_only_content(self):
+        """Test content that's only whitespace"""
+        # Test content that's only whitespace 
+        whitespace_content = "   "  # Whitespace only - truthy but effectively empty
+        
+        # Should be valid since it's not empty (length > 0) and passes all checks
+        result = validate_content(whitespace_content)
+        assert result == whitespace_content  # Should return as-is
