@@ -78,6 +78,7 @@ claude-memory-mcp-venv/
 
 # Performance testing artifacts
 benchmark_results/
+benchmark_data/
 
 # Test data directories
 ~/claude-memory-test/
