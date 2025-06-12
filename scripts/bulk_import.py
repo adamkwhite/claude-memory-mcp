@@ -17,14 +17,12 @@ Supports importing multiple conversations from various formats:
 import os
 import json
 import csv
-import sys
 from datetime import datetime
 from pathlib import Path
 import asyncio
 import argparse
 
-# Add the MCP server path to use ConversationMemoryServer
-sys.path.append('/home/adam/Code/claude-memory-mcp')
+# Import ConversationMemoryServer from src directory (already in path)
 from server_fastmcp import ConversationMemoryServer
 
 class BulkImporter:
