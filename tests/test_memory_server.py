@@ -371,15 +371,15 @@ class TestServerIntegration:
         test_conversation = {
             "content": "This is a test conversation about Python programming",
             "title": "Python Test",
-            "date": "2024-01-01T10:00:00Z"
+            "conversation_date": "2024-01-01T10:00:00Z"
         }
         
-        result = await server.add_conversation(**test_conversation)
-        assert result["success"] is True
+        result = server.add_conversation(**test_conversation)
+        assert result["status"] == "success"
         assert "file_path" in result
         
-        # Test searching for the conversation
-        search_results = await server.search_conversations("Python", limit=5)
+        # Test searching for the conversation  
+        search_results = server.search_conversations("Python", limit=5)
         assert len(search_results) > 0
         
         found = False
