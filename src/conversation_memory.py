@@ -151,7 +151,7 @@ class ConversationMemoryServer:
         
         return found_topics[:10]  # Limit to top 10 topics
     
-    def add_conversation(self, content: str, title: str = None, conversation_date: str = None) -> Dict[str, Any]:
+    async def add_conversation(self, content: str, title: str = None, conversation_date: str = None) -> Dict[str, Any]:
         """Add a new conversation to storage"""
         try:
             # Parse date or use current
@@ -256,7 +256,7 @@ class ConversationMemoryServer:
         except (OSError, ValueError, KeyError, TypeError):
             return None
 
-    def search_conversations(self, query: str, limit: int = 10) -> List[Dict[str, Any]]:
+    async def search_conversations(self, query: str, limit: int = 10) -> List[Dict[str, Any]]:
         """Search conversations by content and topics"""
         # Use SQLite FTS search if available and enabled
         if self.use_sqlite_search and self.search_db:
@@ -397,7 +397,7 @@ class ConversationMemoryServer:
         except (OSError, ValueError, KeyError, TypeError) as e:
             self.logger.error(f"Error updating topics index: {e}")
     
-    def generate_weekly_summary(self, week_offset: int = 0) -> str:
+    async def generate_weekly_summary(self, week_offset: int = 0) -> str:
         """Generate a weekly summary of conversations"""
         try:
             today = datetime.now()
@@ -484,7 +484,7 @@ class ConversationMemoryServer:
 
         return "\n".join(summary_parts)
     
-    def get_search_stats(self) -> Dict[str, Any]:
+    async def get_search_stats(self) -> Dict[str, Any]:
         """Get search engine statistics and status."""
         stats = {
             "sqlite_available": SQLITE_AVAILABLE,
@@ -501,7 +501,7 @@ class ConversationMemoryServer:
         
         return stats
     
-    def migrate_to_sqlite(self) -> Dict[str, Any]:
+    async def migrate_to_sqlite(self) -> Dict[str, Any]:
         """Migrate existing conversations to SQLite database."""
         if not SQLITE_AVAILABLE:
             return {"error": "SQLite not available"}
@@ -525,7 +525,7 @@ class ConversationMemoryServer:
         except Exception as e:
             return {"error": f"Migration failed: {str(e)}"}
     
-    def search_by_topic(self, topic: str, limit: int = 10) -> List[Dict[str, Any]]:
+    async def search_by_topic(self, topic: str, limit: int = 10) -> List[Dict[str, Any]]:
         """Search conversations by specific topic."""
         if self.use_sqlite_search and self.search_db:
             try:

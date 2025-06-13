@@ -116,7 +116,7 @@ memory_server = FastMCPConversationMemoryServer()
 @mcp.tool()
 async def search_conversations(query: str, limit: int = DEFAULT_SEARCH_LIMIT) -> str:
     """Search through stored Claude conversations for relevant content"""
-    results = memory_server.search_conversations(query, limit)
+    results = await memory_server.search_conversations(query, limit)
     
     if not results:
         return f"No conversations found matching '{query}'"
@@ -138,18 +138,18 @@ async def search_conversations(query: str, limit: int = DEFAULT_SEARCH_LIMIT) ->
 @mcp.tool()
 async def add_conversation(content: str, title: Optional[str] = None, date: Optional[str] = None) -> str:
     """Add a new conversation to the memory system"""
-    result = memory_server.add_conversation(content, title, date)
+    result = await memory_server.add_conversation(content, title, date)
     return f"Status: {result['status']}\n{result['message']}"
 
 @mcp.tool()
 async def generate_weekly_summary(week_offset: int = 0) -> str:
     """Generate a summary of conversations from the past week"""
-    return memory_server.generate_weekly_summary(week_offset)
+    return await memory_server.generate_weekly_summary(week_offset)
 
 @mcp.tool()
 async def search_by_topic(topic: str, limit: int = 10) -> str:
     """Search conversations by a specific topic"""
-    results = memory_server.search_by_topic(topic, limit)
+    results = await memory_server.search_by_topic(topic, limit)
     
     if not results:
         return f"No conversations found for topic '{topic}'"
@@ -171,7 +171,7 @@ async def search_by_topic(topic: str, limit: int = 10) -> str:
 @mcp.tool()
 async def get_search_stats() -> str:
     """Get search engine statistics and performance information"""
-    stats = memory_server.get_search_stats()
+    stats = await memory_server.get_search_stats()
     
     response = "Search Engine Statistics:\n\n"
     response += f"• SQLite Available: {stats.get('sqlite_available', 'Unknown')}\n"
@@ -197,7 +197,7 @@ async def get_search_stats() -> str:
 @mcp.tool()
 async def migrate_to_sqlite() -> str:
     """Migrate existing JSON conversations to SQLite database for better search performance"""
-    result = memory_server.migrate_to_sqlite()
+    result = await memory_server.migrate_to_sqlite()
     
     if "error" in result:
         return f"Migration failed: {result['error']}"
