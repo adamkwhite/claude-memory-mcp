@@ -18,7 +18,7 @@ from datetime import datetime, timedelta
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'src'))
 
 try:
-    from server_fastmcp import ConversationMemoryServer
+    from conversation_memory import ConversationMemoryServer
     import server_fastmcp
     FASTMCP_AVAILABLE = True
 except ImportError:

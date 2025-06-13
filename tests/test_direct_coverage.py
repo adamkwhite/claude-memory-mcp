@@ -38,7 +38,7 @@ project_root = Path(__file__).parent.parent
 sys.path.insert(0, str(project_root))
 
 # Now import with mocked dependencies
-from server_fastmcp import ConversationMemoryServer
+from conversation_memory import ConversationMemoryServer
 
 
 @pytest.fixture

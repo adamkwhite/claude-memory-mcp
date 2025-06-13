@@ -21,7 +21,7 @@ sys.path.insert(0, str(project_root / 'src'))
 sys.path.insert(0, str(project_root / 'tests'))
 
 try:
-    from server_fastmcp import ConversationMemoryServer
+    from conversation_memory import ConversationMemoryServer
     FASTMCP_AVAILABLE = True
 except ImportError:
     FASTMCP_AVAILABLE = False

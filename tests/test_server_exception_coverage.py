@@ -37,7 +37,7 @@ class MockFastMCP:
 sys.modules['mcp.server.fastmcp'] = type(sys)('mcp.server.fastmcp')
 sys.modules['mcp.server.fastmcp'].FastMCP = MockFastMCP
 
-from server_fastmcp import ConversationMemoryServer
+from conversation_memory import ConversationMemoryServer
 
 
 class TestServerExceptionCoverage(unittest.TestCase):
