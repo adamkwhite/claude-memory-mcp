@@ -223,7 +223,7 @@ class SearchBenchmark:
         print(f"\n{'='*60}")
         print("SEARCH PERFORMANCE BENCHMARK REPORT")
         print(f"{'='*60}")
-        print(f"Test Setup:")
+        print("Test Setup:")
         print(f"  • Conversations: {results['setup']['num_conversations']}")
         print(f"  • Storage Path: {results['setup']['storage_path']}")
         print(f"  • Timestamp: {time.ctime(results['setup']['timestamp'])}")
@@ -257,7 +257,7 @@ class SearchBenchmark:
             print(f"  ✅ SQLite FTS is {overall['overall_speedup']:.1f}x faster than linear search")
             print(f"  ✅ Performance improvement of {overall['overall_improvement_percent']:.1f}%")
         else:
-            print(f"  ⚠️  Linear search performed better in this test")
+            print("  ⚠️  Linear search performed better in this test")
         
         print(f"\n{'='*60}")
     

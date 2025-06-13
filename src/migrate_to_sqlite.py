@@ -14,6 +14,10 @@ from typing import Dict, List, Optional
 import sys
 from datetime import datetime
 
+# Constants
+INDEX_JSON_FILENAME = "index.json"
+TOPICS_JSON_FILENAME = "topics.json"
+
 # Add src to path for imports
 sys.path.append(str(Path(__file__).parent))
 
@@ -37,7 +41,7 @@ class ConversationMigrator:
         else:
             self.conversations_path = self.storage_path / "conversations"
         
-        self.index_file = self.conversations_path / "index.json"
+        self.index_file = self.conversations_path / INDEX_JSON_FILENAME
         
         # Initialize search database
         db_path = self.conversations_path / "search.db"
@@ -115,7 +119,7 @@ class ConversationMigrator:
         # Filter out index and topics files
         conversation_files = [
             f for f in json_files 
-            if f.name not in ["index.json", "topics.json"]
+            if f.name not in [INDEX_JSON_FILENAME, TOPICS_JSON_FILENAME]
         ]
         
         stats["total_found"] = len(conversation_files)
@@ -203,7 +207,7 @@ class ConversationMigrator:
             json_files = list(self.conversations_path.rglob("*.json"))
             conversation_files = [
                 f for f in json_files 
-                if f.name not in ["index.json", "topics.json"]
+                if f.name not in [INDEX_JSON_FILENAME, TOPICS_JSON_FILENAME]
             ]
             json_count = len(conversation_files)
             

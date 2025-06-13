@@ -379,10 +379,8 @@ class ConversationMemoryServer:
             
             # Add conversation to each topic
             for topic in topics:
-                if topic not in topics_index:
-                    topics_index[topic] = []
-                elif isinstance(topics_index[topic], int):
-                    # Handle legacy format where topics were stored as counts
+                if topic not in topics_index or isinstance(topics_index[topic], int):
+                    # Initialize new topics or handle legacy format where topics were stored as counts
                     topics_index[topic] = []
                 
                 topics_index[topic].append({
@@ -540,12 +538,15 @@ class ConversationMemoryServer:
                 self.logger.warning(f"SQLite topic search failed: {e}")
         
         # Fallback to JSON-based topic search
+        return self._search_topic_json(topic, limit)
+    
+    def _search_topic_json(self, topic: str, limit: int) -> List[Dict[str, Any]]:
+        """Helper method for JSON-based topic search."""
         try:
             with open(self.topics_file, 'r') as f:
                 topics_data = json.load(f)
             
             topics_index = topics_data.get("topics", {})
-            
             if topic not in topics_index:
                 return []
             
