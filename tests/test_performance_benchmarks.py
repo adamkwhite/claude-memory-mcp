@@ -148,7 +148,8 @@ class TestSearchPerformance:
         (200, 200),
         (500, 500)
     ])
-    def test_search_performance_scaling(self, test_data_path, dataset_size, 
+    @pytest.mark.asyncio
+    async def test_search_performance_scaling(self, test_data_path, dataset_size, 
                                        expected_conversations, benchmark_results, 
                                        performance_metrics):
         """Test search performance with different dataset sizes."""
@@ -206,7 +207,8 @@ class TestSearchPerformance:
         finally:
             shutil.rmtree(temp_dir, ignore_errors=True)
             
-    def test_search_memory_usage(self, test_data_path, benchmark_results, performance_metrics):
+    @pytest.mark.asyncio
+    async def test_search_memory_usage(self, test_data_path, benchmark_results, performance_metrics):
         """Test memory usage during search operations."""
         server = ConversationMemoryServer(str(test_data_path))
         
@@ -357,7 +359,8 @@ class TestWeeklySummaryPerformance:
 class TestOverallPerformance:
     """Overall performance validation tests."""
     
-    def test_readme_claims_validation(self, test_data_path, benchmark_results):
+    @pytest.mark.asyncio
+    async def test_readme_claims_validation(self, test_data_path, benchmark_results):
         """Validate specific README performance claims."""
         server = ConversationMemoryServer(str(test_data_path))
         
