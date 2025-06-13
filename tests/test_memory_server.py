@@ -85,7 +85,7 @@ class TestStandaloneMemoryServer:
         result = await standalone_server.add_conversation(
             content=sample_conversation_content,
             title="MCP Server Setup Discussion",
-            date="2025-01-15T10:30:00"
+            conversation_date="2025-01-15T10:30:00"
         )
         
         assert result['status'] == 'success'
@@ -105,7 +105,7 @@ class TestStandaloneMemoryServer:
         await standalone_server.add_conversation(
             content=sample_conversation_content,
             title="MCP Server Setup Discussion",
-            date="2025-01-15T10:30:00"
+            conversation_date="2025-01-15T10:30:00"
         )
         
         # Then search for it
@@ -133,7 +133,7 @@ class TestStandaloneMemoryServer:
         result = await standalone_server.add_conversation(
             content=content_with_topics,
             title="Tech Discussion",
-            date="2025-01-15T11:00:00"
+            conversation_date="2025-01-15T11:00:00"
         )
         
         topics = result['topics']
@@ -156,7 +156,7 @@ class TestStandaloneMemoryServer:
         await standalone_server.add_conversation(
             content=sample_conversation_content,
             title="Test Conversation",
-            date="2025-01-15T10:30:00"
+            conversation_date="2025-01-15T10:30:00"
         )
         
         # Check index.json
@@ -183,7 +183,7 @@ class TestStandaloneMemoryServer:
         result = await standalone_server.add_conversation(
             content=sample_conversation_content,
             title="Date Test Conversation",
-            date="2025-03-15T14:30:00"
+            conversation_date="2025-03-15T14:30:00"
         )
         
         file_path = Path(result['file_path'])
@@ -200,13 +200,13 @@ class TestStandaloneMemoryServer:
         await standalone_server.add_conversation(
             content="Python programming with MCP server development",
             title="High Score Conversation",
-            date="2025-01-15T10:00:00"
+            conversation_date="2025-01-15T10:00:00"
         )
         
         await standalone_server.add_conversation(
             content="Discussion about general programming concepts",
             title="Low Score Conversation", 
-            date="2025-01-15T11:00:00"
+            conversation_date="2025-01-15T11:00:00"
         )
         
         # Search for python
@@ -230,7 +230,7 @@ class TestStandaloneMemoryServer:
         result = await standalone_server.add_conversation(
             content=sample_conversation_content,
             title="Invalid Date Test",
-            date="invalid-date-format"
+            conversation_date="invalid-date-format"
         )
         
         # Should handle error gracefully (may succeed or fail depending on implementation)
@@ -279,7 +279,7 @@ class TestCoverageTarget:
         result = await standalone_server.add_conversation(
             content="Test content",
             title="Error Test",
-            date="2025-01-15T10:30:00"
+            conversation_date="2025-01-15T10:30:00"
         )
         
         # Should succeed by recreating directories
@@ -345,7 +345,7 @@ Line 5: Final line
         result = await standalone_server.add_conversation(
             content=content,
             title="Preview Test",
-            date="2025-01-15T10:30:00"
+            conversation_date="2025-01-15T10:30:00"
         )
         
         file_path = Path(result['file_path'])

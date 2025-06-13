@@ -347,7 +347,7 @@ class TestErrorHandlingAndEdgeCases:
         result = await server.add_conversation(
             content=special_content,
             title="Encoding Test",
-            date="2025-01-15T10:30:00"
+            conversation_date="2025-01-15T10:30:00"
         )
         
         # Should handle encoding gracefully
@@ -372,7 +372,7 @@ Line 5: Final line
         result = await server.add_conversation(
             content=content,
             title="Preview Test",
-            date="2025-01-15T10:30:00"
+            conversation_date="2025-01-15T10:30:00"
         )
         
         file_path = Path(result['file_path'])
