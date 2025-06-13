@@ -31,9 +31,9 @@ from conversation_memory import ConversationMemoryServer as StandaloneServer
 @pytest.fixture
 def temp_storage():
     """Create a temporary storage directory for testing"""
-    # Create temp dir in home directory to pass security validation
-    home_dir = Path.home()
-    temp_dir = tempfile.mkdtemp(prefix="claude_memory_test_", dir=str(home_dir))
+    # Create temp dir in project directory to pass security validation
+    project_root = Path(__file__).parent.parent
+    temp_dir = tempfile.mkdtemp(prefix="claude_memory_test_", dir=str(project_root))
     yield temp_dir
     shutil.rmtree(temp_dir, ignore_errors=True)
 

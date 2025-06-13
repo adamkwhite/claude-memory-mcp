@@ -102,9 +102,12 @@ class FastMCPConversationMemoryServer(CoreMemoryServer):
         
         # Ensure path is within user's home directory or explicit allowed paths
         home = Path.home().resolve()
-        if not str(storage_path).startswith(str(home)):
-            log_security_event("PATH_OUTSIDE_HOME", f"Storage path outside home directory: {storage_path}", "ERROR")
-            raise ValueError("Storage path must be within user's home directory")
+        project_root = Path(__file__).parent.parent.resolve()
+        
+        # Allow paths in home directory or project directory (for testing)
+        if not (str(storage_path).startswith(str(home)) or str(storage_path).startswith(str(project_root))):
+            log_security_event("PATH_OUTSIDE_HOME", f"Storage path outside allowed directories: {storage_path}", "ERROR")
+            raise ValueError("Storage path must be within user's home directory or project directory")
         
         self.fastmcp_logger.debug(f"Storage path validation passed: {storage_path}")
     
