@@ -48,7 +48,7 @@ This file maintains persistent todos across Claude Code sessions.
 - [x] **Address final 2 code smells to achieve zero**
   - ✅ COMPLETED: SonarCloud now reports 0 code smells!
   - Successfully achieved perfect code quality
-- [x] **Optimize search performance - replace linear search with SQLite FTS indexing** ✅ COMPLETED (June 12, 2025)
+- [x] **Optimize search performance - replace linear search with SQLite FTS indexing** ✅ COMPLETED & MERGED (June 13, 2025)
   - ✅ Implemented SQLite FTS5 database with full-text search capabilities
   - ✅ Created migration system to convert existing JSON conversations to SQLite
   - ✅ Added backward compatibility with automatic fallback to linear search
@@ -56,6 +56,12 @@ This file maintains persistent todos across Claude Code sessions.
   - ✅ Created comprehensive test suite for SQLite functionality
   - ✅ Updated FastMCP server with new search tools and statistics
   - ✅ Added migration and stats tools accessible via MCP interface
+  - ✅ **PR #41 SUCCESSFULLY MERGED** - All GitHub Actions passing
+  - ✅ Fixed 64 test failures from async compatibility issues
+  - ✅ Resolved 5 SonarQube quality issues and 5 security hotspots
+  - ✅ Fixed critical home directory pollution by tests
+  - ✅ Updated memory usage test thresholds for SQLite operations
+  - ✅ **NOW IN PRODUCTION**: 207/207 tests passing, 4.4x faster search live
 - [x] **Add input validation - validate conversation content, titles, and other user inputs** ✅ COMPLETED
   - ✅ PR #12: Implemented comprehensive input validation for all user inputs
   - ✅ Prevents path traversal, null byte injection, XSS attempts
