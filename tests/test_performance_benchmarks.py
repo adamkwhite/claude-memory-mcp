@@ -274,7 +274,8 @@ class TestSearchPerformance:
 class TestWritePerformance:
     """Test write operation performance."""
     
-    def test_add_conversation_performance(self, benchmark_results, performance_metrics):
+    @pytest.mark.asyncio
+    async def test_add_conversation_performance(self, benchmark_results, performance_metrics):
         """Test performance of adding conversations."""
         temp_dir = tempfile.mkdtemp(prefix="write_perf_test_")
         
@@ -294,13 +295,13 @@ class TestWritePerformance:
             
             for size_name, content in test_cases:
                 # Warm up
-                server.add_conversation(content, f"Warmup {size_name}", datetime.now().isoformat())
+                await server.add_conversation(content, f"Warmup {size_name}", datetime.now().isoformat())
                 
                 # Measure performance (average of 10 writes)
                 durations = []
                 for i in range(10):
                     performance_metrics.start()
-                    result = server.add_conversation(
+                    result = await server.add_conversation(
                         content,
                         f"Performance test {size_name} {i}",
                         datetime.now().isoformat()
@@ -333,14 +334,15 @@ class TestWeeklySummaryPerformance:
     """Test weekly summary generation performance."""
     
     @pytest.mark.parametrize("week_conversation_count", [10, 50, 100])
-    def test_weekly_summary_performance(self, test_data_path, week_conversation_count,
+    @pytest.mark.asyncio
+    async def test_weekly_summary_performance(self, test_data_path, week_conversation_count,
                                       benchmark_results, performance_metrics):
         """Test weekly summary generation with different conversation counts."""
         server = ConversationMemoryServer(str(test_data_path))
         
         # Generate weekly summary
         performance_metrics.start()
-        summary = server.generate_weekly_summary(0)  # Current week
+        summary = await server.generate_weekly_summary(0)  # Current week
         metrics = performance_metrics.stop()
         
         benchmark_results.add_result(

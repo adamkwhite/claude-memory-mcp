@@ -168,7 +168,7 @@ class TestServerExceptionCoverage(unittest.TestCase):
             result = server._analyze_conversations([mock_conv_info])
             
             # Should handle the error gracefully and return default values
-            self.assertIsInstance(result, tuple)
+            self.assertIsInstance(result, list)
     
     def test_initialization_with_invalid_permissions(self):
         """Test server initialization with permission issues"""

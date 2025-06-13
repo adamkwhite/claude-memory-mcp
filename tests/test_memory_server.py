@@ -161,7 +161,7 @@ class TestStandaloneMemoryServer:
         )
         
         # Check index.json
-        index_file = Path(temp_storage) / "conversations" / "index.json"
+        index_file = Path(temp_storage) / "data" / "conversations" / "index.json"
         with open(index_file, 'r') as f:
             index_data = json.load(f)
         
@@ -172,7 +172,7 @@ class TestStandaloneMemoryServer:
         assert 'file_path' in conv
         
         # Check topics.json
-        topics_file = Path(temp_storage) / "conversations" / "topics.json"
+        topics_file = Path(temp_storage) / "data" / "conversations" / "topics.json"
         with open(topics_file, 'r') as f:
             topics_data = json.load(f)
         
@@ -192,7 +192,7 @@ class TestStandaloneMemoryServer:
         # Check that it's in the correct year/month folder
         assert "2025" in str(file_path)
         assert "03-march" in str(file_path)
-        assert file_path.name.startswith("2025-03-15")
+        assert file_path.name.startswith("conv_20250315")
 
     @pytest.mark.asyncio
     async def test_search_scoring(self, standalone_server):
