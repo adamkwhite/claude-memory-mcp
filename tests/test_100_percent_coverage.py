@@ -148,7 +148,7 @@ class TestCompleteEdgeCaseCoverage:
             fake_path.touch()
             
             # This calls _update_index internally which should handle the exception
-            server.add_conversation("Test content", test_title, test_date.isoformat())
+            await server.add_conversation("Test content", test_title, test_date.isoformat())
             
         finally:
             # Restore permissions
@@ -208,19 +208,19 @@ class TestCompleteEdgeCaseCoverage:
         current_time = datetime.now()
         
         # Add conversations that will trigger all the content analysis paths
-        server.add_conversation(
+        await server.add_conversation(
             "Writing code for a new function with class definitions and import statements",
             "Coding with Code Keywords",
             current_time.isoformat()
         )
         
-        server.add_conversation(
+        await server.add_conversation(
             "We decided on this approach and I recommend using this solution",
             "Decision with Recommendation",
             current_time.isoformat()
         )
         
-        server.add_conversation(
+        await server.add_conversation(
             "Learning how to understand and explain complex tutorial concepts",
             "Learning How To",
             current_time.isoformat()
@@ -265,7 +265,7 @@ class TestCompleteEdgeCaseCoverage:
         from datetime import datetime
         # Use local time to match generate_weekly_summary behavior
         current_week_date = datetime.now().strftime("%Y-%m-%dT%H:%M:%S")
-        server.add_conversation(
+        await server.add_conversation(
             "Python programming discussion", 
             "Python Talk", 
             current_week_date
@@ -302,7 +302,7 @@ class TestCompleteEdgeCaseCoverage:
         current_week_date = now.strftime("%Y-%m-%dT%H:%M:%S")
         
         # Add test conversation for current week
-        server.add_conversation(
+        await server.add_conversation(
             "Technical discussion about API design", 
             "API Design", 
             current_week_date
@@ -319,7 +319,7 @@ class TestCompleteEdgeCaseCoverage:
         """Test weekly summary file saving functionality"""
         current_time = datetime.now()
         
-        server.add_conversation(
+        await server.add_conversation(
             "Test conversation for file saving verification",
             "File Save Test",
             current_time.isoformat()
@@ -572,7 +572,7 @@ Line 5: Final line"""
         import json
         
         # First add a normal conversation
-        server.add_conversation(
+        await server.add_conversation(
             "Test conversation",
             "Test",
             datetime.now(timezone.utc).isoformat()
@@ -649,7 +649,7 @@ class TestMCPToolWrapperFunctions:
         from server_fastmcp import search_conversations as mcp_search
         
         # Add test data
-        server.add_conversation(
+        await server.add_conversation(
             "Test conversation for MCP search formatting",
             "Test Formatting",
             "2025-06-02T10:00:00Z"
@@ -685,7 +685,7 @@ class TestMCPToolWrapperFunctions:
         
         # Add some test data
         current_time = datetime.now().isoformat()
-        server.add_conversation(
+        await server.add_conversation(
             "Weekly summary test conversation",
             "Weekly Test",
             current_time
@@ -705,7 +705,7 @@ class TestMCPToolWrapperFunctions:
         now = datetime.now()
         current_week_date = now.strftime("%Y-%m-%dT%H:%M:%S")
         
-        server.add_conversation(
+        await server.add_conversation(
             "Test with many topics for truncation",
             "Many Topics Test",
             current_week_date
@@ -742,7 +742,7 @@ class TestMCPToolWrapperFunctions:
         import unittest.mock
         
         with unittest.mock.patch.object(server, '_get_week_conversations', side_effect=OSError("Test error")):
-            summary_with_error = server.generate_weekly_summary(0)
+            summary_with_error = await server.generate_weekly_summary(0)
             assert "Failed to generate weekly summary" in summary_with_error
         
         # Test lines 378-379: Error handling in MCP search tool
