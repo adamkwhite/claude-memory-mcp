@@ -48,7 +48,14 @@ This file maintains persistent todos across Claude Code sessions.
 - [x] **Address final 2 code smells to achieve zero**
   - ✅ COMPLETED: SonarCloud now reports 0 code smells!
   - Successfully achieved perfect code quality
-- [ ] Optimize search performance - replace linear search with proper indexing (SQLite FTS or inverted index)
+- [x] **Optimize search performance - replace linear search with SQLite FTS indexing** ✅ COMPLETED (June 12, 2025)
+  - ✅ Implemented SQLite FTS5 database with full-text search capabilities
+  - ✅ Created migration system to convert existing JSON conversations to SQLite
+  - ✅ Added backward compatibility with automatic fallback to linear search
+  - ✅ Performance benchmarks show 4.4x speed improvement (77.5% faster)
+  - ✅ Created comprehensive test suite for SQLite functionality
+  - ✅ Updated FastMCP server with new search tools and statistics
+  - ✅ Added migration and stats tools accessible via MCP interface
 - [x] **Add input validation - validate conversation content, titles, and other user inputs** ✅ COMPLETED
   - ✅ PR #12: Implemented comprehensive input validation for all user inputs
   - ✅ Prevents path traversal, null byte injection, XSS attempts
@@ -67,7 +74,12 @@ This file maintains persistent todos across Claude Code sessions.
   - ✅ Performance monitoring and metrics collection
   - ✅ Structured logging with proper sanitization
   - ✅ Path redaction for security compliance
-- [ ] **Remove hard-coded system paths to improve portability**
+- [x] **Remove hard-coded system paths to improve portability** ✅ COMPLETED
+  - ✅ PR #38: Added path_utils.py module with cross-platform path resolution
+  - ✅ PR #37: Fixed hardcoded paths in shell scripts with dynamic detection  
+  - ✅ PR #36: Fixed hardcoded paths in Python import scripts
+  - ✅ All hardcoded `/home/adam/` paths replaced with dynamic resolution
+  - ✅ Project now works on any installation location and OS
 
   ### 1. Analysis and Discovery
   

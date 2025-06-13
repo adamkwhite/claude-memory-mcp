@@ -13,9 +13,19 @@ import re
 from typing import Dict, List, Optional, Any
 import logging
 
+try:
+    from .search_database import SearchDatabase
+    SQLITE_AVAILABLE = True
+except ImportError:
+    try:
+        from search_database import SearchDatabase
+        SQLITE_AVAILABLE = True
+    except ImportError:
+        SQLITE_AVAILABLE = False
+
 
 class ConversationMemoryServer:
-    def __init__(self, storage_path: str = "~/claude-memory", use_data_dir: bool = None):
+    def __init__(self, storage_path: str = "~/claude-memory", use_data_dir: bool = None, enable_sqlite: bool = True):
         self.storage_path = Path(storage_path).expanduser()
         
         # Auto-detect directory structure if not specified
@@ -37,6 +47,20 @@ class ConversationMemoryServer:
         
         # Initialize logger
         self.logger = logging.getLogger(__name__)
+        
+        # Initialize SQLite search database if available and enabled
+        self.search_db = None
+        self.use_sqlite_search = False
+        
+        if enable_sqlite and SQLITE_AVAILABLE:
+            try:
+                db_path = self.conversations_path / "search.db"
+                self.search_db = SearchDatabase(str(db_path))
+                self.use_sqlite_search = True
+                self.logger.info("SQLite FTS search enabled")
+            except Exception as e:
+                self.logger.warning(f"Failed to initialize SQLite search: {e}")
+                self.use_sqlite_search = False
         
         # Ensure directories exist
         self.conversations_path.mkdir(parents=True, exist_ok=True)
@@ -174,6 +198,11 @@ class ConversationMemoryServer:
             # Update topics index
             self._update_topics_index(topics, conversation_id)
             
+            # Add to SQLite search database if available
+            if self.use_sqlite_search and self.search_db:
+                relative_path = str(file_path.relative_to(self.storage_path))
+                self.search_db.add_conversation(conversation_data, relative_path)
+            
             return {
                 "status": "success",
                 "file_path": str(file_path),
@@ -229,6 +258,15 @@ class ConversationMemoryServer:
 
     def search_conversations(self, query: str, limit: int = 10) -> List[Dict[str, Any]]:
         """Search conversations by content and topics"""
+        # Use SQLite FTS search if available and enabled
+        if self.use_sqlite_search and self.search_db:
+            try:
+                return self.search_db.search_conversations(query, limit)
+            except Exception as e:
+                self.logger.warning(f"SQLite search failed, falling back to linear search: {e}")
+                # Fall through to linear search
+        
+        # Fallback to linear search through JSON files
         try:
             # Load index
             with open(self.index_file, 'r') as f:
@@ -445,3 +483,82 @@ class ConversationMemoryServer:
             summary_parts.append(conv_line)
 
         return "\n".join(summary_parts)
+    
+    def get_search_stats(self) -> Dict[str, Any]:
+        """Get search engine statistics and status."""
+        stats = {
+            "sqlite_available": SQLITE_AVAILABLE,
+            "sqlite_enabled": self.use_sqlite_search,
+            "search_engine": "sqlite_fts" if self.use_sqlite_search else "linear_json"
+        }
+        
+        if self.use_sqlite_search and self.search_db:
+            try:
+                db_stats = self.search_db.get_conversation_stats()
+                stats.update(db_stats)
+            except Exception as e:
+                stats["sqlite_error"] = str(e)
+        
+        return stats
+    
+    def migrate_to_sqlite(self) -> Dict[str, Any]:
+        """Migrate existing conversations to SQLite database."""
+        if not SQLITE_AVAILABLE:
+            return {"error": "SQLite not available"}
+        
+        if not self.use_sqlite_search:
+            return {"error": "SQLite search not enabled"}
+        
+        try:
+            from .migrate_to_sqlite import ConversationMigrator
+            
+            # Determine directory structure
+            use_data_dir = (self.conversations_path.parent.name == "data")
+            
+            migrator = ConversationMigrator(str(self.storage_path), use_data_dir)
+            migration_stats = migrator.migrate_all_conversations()
+            
+            return migration_stats
+            
+        except ImportError:
+            return {"error": "Migration module not available"}
+        except Exception as e:
+            return {"error": f"Migration failed: {str(e)}"}
+    
+    def search_by_topic(self, topic: str, limit: int = 10) -> List[Dict[str, Any]]:
+        """Search conversations by specific topic."""
+        if self.use_sqlite_search and self.search_db:
+            try:
+                return self.search_db.search_by_topic(topic, limit)
+            except Exception as e:
+                self.logger.warning(f"SQLite topic search failed: {e}")
+        
+        # Fallback to JSON-based topic search
+        try:
+            with open(self.topics_file, 'r') as f:
+                topics_data = json.load(f)
+            
+            topics_index = topics_data.get("topics", {})
+            
+            if topic not in topics_index:
+                return []
+            
+            # Get conversation IDs for this topic
+            topic_convs = topics_index[topic]
+            
+            # Load conversation details
+            results = []
+            for topic_conv in topic_convs[:limit]:
+                conv_id = topic_conv.get("conversation_id")
+                if conv_id:
+                    preview = self.get_preview(conv_id)
+                    if preview and "not found" not in preview.lower():
+                        results.append({
+                            "id": conv_id,
+                            "preview": preview[:200] + "..." if len(preview) > 200 else preview
+                        })
+            
+            return results
+            
+        except (OSError, ValueError, KeyError, TypeError) as e:
+            return [{"error": f"Topic search failed: {str(e)}"}]
