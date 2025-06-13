@@ -232,17 +232,24 @@ class TestConversationMemoryServerSQLite:
         await memory_server_sqlite.add_conversation(content, title)
         await memory_server_linear.add_conversation(content, title)
         
-        # Search both
-        sqlite_results = await memory_server_sqlite.search_conversations("python")
-        linear_results = await memory_server_linear.search_conversations("python")
+        # Search both with a more specific term to avoid conflicts with other tests
+        sqlite_results = await memory_server_sqlite.search_conversations("FastAPI")
+        linear_results = await memory_server_linear.search_conversations("FastAPI")
         
         # Should find the conversation in both
-        assert len(sqlite_results) == 1
-        assert len(linear_results) == 1
+        assert len(sqlite_results) >= 1
+        assert len(linear_results) >= 1
+        
+        # Find matching conversations (both should have the specific title)
+        sqlite_conv = next((r for r in sqlite_results if r["title"] == title), None)
+        linear_conv = next((r for r in linear_results if r["title"] == title), None)
+        
+        assert sqlite_conv is not None, "SQLite should find the added conversation"
+        assert linear_conv is not None, "Linear search should find the added conversation"
         
         # IDs should match (both use same generation logic)
-        assert sqlite_results[0]["id"] == linear_results[0]["id"]
-        assert sqlite_results[0]["title"] == linear_results[0]["title"]
+        assert sqlite_conv["id"] == linear_conv["id"]
+        assert sqlite_conv["title"] == linear_conv["title"]
     
     @pytest.mark.asyncio
     async def test_topic_search(self, memory_server_sqlite):
