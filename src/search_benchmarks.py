@@ -8,7 +8,7 @@ and provides detailed performance comparisons.
 
 import time
 import json
-import random
+import random  # nosec B311 - Used for test data generation, not security purposes
 import string
 import statistics
 from pathlib import Path
@@ -59,8 +59,8 @@ class SearchBenchmark:
         
         for i in range(num_conversations):
             # Generate realistic conversation content
-            num_topics = random.randint(2, 5)
-            selected_topics = random.sample(tech_terms, num_topics)
+            num_topics = random.randint(2, 5)  # nosec B311 - Test data generation only
+            selected_topics = random.sample(tech_terms, num_topics)  # nosec B311 - Test data generation only
             
             # Create conversation content with topics
             content_parts = []
@@ -76,8 +76,8 @@ class SearchBenchmark:
                     f"The documentation for {topic} mentions that"
                 ]
                 
-                template = random.choice(sentence_templates)
-                random_detail = ''.join(random.choices(string.ascii_lowercase + ' ', k=50))
+                template = random.choice(sentence_templates)  # nosec B311 - Test data generation only
+                random_detail = ''.join(random.choices(string.ascii_lowercase + ' ', k=50))  # nosec B311 - Test data generation only
                 content_parts.append(f"{template} {random_detail}")
             
             content = ". ".join(content_parts)
