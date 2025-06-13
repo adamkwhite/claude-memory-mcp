@@ -257,7 +257,7 @@ class TestDataGenerator:
             
         return title, content
     
-    def generate_dataset(self, num_conversations: int, start_date: datetime = None) -> Dict[str, any]:
+    async def generate_dataset(self, num_conversations: int, start_date: datetime = None) -> Dict[str, any]:
         """Generate a complete dataset of conversations."""
         if start_date is None:
             start_date = datetime.now() - timedelta(days=90)  # 3 months ago
@@ -290,7 +290,7 @@ class TestDataGenerator:
             timestamp = start_date + timedelta(days=days_offset, hours=hours_offset)
             
             # Add conversation
-            result = self.server.add_conversation(
+            result = await self.server.add_conversation(
                 content=content,
                 title=title,
                 conversation_date=timestamp.isoformat()
@@ -352,7 +352,7 @@ class TestDataGenerator:
                 print(f"⚠️  Size difference: {size_diff:.2f}MB")
 
 
-def main():
+async def main():
     """Main entry point."""
     import argparse
     
@@ -378,7 +378,7 @@ def main():
     generator = TestDataGenerator(args.storage_path)
     print(f"Generating {args.conversations} conversations...")
     
-    stats = generator.generate_dataset(args.conversations)
+    stats = await generator.generate_dataset(args.conversations)
     generator.print_stats(stats)
     
     # Save stats
@@ -389,4 +389,5 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    import asyncio
+    asyncio.run(main())

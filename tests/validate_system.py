@@ -10,7 +10,7 @@ from pathlib import Path
 # Add the project root to path using dynamic resolution
 project_root = Path(__file__).parent.parent
 sys.path.insert(0, str(project_root))
-from server_fastmcp import ConversationMemoryServer
+from conversation_memory import ConversationMemoryServer
 
 async def validate_memory_system():
     """Run validation tests on the memory system"""

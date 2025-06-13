@@ -21,19 +21,19 @@ sys.path.insert(0, str(project_root / 'src'))
 sys.path.insert(0, str(project_root / 'tests'))
 
 try:
-    from server_fastmcp import ConversationMemoryServer
+    from conversation_memory import ConversationMemoryServer
     FASTMCP_AVAILABLE = True
 except ImportError:
     FASTMCP_AVAILABLE = False
-from standalone_test import ConversationMemoryServer as StandaloneServer
+from conversation_memory import ConversationMemoryServer as StandaloneServer
 
 
 @pytest.fixture
 def temp_storage():
     """Create a temporary storage directory for testing"""
-    # Create temp dir in home directory to pass security validation
-    home_dir = Path.home()
-    temp_dir = tempfile.mkdtemp(prefix="claude_memory_test_", dir=str(home_dir))
+    # Create temp dir in project directory to pass security validation
+    project_root = Path(__file__).parent.parent
+    temp_dir = tempfile.mkdtemp(prefix="claude_memory_test_", dir=str(project_root))
     yield temp_dir
     shutil.rmtree(temp_dir, ignore_errors=True)
 
@@ -70,14 +70,14 @@ class TestStandaloneMemoryServer:
         """Test that server initializes properly"""
         server = StandaloneServer(temp_storage)
         
-        # Check that directories were created
-        assert (Path(temp_storage) / "conversations").exists()
-        assert (Path(temp_storage) / "summaries").exists()
-        assert (Path(temp_storage) / "summaries" / "weekly").exists()
+        # Check that directories were created (using new data/ structure)
+        assert (Path(temp_storage) / "data" / "conversations").exists()
+        assert (Path(temp_storage) / "data" / "summaries").exists()
+        assert (Path(temp_storage) / "data" / "summaries" / "weekly").exists()
         
         # Check that index files were created
-        assert (Path(temp_storage) / "conversations" / "index.json").exists()
-        assert (Path(temp_storage) / "conversations" / "topics.json").exists()
+        assert (Path(temp_storage) / "data" / "conversations" / "index.json").exists()
+        assert (Path(temp_storage) / "data" / "conversations" / "topics.json").exists()
 
     @pytest.mark.asyncio
     async def test_add_conversation(self, standalone_server, sample_conversation_content):
@@ -85,7 +85,7 @@ class TestStandaloneMemoryServer:
         result = await standalone_server.add_conversation(
             content=sample_conversation_content,
             title="MCP Server Setup Discussion",
-            date="2025-01-15T10:30:00"
+            conversation_date="2025-01-15T10:30:00"
         )
         
         assert result['status'] == 'success'
@@ -105,7 +105,7 @@ class TestStandaloneMemoryServer:
         await standalone_server.add_conversation(
             content=sample_conversation_content,
             title="MCP Server Setup Discussion",
-            date="2025-01-15T10:30:00"
+            conversation_date="2025-01-15T10:30:00"
         )
         
         # Then search for it
@@ -119,7 +119,8 @@ class TestStandaloneMemoryServer:
         assert 'title' in first_result
         assert 'score' in first_result
         assert 'topics' in first_result
-        assert first_result['score'] > 0
+        # SQLite FTS5 BM25 scores can be negative, so just check it exists
+        assert isinstance(first_result['score'], (int, float))
 
     @pytest.mark.asyncio
     async def test_topic_extraction(self, standalone_server):
@@ -133,7 +134,7 @@ class TestStandaloneMemoryServer:
         result = await standalone_server.add_conversation(
             content=content_with_topics,
             title="Tech Discussion",
-            date="2025-01-15T11:00:00"
+            conversation_date="2025-01-15T11:00:00"
         )
         
         topics = result['topics']
@@ -156,11 +157,11 @@ class TestStandaloneMemoryServer:
         await standalone_server.add_conversation(
             content=sample_conversation_content,
             title="Test Conversation",
-            date="2025-01-15T10:30:00"
+            conversation_date="2025-01-15T10:30:00"
         )
         
         # Check index.json
-        index_file = Path(temp_storage) / "conversations" / "index.json"
+        index_file = Path(temp_storage) / "data" / "conversations" / "index.json"
         with open(index_file, 'r') as f:
             index_data = json.load(f)
         
@@ -171,7 +172,7 @@ class TestStandaloneMemoryServer:
         assert 'file_path' in conv
         
         # Check topics.json
-        topics_file = Path(temp_storage) / "conversations" / "topics.json"
+        topics_file = Path(temp_storage) / "data" / "conversations" / "topics.json"
         with open(topics_file, 'r') as f:
             topics_data = json.load(f)
         
@@ -183,7 +184,7 @@ class TestStandaloneMemoryServer:
         result = await standalone_server.add_conversation(
             content=sample_conversation_content,
             title="Date Test Conversation",
-            date="2025-03-15T14:30:00"
+            conversation_date="2025-03-15T14:30:00"
         )
         
         file_path = Path(result['file_path'])
@@ -191,7 +192,7 @@ class TestStandaloneMemoryServer:
         # Check that it's in the correct year/month folder
         assert "2025" in str(file_path)
         assert "03-march" in str(file_path)
-        assert file_path.name.startswith("2025-03-15")
+        assert file_path.name.startswith("conv_20250315")
 
     @pytest.mark.asyncio
     async def test_search_scoring(self, standalone_server):
@@ -200,13 +201,13 @@ class TestStandaloneMemoryServer:
         await standalone_server.add_conversation(
             content="Python programming with MCP server development",
             title="High Score Conversation",
-            date="2025-01-15T10:00:00"
+            conversation_date="2025-01-15T10:00:00"
         )
         
         await standalone_server.add_conversation(
             content="Discussion about general programming concepts",
             title="Low Score Conversation", 
-            date="2025-01-15T11:00:00"
+            conversation_date="2025-01-15T11:00:00"
         )
         
         # Search for python
@@ -230,7 +231,7 @@ class TestStandaloneMemoryServer:
         result = await standalone_server.add_conversation(
             content=sample_conversation_content,
             title="Invalid Date Test",
-            date="invalid-date-format"
+            conversation_date="invalid-date-format"
         )
         
         # Should handle error gracefully (may succeed or fail depending on implementation)
@@ -279,7 +280,7 @@ class TestCoverageTarget:
         result = await standalone_server.add_conversation(
             content="Test content",
             title="Error Test",
-            date="2025-01-15T10:30:00"
+            conversation_date="2025-01-15T10:30:00"
         )
         
         # Should succeed by recreating directories
@@ -345,7 +346,7 @@ Line 5: Final line
         result = await standalone_server.add_conversation(
             content=content,
             title="Preview Test",
-            date="2025-01-15T10:30:00"
+            conversation_date="2025-01-15T10:30:00"
         )
         
         file_path = Path(result['file_path'])
@@ -371,7 +372,7 @@ class TestServerIntegration:
         test_conversation = {
             "content": "This is a test conversation about Python programming",
             "title": "Python Test",
-            "date": "2024-01-01T10:00:00Z"
+            "conversation_date": "2024-01-01T10:00:00Z"
         }
         
         result = await server.add_conversation(**test_conversation)
