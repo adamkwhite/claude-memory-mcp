@@ -371,7 +371,7 @@ class TestServerIntegration:
         test_conversation = {
             "content": "This is a test conversation about Python programming",
             "title": "Python Test",
-            "date": "2024-01-01T10:00:00Z"
+            "conversation_date": "2024-01-01T10:00:00Z"
         }
         
         result = await server.add_conversation(**test_conversation)
