@@ -208,6 +208,61 @@ source claude-memory-mcp-venv/bin/activate && python -m pytest tests/ --ignore=t
 
 This prevents back-and-forth in PRs due to test failures.
 
+### **⚠️ CRITICAL: Lessons Learned from Process Failures**
+
+**Based on SQLite FTS Search Optimization implementation (June 2025), the following workflow violations caused significant impact:**
+
+**NEVER DO THIS:**
+- ❌ Skip local testing before commits ("I'll test in CI/CD")
+- ❌ Push changes without running full test suite first
+- ❌ Create reactive "fix-as-we-go" PRs with multiple failure cycles
+- ❌ Submit PRs before validating compatibility with existing systems
+- ❌ Ignore async compatibility analysis for major changes
+
+**CONSEQUENCES OF WORKFLOW VIOLATIONS:**
+- **Technical Impact**: 64+ test failures, hours of reactive debugging
+- **Team Impact**: Multiple back-and-forth cycles, wasted review time
+- **Process Impact**: CI/CD pipeline blocked, delayed other features
+- **Quality Impact**: Reactive fixes instead of systematic solutions
+
+**MANDATORY PREVENTIVE MEASURES:**
+1. **Pre-Commit Validation**: ALWAYS run local test suite before first commit
+2. **Compatibility Analysis**: Plan async/breaking changes before implementation
+3. **Script Dependencies**: Test all supporting scripts locally before CI/CD
+4. **Systematic Approach**: Complete planning phase before coding phase
+5. **Zero-Defect PRs**: Only submit PRs after local validation passes
+
+**ACCOUNTABILITY:**
+- Local testing is **NON-NEGOTIABLE** - no exceptions for "minor" changes
+- "Speed over quality" approach is **explicitly prohibited**
+- Process shortcuts that create technical debt are **unacceptable**
+- Reactive debugging in PRs indicates **insufficient upfront planning**
+
+### **📋 PRE-COMMIT CHECKLIST (MANDATORY)**
+
+**Before making ANY commit to ANY branch:**
+
+- [ ] **1. Run Full Test Suite Locally**
+  ```bash
+  source claude-memory-mcp-venv/bin/activate && python -m pytest tests/ --ignore=tests/standalone_test.py --cov=src --cov-report=term -v
+  ```
+- [ ] **2. Verify All Tests Pass** (expect 207+ passing tests)
+- [ ] **3. Check Coverage Baseline** (expect ≥94% coverage)
+- [ ] **4. Test Supporting Scripts** (if modified any scripts/ files)
+- [ ] **5. Validate Async Compatibility** (if modified async methods)
+- [ ] **6. Run SonarQube Locally** (if available)
+- [ ] **7. Document Breaking Changes** (if any API changes)
+
+**Before creating ANY Pull Request:**
+
+- [ ] **8. Re-run Full Test Suite** (final validation)
+- [ ] **9. Review All Changed Files** (ensure no debug code, console.log, etc.)
+- [ ] **10. Write Descriptive PR Description** (what, why, how, testing done)
+- [ ] **11. Self-Review Changes** (would you approve this PR?)
+- [ ] **12. Verify No Merge Conflicts** (rebase if needed)
+
+**⚠️ ZERO TOLERANCE:** Committing without completing this checklist violates workflow standards and creates technical debt.
+
 **GitHub Actions Workflow Notes:**
 - ✅ **Fixed**: SonarQube Badge action no longer runs during PR builds (PR #31)
 - **Two build phases**: PR testing (cannot push) + post-merge execution (can push badges)
