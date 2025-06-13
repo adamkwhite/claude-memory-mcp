@@ -172,13 +172,13 @@ class TestSearchPerformance:
             
             for query, description in search_queries:
                 # Warm up
-                server.search_conversations(query, limit=5)
+                await server.search_conversations(query, limit=5)
                 
                 # Measure performance (average of 3 runs)
                 durations = []
                 for _ in range(3):
                     performance_metrics.start()
-                    results = server.search_conversations(query, limit=10)
+                    results = await server.search_conversations(query, limit=10)
                     metrics = performance_metrics.stop()
                     durations.append(metrics["duration_seconds"])
                 
@@ -214,7 +214,7 @@ class TestSearchPerformance:
         performance_metrics.start()
         
         for i in range(100):
-            server.search_conversations("python testing", limit=20)
+            await server.search_conversations("python testing", limit=20)
             
         metrics = performance_metrics.stop()
         
@@ -375,7 +375,7 @@ class TestOverallPerformance:
         max_duration = 0
         for query in queries:
             start = time.time()
-            results = server.search_conversations(query, limit=10)
+            results = await server.search_conversations(query, limit=10)
             duration = time.time() - start
             max_duration = max(max_duration, duration)
             

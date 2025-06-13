@@ -70,14 +70,14 @@ class TestStandaloneMemoryServer:
         """Test that server initializes properly"""
         server = StandaloneServer(temp_storage)
         
-        # Check that directories were created
-        assert (Path(temp_storage) / "conversations").exists()
-        assert (Path(temp_storage) / "summaries").exists()
-        assert (Path(temp_storage) / "summaries" / "weekly").exists()
+        # Check that directories were created (using new data/ structure)
+        assert (Path(temp_storage) / "data" / "conversations").exists()
+        assert (Path(temp_storage) / "data" / "summaries").exists()
+        assert (Path(temp_storage) / "data" / "summaries" / "weekly").exists()
         
         # Check that index files were created
-        assert (Path(temp_storage) / "conversations" / "index.json").exists()
-        assert (Path(temp_storage) / "conversations" / "topics.json").exists()
+        assert (Path(temp_storage) / "data" / "conversations" / "index.json").exists()
+        assert (Path(temp_storage) / "data" / "conversations" / "topics.json").exists()
 
     @pytest.mark.asyncio
     async def test_add_conversation(self, standalone_server, sample_conversation_content):
