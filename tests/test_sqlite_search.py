@@ -187,50 +187,54 @@ class TestConversationMemoryServerSQLite:
             enable_sqlite=False
         )
     
-    def test_sqlite_initialization(self, memory_server_sqlite):
+    @pytest.mark.asyncio
+    async def test_sqlite_initialization(self, memory_server_sqlite):
         """Test SQLite search is properly initialized."""
         assert memory_server_sqlite.use_sqlite_search is True
         assert memory_server_sqlite.search_db is not None
         
-        stats = memory_server_sqlite.get_search_stats()
+        stats = await memory_server_sqlite.get_search_stats()
         assert stats["sqlite_available"] is True
         assert stats["sqlite_enabled"] is True
         assert stats["search_engine"] == "sqlite_fts"
     
-    def test_linear_fallback(self, memory_server_linear):
+    @pytest.mark.asyncio
+    async def test_linear_fallback(self, memory_server_linear):
         """Test linear search fallback when SQLite disabled."""
         assert memory_server_linear.use_sqlite_search is False
         assert memory_server_linear.search_db is None
         
-        stats = memory_server_linear.get_search_stats()
+        stats = await memory_server_linear.get_search_stats()
         assert stats["sqlite_enabled"] is False
         assert stats["search_engine"] == "linear_json"
     
-    def test_add_conversation_with_sqlite(self, memory_server_sqlite):
+    @pytest.mark.asyncio
+    async def test_add_conversation_with_sqlite(self, memory_server_sqlite):
         """Test adding conversation updates both JSON and SQLite."""
         content = "Testing SQLite integration with Python FastAPI"
         title = "SQLite Test"
         
-        result = memory_server_sqlite.add_conversation(content, title)
+        result = await memory_server_sqlite.add_conversation(content, title)
         assert result["status"] == "success"
         
         # Verify conversation is in SQLite
-        search_results = memory_server_sqlite.search_conversations("SQLite")
+        search_results = await memory_server_sqlite.search_conversations("SQLite")
         assert len(search_results) == 1
         assert search_results[0]["title"] == title
     
-    def test_search_consistency(self, memory_server_sqlite, memory_server_linear):
+    @pytest.mark.asyncio
+    async def test_search_consistency(self, memory_server_sqlite, memory_server_linear):
         """Test that SQLite and linear search return consistent results."""
         content = "Python programming with async/await patterns and FastAPI framework"
         title = "Python Async Programming"
         
         # Add to both servers
-        memory_server_sqlite.add_conversation(content, title)
-        memory_server_linear.add_conversation(content, title)
+        await memory_server_sqlite.add_conversation(content, title)
+        await memory_server_linear.add_conversation(content, title)
         
         # Search both
-        sqlite_results = memory_server_sqlite.search_conversations("python")
-        linear_results = memory_server_linear.search_conversations("python")
+        sqlite_results = await memory_server_sqlite.search_conversations("python")
+        linear_results = await memory_server_linear.search_conversations("python")
         
         # Should find the conversation in both
         assert len(sqlite_results) == 1
@@ -240,29 +244,31 @@ class TestConversationMemoryServerSQLite:
         assert sqlite_results[0]["id"] == linear_results[0]["id"]
         assert sqlite_results[0]["title"] == linear_results[0]["title"]
     
-    def test_topic_search(self, memory_server_sqlite):
+    @pytest.mark.asyncio
+    async def test_topic_search(self, memory_server_sqlite):
         """Test topic-based search functionality."""
         content = "Discussion about machine learning algorithms and data science"
         title = "ML Discussion"
         
-        memory_server_sqlite.add_conversation(content, title)
+        await memory_server_sqlite.add_conversation(content, title)
         
         # Test topic search
-        results = memory_server_sqlite.search_by_topic("machine learning")
+        results = await memory_server_sqlite.search_by_topic("machine learning")
         assert len(results) >= 0  # Topic extraction might vary
     
-    def test_search_stats(self, memory_server_sqlite):
+    @pytest.mark.asyncio
+    async def test_search_stats(self, memory_server_sqlite):
         """Test search statistics functionality."""
-        stats = memory_server_sqlite.get_search_stats()
+        stats = await memory_server_sqlite.get_search_stats()
         
         required_keys = ["sqlite_available", "sqlite_enabled", "search_engine"]
         for key in required_keys:
             assert key in stats
         
         # Add conversation and check stats update
-        memory_server_sqlite.add_conversation("Test content", "Test title")
+        await memory_server_sqlite.add_conversation("Test content", "Test title")
         
-        updated_stats = memory_server_sqlite.get_search_stats()
+        updated_stats = await memory_server_sqlite.get_search_stats()
         if "total_conversations" in updated_stats:
             assert updated_stats["total_conversations"] >= 1
 
@@ -391,7 +397,8 @@ class TestPerformanceComparison:
         
         return conversations
     
-    def test_search_performance_comparison(self, performance_test_data):
+    @pytest.mark.asyncio
+    async def test_search_performance_comparison(self, performance_test_data):
         """Test that SQLite search performs reasonably compared to linear search."""
         import time
         
@@ -412,8 +419,8 @@ class TestPerformanceComparison:
             
             # Add test data
             for conv in performance_test_data:
-                sqlite_server.add_conversation(conv["content"], conv["title"])
-                linear_server.add_conversation(conv["content"], conv["title"])
+                await sqlite_server.add_conversation(conv["content"], conv["title"])
+                await linear_server.add_conversation(conv["content"], conv["title"])
             
             # Test search performance
             test_queries = ["python", "javascript", "database"]
@@ -421,12 +428,12 @@ class TestPerformanceComparison:
             for query in test_queries:
                 # SQLite search
                 start_time = time.perf_counter()
-                sqlite_results = sqlite_server.search_conversations(query, limit=10)
+                sqlite_results = await sqlite_server.search_conversations(query, limit=10)
                 sqlite_time = time.perf_counter() - start_time
                 
                 # Linear search
                 start_time = time.perf_counter()
-                linear_results = linear_server.search_conversations(query, limit=10)
+                linear_results = await linear_server.search_conversations(query, limit=10)
                 linear_time = time.perf_counter() - start_time
                 
                 # Both should return results
