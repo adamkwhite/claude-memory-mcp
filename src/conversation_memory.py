@@ -381,6 +381,9 @@ class ConversationMemoryServer:
             for topic in topics:
                 if topic not in topics_index:
                     topics_index[topic] = []
+                elif isinstance(topics_index[topic], int):
+                    # Handle legacy format where topics were stored as counts
+                    topics_index[topic] = []
                 
                 topics_index[topic].append({
                     "conversation_id": conversation_id,
