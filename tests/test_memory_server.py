@@ -25,7 +25,7 @@ try:
     FASTMCP_AVAILABLE = True
 except ImportError:
     FASTMCP_AVAILABLE = False
-from standalone_test import ConversationMemoryServer as StandaloneServer
+from conversation_memory import ConversationMemoryServer as StandaloneServer
 
 
 @pytest.fixture

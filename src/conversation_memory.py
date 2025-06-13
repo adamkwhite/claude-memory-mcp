@@ -406,7 +406,10 @@ class ConversationMemoryServer:
 
             week_conversations = self._get_week_conversations(start_of_week, end_of_week)
             if not week_conversations:
-                return f"No conversations found for week of {start_of_week.strftime('%Y-%m-%d')}"
+                if week_offset == 0:
+                    return f"No conversations found for current week ({start_of_week.strftime('%Y-%m-%d')})"
+                else:
+                    return f"No conversations found for week of {start_of_week.strftime('%Y-%m-%d')} ({week_offset} week(s) ago)"
 
             summary_text = self._build_weekly_summary_text(start_of_week, end_of_week, week_conversations)
 
