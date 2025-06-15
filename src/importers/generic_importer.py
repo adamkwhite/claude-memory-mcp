@@ -145,10 +145,33 @@ class GenericImporter(BaseImporter):
                 
                 # Group rows by conversation if possible
                 rows = list(csv_reader)
+                
+                # Handle empty CSV files
+                if not rows:
+                    return ImportResult(
+                        success=False,
+                        conversations_imported=0,
+                        conversations_failed=1,
+                        errors=["CSV file is empty or has no data rows"],
+                        imported_ids=[],
+                        metadata={"source_file": str(file_path), "format_type": "generic_csv", "platform": "generic"}
+                    )
+                
                 conversation_data = self._parse_csv_rows(rows, file_path)
                 
                 if conversation_data:
                     conversations.append(conversation_data)
+            
+            # If no conversations were created but rows existed, treat as failure
+            if not conversations:
+                return ImportResult(
+                    success=False,
+                    conversations_imported=0,
+                    conversations_failed=1,
+                    errors=["No valid conversation data found in CSV"],
+                    imported_ids=[],
+                    metadata={"source_file": str(file_path), "format_type": "generic_csv", "platform": "generic"}
+                )
             
             return self._save_conversations(conversations, file_path, "generic_csv")
             
@@ -609,6 +632,50 @@ class GenericImporter(BaseImporter):
             date=datetime.now(),
             model="unknown",
             metadata={"original_keys": list(data.keys())}
+        )
+    
+    def _parse_list_as_conversation(self, data: List[Any]) -> Dict[str, Any]:
+        """Parse list as conversation - treat as messages array."""
+        messages = []
+        content_parts = []
+        
+        for i, item in enumerate(data):
+            if isinstance(item, dict):
+                # Try to extract role and content from dict
+                role = self._extract_field(item, ["role", "speaker", "user", "author"]) or f"speaker_{i % 2 + 1}"
+                msg_content = self._extract_field(item, ["content", "text", "message"]) or str(item)
+                
+                message = self._create_message(
+                    role=self._normalize_role(role),
+                    content=msg_content,
+                    metadata={"list_index": i, "original": item}
+                )
+                messages.append(message)
+                content_parts.append(f"**{role.title()}**: {msg_content}")
+            else:
+                # Treat non-dict items as content
+                role = f"speaker_{i % 2 + 1}"
+                content = str(item)
+                
+                message = self._create_message(
+                    role=role,
+                    content=content,
+                    metadata={"list_index": i}
+                )
+                messages.append(message)
+                content_parts.append(f"**{role.title()}**: {content}")
+        
+        # Create conversation from list
+        full_content = "\n\n".join(content_parts)
+        
+        return self.create_universal_conversation(
+            platform_id=f"generic_{int(datetime.now().timestamp())}",
+            title=DEFAULT_CONVERSATION_TITLE,
+            content=full_content,
+            messages=messages,
+            date=datetime.now(),
+            model="unknown",
+            metadata={"parsing_strategy": "list_format", "list_length": len(data)}
         )
     
     def _extract_field(self, data: Dict[str, Any], field_names: List[str]) -> Any:
