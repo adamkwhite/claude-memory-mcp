@@ -167,7 +167,7 @@ class GenericImporter(BaseImporter):
             tree = ET.parse(file_path)
             root = tree.getroot()
             
-            conversations = self._parse_xml_tree(root, file_path)
+            conversations = self._parse_xml_tree(root)
             
             return self._save_conversations(conversations, file_path, "generic_xml")
             
@@ -224,34 +224,49 @@ class GenericImporter(BaseImporter):
         conversations = []
         
         if self._looks_like_conversation(data):
-            # Single conversation
-            try:
-                conv = self.parse_conversation(data)
-                conversations.append(conv)
-            except Exception as e:
-                self.logger.warning(f"Failed to parse conversation object: {e}")
+            conversations = self._parse_single_conversation(data)
         else:
-            # Look for conversation arrays within the object
-            for key, value in data.items():
-                if isinstance(value, list) and value:
-                    if self._looks_like_conversation(value[0] if isinstance(value[0], dict) else {}):
-                        # Found conversation array
-                        for item in value:
-                            try:
-                                conv = self.parse_conversation(item)
-                                conversations.append(conv)
-                            except Exception as e:
-                                self.logger.warning(f"Failed to parse nested conversation: {e}")
+            conversations = self._parse_nested_conversations(data)
         
         # If no conversations found, treat entire object as single conversation
         if not conversations:
-            try:
-                conv = self._parse_dict_as_conversation(data)
-                conversations.append(conv)
-            except Exception as e:
-                self.logger.warning(f"Failed to parse object as conversation: {e}")
+            conversations = self._parse_fallback_conversation(data)
         
         return conversations
+
+    def _parse_single_conversation(self, data: Dict[str, Any]) -> List[Dict[str, Any]]:
+        """Parse data as single conversation."""
+        try:
+            conv = self.parse_conversation(data)
+            return [conv]
+        except Exception as e:
+            self.logger.warning("Failed to parse conversation object: %s", e)
+            return []
+
+    def _parse_nested_conversations(self, data: Dict[str, Any]) -> List[Dict[str, Any]]:
+        """Parse nested conversation arrays within object."""
+        conversations = []
+        
+        for key, value in data.items():
+            if isinstance(value, list) and value:
+                if self._looks_like_conversation(value[0] if isinstance(value[0], dict) else {}):
+                    for item in value:
+                        try:
+                            conv = self.parse_conversation(item)
+                            conversations.append(conv)
+                        except Exception as e:
+                            self.logger.warning("Failed to parse nested conversation: %s", e)
+        
+        return conversations
+
+    def _parse_fallback_conversation(self, data: Dict[str, Any]) -> List[Dict[str, Any]]:
+        """Parse object as single conversation fallback."""
+        try:
+            conv = self._parse_dict_as_conversation(data)
+            return [conv]
+        except Exception as e:
+            self.logger.warning("Failed to parse object as conversation: %s", e)
+            return []
     
     def _parse_text_content(self, content: str, file_path: Path) -> List[Dict[str, Any]]:
         """Parse text content for conversation patterns."""
@@ -322,7 +337,7 @@ class GenericImporter(BaseImporter):
             metadata={"csv_headers": headers, "row_count": len(rows)}
         )
     
-    def _parse_xml_tree(self, root, file_path: Path) -> List[Dict[str, Any]]:
+    def _parse_xml_tree(self, root) -> List[Dict[str, Any]]:
         """Parse XML tree for conversation data."""
         conversations = []
         
@@ -330,14 +345,14 @@ class GenericImporter(BaseImporter):
         for elem in root.iter():
             if self._xml_element_looks_like_conversation(elem):
                 try:
-                    conv = self._parse_xml_conversation(elem, file_path)
+                    conv = self._parse_xml_element_as_conversation(elem)
                     conversations.append(conv)
                 except Exception as e:
-                    self.logger.warning(f"Failed to parse XML conversation: {e}")
+                    self.logger.warning("Failed to parse XML conversation: %s", e)
         
         # If no conversations found, parse entire XML as single conversation
         if not conversations:
-            conv = self._parse_entire_xml_as_conversation(root, file_path)
+            conv = self._parse_xml_root_as_conversation(root)
             conversations.append(conv)
         
         return conversations
@@ -386,31 +401,20 @@ class GenericImporter(BaseImporter):
         
         return timestamp_lines >= 2 or separator_lines >= 2
     
-    def _parse_dialogue_text(self, content: str, file_path: Path = None) -> Dict[str, Any]:
-        """Parse text with dialogue markers."""
-        lines = content.split('\n')
+    def _extract_dialogue_messages(self, lines: List[str]) -> tuple:
+        """Extract messages from dialogue lines."""
         messages = []
         content_parts = []
-        
         current_speaker = None
         current_message = []
         
         for line in lines:
-            # Check for speaker pattern
             speaker_match = re.match(r'(\*\*)?(\w+)(\*\*)?\s*:\s*(.*)', line)
             
             if speaker_match:
                 # Save previous message if exists
                 if current_speaker and current_message:
-                    message_text = '\n'.join(current_message).strip()
-                    if message_text:
-                        message = self._create_message(
-                            role=self._normalize_role(current_speaker),
-                            content=message_text,
-                            metadata={"source": "dialogue_parsing"}
-                        )
-                        messages.append(message)
-                        content_parts.append(f"**{current_speaker}**: {message_text}")
+                    self._save_dialogue_message(current_speaker, current_message, messages, content_parts)
                 
                 # Start new message
                 current_speaker = speaker_match.group(2)
@@ -422,18 +426,29 @@ class GenericImporter(BaseImporter):
         
         # Save final message
         if current_speaker and current_message:
-            message_text = '\n'.join(current_message).strip()
-            if message_text:
-                message = self._create_message(
-                    role=self._normalize_role(current_speaker),
-                    content=message_text,
-                    metadata={"source": "dialogue_parsing"}
-                )
-                messages.append(message)
-                content_parts.append(f"**{current_speaker}**: {message_text}")
+            self._save_dialogue_message(current_speaker, current_message, messages, content_parts)
+        
+        return messages, content_parts
+
+    def _save_dialogue_message(self, speaker: str, message_lines: List[str], messages: List, content_parts: List):
+        """Save a dialogue message to collections."""
+        message_text = '\n'.join(message_lines).strip()
+        if message_text:
+            message = self._create_message(
+                role=self._normalize_role(speaker),
+                content=message_text,
+                metadata={"source": "dialogue_parsing"}
+            )
+            messages.append(message)
+            content_parts.append(f"**{speaker}**: {message_text}")
+
+    def _parse_dialogue_text(self, content: str, file_path: Path = None) -> Dict[str, Any]:
+        """Parse text with dialogue markers."""
+        lines = content.split('\n')
+        messages, content_parts = self._extract_dialogue_messages(lines)
         
         # Create conversation
-        title = f"Generic Conversation"
+        title = "Generic Conversation"
         if file_path:
             title = file_path.stem.replace('_', ' ').title()
         
@@ -481,7 +496,7 @@ class GenericImporter(BaseImporter):
             content_parts.append(f"**{role.title()}**: {block}")
         
         # Create conversation
-        title = f"Generic Conversation"
+        title = "Generic Conversation"
         if file_path:
             title = file_path.stem.replace('_', ' ').title()
         
@@ -506,7 +521,7 @@ class GenericImporter(BaseImporter):
             metadata={"source": "full_text"}
         )
         
-        title = f"Generic Text"
+        title = "Generic Text"
         if file_path:
             title = file_path.stem.replace('_', ' ').title()
         
@@ -583,6 +598,45 @@ class GenericImporter(BaseImporter):
                     return headers[i]
         return headers[0] if headers else ""
     
+    def _xml_element_looks_like_conversation(self, elem) -> bool:
+        """Check if XML element looks like conversation."""
+        conversation_tags = ['conversation', 'dialogue', 'chat', 'messages', 'transcript']
+        return elem.tag.lower() in conversation_tags or len(list(elem)) > 3
+
+    def _parse_xml_element_as_conversation(self, elem) -> Dict[str, Any]:
+        """Parse XML element as conversation."""
+        content = elem.text or ""
+        for child in elem:
+            if child.text:
+                content += f"\n{child.tag}: {child.text}"
+        
+        return self.create_universal_conversation(
+            platform_id=f"xml_{int(datetime.now().timestamp())}",
+            title=f"XML {elem.tag}",
+            content=content,
+            messages=[],
+            date=datetime.now(),
+            model="unknown",
+            metadata={"xml_tag": elem.tag}
+        )
+
+    def _parse_xml_root_as_conversation(self, root) -> Dict[str, Any]:
+        """Parse entire XML root as conversation."""
+        content = root.text or ""
+        for elem in root.iter():
+            if elem.text and elem.text.strip():
+                content += f"\n{elem.tag}: {elem.text}"
+        
+        return self.create_universal_conversation(
+            platform_id=f"xml_{int(datetime.now().timestamp())}",
+            title="XML Document",
+            content=content,
+            messages=[],
+            date=datetime.now(),
+            model="unknown",
+            metadata={"xml_root": root.tag}
+        )
+
     def _normalize_role(self, role: str) -> str:
         """Normalize role names to standard format."""
         role_lower = role.lower().strip()
@@ -649,7 +703,7 @@ class GenericImporter(BaseImporter):
         with open(file_path, 'w', encoding='utf-8') as f:
             json.dump(conversation, f, indent=2, ensure_ascii=False)
         
-        self.logger.info(f"Saved generic conversation to: {file_path}")
+        self.logger.info("Saved generic conversation to: %s", file_path)
         return file_path
 
 

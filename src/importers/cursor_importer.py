@@ -65,7 +65,7 @@ class CursorImporter(BaseImporter):
                 
                 if self._validate_conversation(universal_conv):
                     # Save the conversation
-                    conv_file = self._save_conversation(universal_conv)
+                    self._save_conversation(universal_conv)
                     
                     return ImportResult(
                         success=True,
@@ -166,11 +166,42 @@ class CursorImporter(BaseImporter):
         
         # Process interactions
         interactions = raw_data.get("interactions", [])
+        messages, full_content = self._process_interactions(interactions, workspace, model, session_id, date)
+        
+        # Create session context
+        session_context = {
+            "workspace": workspace,
+            "workspace_name": workspace_name,
+            "session_id": session_id,
+            "model": model,
+            "interaction_count": len(messages)
+        }
+        
+        # Create universal conversation
+        return self.create_universal_conversation(
+            platform_id=session_id,
+            title=title,
+            content=full_content,
+            messages=messages,
+            date=date,
+            model=model,
+            session_context=session_context,
+            metadata={
+                "original_session_id": session_id,
+                "workspace_path": workspace,
+                "session_timestamp": session_timestamp,
+                "interaction_count": len(interactions),
+                "files_involved": self._extract_files_from_interactions(interactions)
+            }
+        )
+    
+    def _process_interactions(self, interactions: List[Any], workspace: str, model: str, session_id: str, date: datetime) -> tuple:
+        """Process interactions and return messages and content."""
         messages = []
         content_parts = []
         
         # Add session header to content
-        content_parts.append(f"# Cursor AI Session")
+        content_parts.append("# Cursor AI Session")
         content_parts.append(f"**Workspace**: {workspace}")
         content_parts.append(f"**Model**: {model}")
         content_parts.append(f"**Session ID**: {session_id}")
@@ -236,34 +267,8 @@ class CursorImporter(BaseImporter):
         
         # Combine all interactions into content string
         full_content = "\n\n".join(content_parts)
-        
-        # Create session context
-        session_context = {
-            "workspace": workspace,
-            "workspace_name": workspace_name,
-            "session_id": session_id,
-            "model": model,
-            "interaction_count": len(messages)
-        }
-        
-        # Create universal conversation
-        return self.create_universal_conversation(
-            platform_id=session_id,
-            title=title,
-            content=full_content,
-            messages=messages,
-            date=date,
-            model=model,
-            session_context=session_context,
-            metadata={
-                "original_session_id": session_id,
-                "workspace_path": workspace,
-                "session_timestamp": session_timestamp,
-                "interaction_count": len(interactions),
-                "files_involved": self._extract_files_from_interactions(interactions)
-            }
-        )
-    
+        return messages, full_content
+
     def _validate_cursor_format(self, data: Any) -> bool:
         """Validate that data is in Cursor AI session format."""
         if not isinstance(data, dict):
@@ -327,7 +332,7 @@ class CursorImporter(BaseImporter):
         with open(file_path, 'w', encoding='utf-8') as f:
             json.dump(conversation, f, indent=2, ensure_ascii=False)
         
-        self.logger.info(f"Saved Cursor session to: {file_path}")
+        self.logger.info("Saved Cursor session to: %s", file_path)
         return file_path
     
     def _extract_topics(self, content: str) -> List[str]:

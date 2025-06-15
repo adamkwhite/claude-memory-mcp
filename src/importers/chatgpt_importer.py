@@ -60,46 +60,7 @@ class ChatGPTImporter(BaseImporter):
             
             # Process each conversation
             conversations = data.get("conversations", [])
-            imported_count = 0
-            failed_count = 0
-            errors = []
-            imported_ids = []
-            
-            for conversation in conversations:
-                try:
-                    # Parse the conversation into universal format
-                    universal_conv = self.parse_conversation(conversation)
-                    
-                    if self._validate_conversation(universal_conv):
-                        # Save the conversation
-                        conv_file = self._save_conversation(universal_conv)
-                        imported_ids.append(universal_conv["id"])
-                        imported_count += 1
-                        self.logger.info(f"Imported ChatGPT conversation: {universal_conv['id']}")
-                    else:
-                        failed_count += 1
-                        errors.append(f"Invalid conversation format for ID: {conversation.get('id', 'unknown')}")
-                        
-                except Exception as e:
-                    failed_count += 1
-                    conv_id = conversation.get("id", "unknown")
-                    error_msg = f"Failed to process conversation {conv_id}: {str(e)}"
-                    errors.append(error_msg)
-                    self.logger.error(error_msg)
-            
-            return ImportResult(
-                success=imported_count > 0,
-                conversations_imported=imported_count,
-                conversations_failed=failed_count,
-                errors=errors,
-                imported_ids=imported_ids,
-                metadata={
-                    "source_file": str(file_path),
-                    "total_conversations_in_file": len(conversations),
-                    "platform": "chatgpt",
-                    "import_format": "openai_export"
-                }
-            )
+            return self._process_conversations(conversations, file_path)
             
         except json.JSONDecodeError as e:
             return ImportResult(
@@ -120,6 +81,49 @@ class ChatGPTImporter(BaseImporter):
                 metadata={}
             )
     
+    def _process_conversations(self, conversations: List[Any], file_path: Path) -> ImportResult:
+        """Process list of conversations and return import result."""
+        imported_count = 0
+        failed_count = 0
+        errors = []
+        imported_ids = []
+        
+        for conversation in conversations:
+            try:
+                # Parse the conversation into universal format
+                universal_conv = self.parse_conversation(conversation)
+                
+                if self._validate_conversation(universal_conv):
+                    # Save the conversation
+                    self._save_conversation(universal_conv)
+                    imported_ids.append(universal_conv["id"])
+                    imported_count += 1
+                    self.logger.info("Imported ChatGPT conversation: %s", universal_conv['id'])
+                else:
+                    failed_count += 1
+                    errors.append(f"Invalid conversation format for ID: {conversation.get('id', 'unknown')}")
+                    
+            except Exception as e:
+                failed_count += 1
+                conv_id = conversation.get("id", "unknown")
+                error_msg = f"Failed to process conversation {conv_id}: {str(e)}"
+                errors.append(error_msg)
+                self.logger.error(error_msg)
+        
+        return ImportResult(
+            success=imported_count > 0,
+            conversations_imported=imported_count,
+            conversations_failed=failed_count,
+            errors=errors,
+            imported_ids=imported_ids,
+            metadata={
+                "source_file": str(file_path),
+                "total_conversations_in_file": len(conversations),
+                "platform": "chatgpt",
+                "import_format": "openai_export"
+            }
+        )
+
     def parse_conversation(self, raw_data: Any) -> Dict[str, Any]:
         """
         Parse raw ChatGPT conversation data into universal format.

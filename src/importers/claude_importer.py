@@ -111,7 +111,7 @@ class ClaudeImporter(BaseImporter):
             universal_conv = self._parse_markdown_conversation(content, file_path)
             
             if self._validate_conversation(universal_conv):
-                conv_file = self._save_conversation(universal_conv)
+                self._save_conversation(universal_conv)
                 
                 return ImportResult(
                     success=True,
@@ -190,7 +190,7 @@ class ClaudeImporter(BaseImporter):
             universal_conv = self.parse_conversation(data)
             
             if self._validate_conversation(universal_conv):
-                conv_file = self._save_conversation(universal_conv)
+                self._save_conversation(universal_conv)
                 
                 return ImportResult(
                     success=True,
@@ -230,7 +230,7 @@ class ClaudeImporter(BaseImporter):
             universal_conv = self.parse_conversation(data)
             
             if self._validate_conversation(universal_conv):
-                conv_file = self._save_conversation(universal_conv)
+                self._save_conversation(universal_conv)
                 
                 return ImportResult(
                     success=True,
@@ -475,7 +475,7 @@ class ClaudeImporter(BaseImporter):
         with open(file_path, 'w', encoding='utf-8') as f:
             json.dump(conversation, f, indent=2, ensure_ascii=False)
         
-        self.logger.info(f"Saved Claude conversation to: {file_path}")
+        self.logger.info("Saved Claude conversation to: %s", file_path)
         return file_path
     
     def _extract_topics(self, content: str) -> List[str]:
