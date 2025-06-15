@@ -54,7 +54,7 @@ class TestClaudeImporter:
         test_file = self.storage_path / "test.json"
         test_file.write_text('{"test": "data"}')
         
-        with patch.object(self.importer, '_detect_claude_format', side_effect=Exception("Test error")):
+        with patch.object(self.importer, '_import_json_format', side_effect=Exception("Test error")):
             result = self.importer.import_file(test_file)
         
         assert result.success is False
@@ -99,13 +99,14 @@ class TestClaudeImporterJSONFormat:
         test_file = self.storage_path / "claude_memory.json"
         test_file.write_text(json.dumps(memory_data))
         
-        with patch.object(self.importer, '_save_conversation') as mock_save:
-            result = self.importer.import_file(test_file)
+        result = self.importer.import_file(test_file)
         
         assert result.success is True
         assert result.conversations_imported == 1
         assert result.conversations_failed == 0
-        mock_save.assert_called_once()
+        assert result.metadata["format"] == "claude_memory"
+        assert result.metadata["already_imported"] is True
+        assert result.imported_ids == ["conv_20250115_120000_abcd1234"]
     
     def test_import_json_invalid_format(self):
         """Test importing invalid JSON."""
@@ -128,10 +129,11 @@ class TestClaudeImporterJSONFormat:
         
         result = self.importer.import_file(test_file)
         
-        assert result.success is False
-        assert result.conversations_imported == 0
-        assert result.conversations_failed == 1
-        assert "valid Claude format" in result.errors[0]
+        # Should successfully import as generic Claude JSON
+        assert result.success is True
+        assert result.conversations_imported == 1
+        assert result.conversations_failed == 0
+        assert result.metadata["format"] == "claude_generic_json"
 
 
 class TestClaudeImporterTextFormat:
@@ -216,15 +218,15 @@ class TestClaudeImporterParsingMethods:
             "created_at": "2025-01-15"
         }
         
-        result = self.importer._detect_claude_format(data)
-        assert result == "claude_memory"
+        result = self.importer._is_claude_memory_format(data)
+        assert result is True
     
     def test_detect_claude_format_unknown(self):
         """Test unknown format detection."""
         data = {"random": "data"}
         
-        result = self.importer._detect_claude_format(data)
-        assert result == "unknown"
+        result = self.importer._is_claude_memory_format(data)
+        assert result is False
 
 
 class TestClaudeImporterSaveConversation:

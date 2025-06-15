@@ -7,7 +7,7 @@ Tests JSON schema validation for ChatGPT export formats.
 
 import json
 import pytest
-from unittest.mock import patch, mock_open
+from unittest.mock import patch, mock_open, MagicMock
 
 from src.schemas.chatgpt_schema import (
     CHATGPT_SCHEMA,
@@ -208,18 +208,27 @@ class TestChatGPTValidation:
         assert len(result["warnings"]) > 0
         assert "no messages" in result["warnings"][0]
     
-    @patch('src.schemas.chatgpt_schema.jsonschema')
-    def test_validate_chatgpt_export_missing_jsonschema(self, mock_jsonschema):
+    def test_validate_chatgpt_export_missing_jsonschema(self):
         """Test validation when jsonschema is not available."""
-        # Simulate ImportError when importing jsonschema
-        with patch('builtins.__import__', side_effect=ImportError("No module named 'jsonschema'")):
+        # Mock the import to raise ImportError
+        def mock_import(name, *args, **kwargs):
+            if name == 'jsonschema':
+                raise ImportError("No module named 'jsonschema'")
+            return __import__(name, *args, **kwargs)
+        
+        with patch('builtins.__import__', side_effect=mock_import):
             result = validate_chatgpt_export([])
             assert result["valid"] is False
             assert "jsonschema library not available" in result["errors"][0]
     
     def test_validate_chatgpt_export_exception_handling(self):
         """Test validation handles general exceptions gracefully."""
-        with patch('src.schemas.chatgpt_schema.jsonschema.validate', side_effect=Exception("Validation error")):
+        # Create a mock jsonschema module with validate that raises an exception
+        mock_jsonschema = MagicMock()
+        mock_jsonschema.validate.side_effect = Exception("Validation error")
+        mock_jsonschema.ValidationError = Exception  # Add ValidationError class
+        
+        with patch.dict('sys.modules', {'jsonschema': mock_jsonschema}):
             result = validate_chatgpt_export([])
             assert result["valid"] is False
             assert "Validation error" in result["errors"][0]

@@ -116,11 +116,19 @@ class FormatDetector:
     
     def _is_chatgpt_format(self, data: Any) -> bool:
         """Check if data matches ChatGPT export format."""
-        if not isinstance(data, dict):
-            return False
+        # ChatGPT exports can be an array of conversations directly
+        if isinstance(data, list):
+            if data and isinstance(data[0], dict):
+                conv = data[0]
+                # Check for ChatGPT-specific structure (title, create_time, mapping)
+                return (isinstance(conv, dict) and 
+                       'title' in conv and
+                       'create_time' in conv and
+                       'mapping' in conv and
+                       isinstance(conv['mapping'], dict))
         
-        # ChatGPT exports have 'conversations' array at root
-        if 'conversations' in data and isinstance(data['conversations'], list):
+        # Or wrapped in a 'conversations' key
+        if isinstance(data, dict) and 'conversations' in data and isinstance(data['conversations'], list):
             # Check a sample conversation structure
             if data['conversations']:
                 conv = data['conversations'][0]
