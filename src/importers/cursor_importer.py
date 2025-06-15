@@ -298,10 +298,6 @@ class CursorImporter(BaseImporter):
             metadata["changes"] = changes
         
         return metadata
-        
-        # Combine all interactions into content string
-        full_content = "\n\n".join(content_parts)
-        return messages, full_content
 
     def _validate_cursor_format(self, data: Any) -> bool:
         """Validate that data is in Cursor AI session format."""

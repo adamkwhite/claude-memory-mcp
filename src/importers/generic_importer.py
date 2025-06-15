@@ -87,7 +87,7 @@ class GenericImporter(BaseImporter):
                 conversations = self._parse_json_array(data, file_path)
             elif isinstance(data, dict):
                 # Single conversation or structured object
-                conversations = self._parse_json_object(data, file_path)
+                conversations = self._parse_json_object(data)
             else:
                 # Unexpected format
                 return ImportResult(
