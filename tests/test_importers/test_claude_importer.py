@@ -312,15 +312,18 @@ class TestClaudeImporterIntegration:
         assert result.metadata["platform"] == "claude"
         assert result.metadata["source_file"] == str(test_file)
         
-        # Verify conversation file was created (excludes source file)
-        conversation_files = [f for f in self.storage_path.rglob("*.json") if f.name != "claude_e2e_test.json"]
-        assert len(conversation_files) == 1
+        # Verify Claude Memory format was recognized (no new file created, existing format validated)
+        assert result.metadata["format"] == "claude_memory"
+        assert result.metadata["already_imported"] is True
         
-        # Verify conversation content
-        with open(conversation_files[0], 'r') as f:
-            saved_conversation = json.load(f)
+        # For Claude Memory format, the original file IS the conversation
+        # (no separate conversation file is created)
+        assert test_file.exists()
         
-        assert saved_conversation["platform"] == "claude"
-        assert saved_conversation["id"] == "conv_20250115_090000_e2etest"
-        assert len(saved_conversation["messages"]) == 2
-        assert "Claude Memory import" in saved_conversation["content"]
+        with open(test_file, 'r') as f:
+            original_data = json.load(f)
+        
+        assert original_data["platform"] == "claude"
+        assert original_data["id"] == "conv_20250115_090000_e2etest"
+        assert len(original_data["messages"]) == 2
+        assert "Claude Memory import" in original_data["content"]

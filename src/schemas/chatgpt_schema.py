@@ -354,7 +354,7 @@ def validate_chatgpt_export(data: Any) -> Dict[str, Any]:
     except jsonschema.ValidationError as e:
         return {
             "valid": False,
-            "errors": [f"Schema validation error: {e.message}"],
+            "errors": [f"Schema validation error: {str(e)}"],
             "warnings": [],
             "conversation_count": 0
         }
