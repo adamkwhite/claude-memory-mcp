@@ -270,7 +270,7 @@ class ChatGPTImporter(BaseImporter):
         # Check messages for model hints
         messages = conversation_data.get("messages", [])
         for msg in messages:
-            if msg.get("role") == "assistant":
+            if isinstance(msg, dict) and msg.get("role") == "assistant":
                 # Look for model indicators in assistant responses
                 content = msg.get("content", "").lower()
                 if "gpt-4" in content:
