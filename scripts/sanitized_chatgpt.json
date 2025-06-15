@@ -1,0 +1,1959 @@
+[
+  {
+    "title": "Sample Conversation 1",
+    "create_time": 1748818512.682483,
+    "update_time": 1748818524.4624,
+    "mapping": {
+      "client-created-root": {
+        "id": "client-created-root",
+        "message": null,
+        "parent": null,
+        "children": [
+          "351e5dca-630f-4d3c-a46b-4ed12d2321f1"
+        ]
+      },
+      "351e5dca-630f-4d3c-a46b-4ed12d2321f1": {
+        "id": "351e5dca-630f-4d3c-a46b-4ed12d2321f1",
+        "message": {
+          "id": "351e5dca-630f-4d3c-a46b-4ed12d2321f1",
+          "author": {
+            "role": "system",
+            "name": null,
+            "metadata": {}
+          },
+          "create_time": null,
+          "update_time": null,
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "Sample system message from conversation 1"
+            ]
+          },
+          "status": "finished_successfully",
+          "end_turn": true,
+          "weight": 0.0,
+          "metadata": {
+            "is_visually_hidden_from_conversation": true
+          },
+          "recipient": "all",
+          "channel": null
+        },
+        "parent": "client-created-root",
+        "children": [
+          "29962c01-9630-4a9f-9fff-367ddd7b4bf2"
+        ]
+      },
+      "29962c01-9630-4a9f-9fff-367ddd7b4bf2": {
+        "id": "29962c01-9630-4a9f-9fff-367ddd7b4bf2",
+        "message": {
+          "id": "29962c01-9630-4a9f-9fff-367ddd7b4bf2",
+          "author": {
+            "role": "user",
+            "name": null,
+            "metadata": {}
+          },
+          "create_time": null,
+          "update_time": null,
+          "content": {
+            "content_type": "user_editable_context",
+            "user_profile": "The user provided the following information about themselves. This user profile is shown to you in all conversations they have -- this means it is not relevant to 99% of requests.\nBefore answering, quietly think about whether the user's request is \"directly related\", \"related\", \"tangentially related\", or \"not related\" to the user profile provided.\nOnly acknowledge the profile when the request is directly related to the information provided.\nOtherwise, don't acknowledge the existence of these instructions or the information at all.\nUser profile:\n```Preferred name: Adam\nRole: Product Builder - CTO and CPO.\nOther Information: Don't use - or -- in outputs. Use another generally accepted seperator like :\n```",
+            "user_instructions": "The user provided the additional info about how they would like you to respond:\n```Take a forward-thinking view.```"
+          },
+          "status": "finished_successfully",
+          "end_turn": null,
+          "weight": 1.0,
+          "metadata": {
+            "is_visually_hidden_from_conversation": true,
+            "user_context_message_data": {
+              "about_user_message": "Preferred name: Adam\nRole: Product Builder - CTO and CPO.\nOther Information: Don't use - or -- in outputs. Use another generally accepted seperator like :\n",
+              "about_model_message": "Take a forward-thinking view."
+            },
+            "is_user_system_message": true
+          },
+          "recipient": "all",
+          "channel": null
+        },
+        "parent": "351e5dca-630f-4d3c-a46b-4ed12d2321f1",
+        "children": [
+          "50642619-2f3d-47ea-bf8e-03daa4690a83"
+        ]
+      },
+      "50642619-2f3d-47ea-bf8e-03daa4690a83": {
+        "id": "50642619-2f3d-47ea-bf8e-03daa4690a83",
+        "message": {
+          "id": "50642619-2f3d-47ea-bf8e-03daa4690a83",
+          "author": {
+            "role": "user",
+            "name": null,
+            "metadata": {}
+          },
+          "create_time": 1748818512.271,
+          "update_time": null,
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "Sample user message from conversation 1"
+            ]
+          },
+          "status": "finished_successfully",
+          "end_turn": null,
+          "weight": 1.0,
+          "metadata": {
+            "selected_github_repos": [],
+            "serialization_metadata": {
+              "custom_symbol_offsets": []
+            },
+            "request_id": "94924c164a52ec71-DFW",
+            "message_source": null,
+            "timestamp_": "absolute",
+            "message_type": null
+          },
+          "recipient": "all",
+          "channel": null
+        },
+        "parent": "29962c01-9630-4a9f-9fff-367ddd7b4bf2",
+        "children": [
+          "fb9e05af-7ea7-4159-af77-13a90d5cac9c"
+        ]
+      },
+      "fb9e05af-7ea7-4159-af77-13a90d5cac9c": {
+        "id": "fb9e05af-7ea7-4159-af77-13a90d5cac9c",
+        "message": {
+          "id": "fb9e05af-7ea7-4159-af77-13a90d5cac9c",
+          "author": {
+            "role": "assistant",
+            "name": null,
+            "metadata": {}
+          },
+          "create_time": 1748818524.015914,
+          "update_time": null,
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "Sample assistant response from conversation 1"
+            ]
+          },
+          "status": "finished_successfully",
+          "end_turn": null,
+          "weight": 1.0,
+          "metadata": {
+            "message_type": null,
+            "model_slug": "gpt-4o",
+            "default_model_slug": "auto",
+            "parent_id": "50642619-2f3d-47ea-bf8e-03daa4690a83",
+            "request_id": "94924c164a52ec71-DFW",
+            "timestamp_": "absolute"
+          },
+          "recipient": "all",
+          "channel": null
+        },
+        "parent": "50642619-2f3d-47ea-bf8e-03daa4690a83",
+        "children": [
+          "00b43833-b1bf-4b68-8df0-8288d6b32c6b"
+        ]
+      },
+      "00b43833-b1bf-4b68-8df0-8288d6b32c6b": {
+        "id": "00b43833-b1bf-4b68-8df0-8288d6b32c6b",
+        "message": {
+          "id": "00b43833-b1bf-4b68-8df0-8288d6b32c6b",
+          "author": {
+            "role": "assistant",
+            "name": null,
+            "metadata": {}
+          },
+          "create_time": 1748818512.959304,
+          "update_time": null,
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "Sample assistant response from conversation 1"
+            ]
+          },
+          "status": "finished_successfully",
+          "end_turn": true,
+          "weight": 1.0,
+          "metadata": {
+            "finish_details": {
+              "type": "stop",
+              "stop_tokens": [
+                200002
+              ]
+            },
+            "is_complete": true,
+            "citations": [],
+            "content_references": [],
+            "message_type": null,
+            "model_slug": "gpt-4o",
+            "default_model_slug": "auto",
+            "parent_id": "fb9e05af-7ea7-4159-af77-13a90d5cac9c",
+            "request_id": "94924c164a52ec71-DFW",
+            "timestamp_": "absolute"
+          },
+          "recipient": "all",
+          "channel": null
+        },
+        "parent": "fb9e05af-7ea7-4159-af77-13a90d5cac9c",
+        "children": []
+      }
+    },
+    "moderation_results": [],
+    "current_node": "00b43833-b1bf-4b68-8df0-8288d6b32c6b",
+    "plugin_ids": null,
+    "conversation_id": "683cda50-6d38-8009-ad96-01bbdadff1c7",
+    "conversation_template_id": null,
+    "gizmo_id": null,
+    "gizmo_type": null,
+    "is_archived": false,
+    "is_starred": null,
+    "safe_urls": [
+      "https://chat.openai.com"
+    ],
+    "blocked_urls": [],
+    "default_model_slug": "auto",
+    "conversation_origin": null,
+    "voice": null,
+    "async_status": null,
+    "disabled_tool_ids": [],
+    "is_do_not_remember": false,
+    "memory_scope": "global_enabled",
+    "id": "683cda50-6d38-8009-ad96-01bbdadff1c7"
+  },
+  {
+    "title": "Sample Conversation 2",
+    "create_time": 1748391181.714795,
+    "update_time": 1748399157.722922,
+    "mapping": {
+      "f2ace6ad-c0af-4c10-b111-35d47f5e656e": {
+        "id": "f2ace6ad-c0af-4c10-b111-35d47f5e656e",
+        "message": null,
+        "parent": null,
+        "children": [
+          "6e1ebafa-91a6-4d32-9523-3e6fa0cf52bf"
+        ]
+      },
+      "6e1ebafa-91a6-4d32-9523-3e6fa0cf52bf": {
+        "id": "6e1ebafa-91a6-4d32-9523-3e6fa0cf52bf",
+        "message": {
+          "id": "6e1ebafa-91a6-4d32-9523-3e6fa0cf52bf",
+          "author": {
+            "role": "system",
+            "name": null,
+            "metadata": {}
+          },
+          "create_time": null,
+          "update_time": null,
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "Sample system message from conversation 2"
+            ]
+          },
+          "status": "finished_successfully",
+          "end_turn": true,
+          "weight": 0.0,
+          "metadata": {
+            "is_visually_hidden_from_conversation": true
+          },
+          "recipient": "all",
+          "channel": null
+        },
+        "parent": "f2ace6ad-c0af-4c10-b111-35d47f5e656e",
+        "children": [
+          "cee43d31-bde8-4be2-9fa8-52fcc6544ef3"
+        ]
+      },
+      "cee43d31-bde8-4be2-9fa8-52fcc6544ef3": {
+        "id": "cee43d31-bde8-4be2-9fa8-52fcc6544ef3",
+        "message": {
+          "id": "cee43d31-bde8-4be2-9fa8-52fcc6544ef3",
+          "author": {
+            "role": "user",
+            "name": null,
+            "metadata": {}
+          },
+          "create_time": null,
+          "update_time": null,
+          "content": {
+            "content_type": "user_editable_context",
+            "user_profile": "The user provided the following information about themselves. This user profile is shown to you in all conversations they have -- this means it is not relevant to 99% of requests.\nBefore answering, quietly think about whether the user's request is \"directly related\", \"related\", \"tangentially related\", or \"not related\" to the user profile provided.\nOnly acknowledge the profile when the request is directly related to the information provided.\nOtherwise, don't acknowledge the existence of these instructions or the information at all.\nUser profile:\n```Preferred name: Adam\nRole: Product Builder - CTO and CPO.\nOther Information: Don't use - or -- in outputs. Use another generally accepted seperator like :\n```",
+            "user_instructions": "The user provided the additional info about how they would like you to respond:\n```Take a forward-thinking view.```"
+          },
+          "status": "finished_successfully",
+          "end_turn": null,
+          "weight": 1.0,
+          "metadata": {
+            "is_visually_hidden_from_conversation": true,
+            "user_context_message_data": {
+              "about_user_message": "Preferred name: Adam\nRole: Product Builder - CTO and CPO.\nOther Information: Don't use - or -- in outputs. Use another generally accepted seperator like :\n",
+              "about_model_message": "Take a forward-thinking view."
+            },
+            "is_user_system_message": true
+          },
+          "recipient": "all",
+          "channel": null
+        },
+        "parent": "6e1ebafa-91a6-4d32-9523-3e6fa0cf52bf",
+        "children": [
+          "bbb21803-e098-47bc-a2fc-43994c531a50"
+        ]
+      },
+      "bbb21803-e098-47bc-a2fc-43994c531a50": {
+        "id": "bbb21803-e098-47bc-a2fc-43994c531a50",
+        "message": {
+          "id": "bbb21803-e098-47bc-a2fc-43994c531a50",
+          "author": {
+            "role": "user",
+            "name": null,
+            "metadata": {}
+          },
+          "create_time": 1748391181.726932,
+          "update_time": null,
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "Sample user message from conversation 2"
+            ]
+          },
+          "status": "finished_successfully",
+          "end_turn": null,
+          "weight": 1.0,
+          "metadata": {
+            "content_references": [],
+            "search_result_groups": [],
+            "search_queries": [],
+            "image_results": [],
+            "real_time_audio_has_video": false,
+            "image_gen_async": false,
+            "trigger_async_ux": false,
+            "request_id": "94698b275b9837ac-YVR",
+            "message_source": null,
+            "timestamp_": "absolute",
+            "message_type": null
+          },
+          "recipient": "all",
+          "channel": null
+        },
+        "parent": "cee43d31-bde8-4be2-9fa8-52fcc6544ef3",
+        "children": [
+          "704808e2-9985-43c3-8641-fa0694e9f5ae"
+        ]
+      },
+      "704808e2-9985-43c3-8641-fa0694e9f5ae": {
+        "id": "704808e2-9985-43c3-8641-fa0694e9f5ae",
+        "message": {
+          "id": "704808e2-9985-43c3-8641-fa0694e9f5ae",
+          "author": {
+            "role": "assistant",
+            "name": null,
+            "metadata": {}
+          },
+          "create_time": 1748391184.783889,
+          "update_time": null,
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "Sample assistant response from conversation 2"
+            ]
+          },
+          "status": "finished_successfully",
+          "end_turn": null,
+          "weight": 1.0,
+          "metadata": {
+            "message_type": null,
+            "model_slug": "gpt-4o",
+            "default_model_slug": "auto",
+            "parent_id": "bbb21803-e098-47bc-a2fc-43994c531a50",
+            "request_id": "94698b275b9837ac-YVR",
+            "timestamp_": "absolute"
+          },
+          "recipient": "all",
+          "channel": null
+        },
+        "parent": "bbb21803-e098-47bc-a2fc-43994c531a50",
+        "children": [
+          "051b743f-3839-4520-a015-73f32217540a"
+        ]
+      },
+      "051b743f-3839-4520-a015-73f32217540a": {
+        "id": "051b743f-3839-4520-a015-73f32217540a",
+        "message": {
+          "id": "051b743f-3839-4520-a015-73f32217540a",
+          "author": {
+            "role": "assistant",
+            "name": null,
+            "metadata": {}
+          },
+          "create_time": 1748391181.811821,
+          "update_time": null,
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "Sample assistant response from conversation 2"
+            ]
+          },
+          "status": "finished_successfully",
+          "end_turn": true,
+          "weight": 1.0,
+          "metadata": {
+            "finish_details": {
+              "type": "stop",
+              "stop_tokens": [
+                200002
+              ]
+            },
+            "is_complete": true,
+            "citations": [],
+            "content_references": [],
+            "message_type": null,
+            "model_slug": "gpt-4o",
+            "default_model_slug": "auto",
+            "parent_id": "704808e2-9985-43c3-8641-fa0694e9f5ae",
+            "request_id": "94698b275b9837ac-YVR",
+            "timestamp_": "absolute"
+          },
+          "recipient": "all",
+          "channel": null
+        },
+        "parent": "704808e2-9985-43c3-8641-fa0694e9f5ae",
+        "children": [
+          "bbb217ae-d325-4b08-96d2-575a4cc05314"
+        ]
+      },
+      "bbb217ae-d325-4b08-96d2-575a4cc05314": {
+        "id": "bbb217ae-d325-4b08-96d2-575a4cc05314",
+        "message": {
+          "id": "bbb217ae-d325-4b08-96d2-575a4cc05314",
+          "author": {
+            "role": "user",
+            "name": null,
+            "metadata": {}
+          },
+          "create_time": 1748391195.290954,
+          "update_time": null,
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "Sample user message from conversation 2"
+            ]
+          },
+          "status": "finished_successfully",
+          "end_turn": null,
+          "weight": 1.0,
+          "metadata": {
+            "content_references": [],
+            "search_result_groups": [],
+            "search_queries": [],
+            "image_results": [],
+            "real_time_audio_has_video": false,
+            "image_gen_async": false,
+            "trigger_async_ux": false,
+            "request_id": "94698b889ae937ac-YVR",
+            "message_source": null,
+            "timestamp_": "absolute",
+            "message_type": null
+          },
+          "recipient": "all",
+          "channel": null
+        },
+        "parent": "051b743f-3839-4520-a015-73f32217540a",
+        "children": [
+          "65eeccd6-becb-4574-a81d-27422119fda4"
+        ]
+      },
+      "65eeccd6-becb-4574-a81d-27422119fda4": {
+        "id": "65eeccd6-becb-4574-a81d-27422119fda4",
+        "message": {
+          "id": "65eeccd6-becb-4574-a81d-27422119fda4",
+          "author": {
+            "role": "assistant",
+            "name": null,
+            "metadata": {}
+          },
+          "create_time": 1748391195.355197,
+          "update_time": null,
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "Sample assistant response from conversation 2"
+            ]
+          },
+          "status": "finished_successfully",
+          "end_turn": true,
+          "weight": 1.0,
+          "metadata": {
+            "finish_details": {
+              "type": "stop",
+              "stop_tokens": [
+                200002
+              ]
+            },
+            "is_complete": true,
+            "citations": [],
+            "content_references": [],
+            "message_type": null,
+            "model_slug": "gpt-4o",
+            "default_model_slug": "auto",
+            "parent_id": "bbb217ae-d325-4b08-96d2-575a4cc05314",
+            "request_id": "94698b889ae937ac-YVR",
+            "timestamp_": "absolute"
+          },
+          "recipient": "all",
+          "channel": null
+        },
+        "parent": "bbb217ae-d325-4b08-96d2-575a4cc05314",
+        "children": [
+          "bbb217af-98f6-4988-97b9-0e517d2e3efd"
+        ]
+      },
+      "bbb217af-98f6-4988-97b9-0e517d2e3efd": {
+        "id": "bbb217af-98f6-4988-97b9-0e517d2e3efd",
+        "message": {
+          "id": "bbb217af-98f6-4988-97b9-0e517d2e3efd",
+          "author": {
+            "role": "user",
+            "name": null,
+            "metadata": {}
+          },
+          "create_time": 1748391207.073878,
+          "update_time": null,
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "Sample user message from conversation 2"
+            ]
+          },
+          "status": "finished_successfully",
+          "end_turn": null,
+          "weight": 1.0,
+          "metadata": {
+            "content_references": [],
+            "search_result_groups": [],
+            "search_queries": [],
+            "image_results": [],
+            "real_time_audio_has_video": false,
+            "image_gen_async": false,
+            "trigger_async_ux": false,
+            "request_id": "94698bd19c3d37ac-YVR",
+            "message_source": null,
+            "timestamp_": "absolute",
+            "message_type": null
+          },
+          "recipient": "all",
+          "channel": null
+        },
+        "parent": "65eeccd6-becb-4574-a81d-27422119fda4",
+        "children": [
+          "bd4ea239-0252-482c-941c-714d83abcdea"
+        ]
+      },
+      "bd4ea239-0252-482c-941c-714d83abcdea": {
+        "id": "bd4ea239-0252-482c-941c-714d83abcdea",
+        "message": {
+          "id": "bd4ea239-0252-482c-941c-714d83abcdea",
+          "author": {
+            "role": "assistant",
+            "name": null,
+            "metadata": {}
+          },
+          "create_time": 1748391207.29144,
+          "update_time": null,
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "Sample assistant response from conversation 2"
+            ]
+          },
+          "status": "finished_successfully",
+          "end_turn": true,
+          "weight": 1.0,
+          "metadata": {
+            "finish_details": {
+              "type": "stop",
+              "stop_tokens": [
+                200002
+              ]
+            },
+            "is_complete": true,
+            "citations": [],
+            "content_references": [],
+            "message_type": null,
+            "model_slug": "gpt-4o",
+            "default_model_slug": "auto",
+            "parent_id": "bbb217af-98f6-4988-97b9-0e517d2e3efd",
+            "request_id": "94698bd19c3d37ac-YVR",
+            "timestamp_": "absolute"
+          },
+          "recipient": "all",
+          "channel": null
+        },
+        "parent": "bbb217af-98f6-4988-97b9-0e517d2e3efd",
+        "children": [
+          "bbb21bac-0651-41bc-94e9-773813b8a7ac"
+        ]
+      },
+      "bbb21bac-0651-41bc-94e9-773813b8a7ac": {
+        "id": "bbb21bac-0651-41bc-94e9-773813b8a7ac",
+        "message": {
+          "id": "bbb21bac-0651-41bc-94e9-773813b8a7ac",
+          "author": {
+            "role": "user",
+            "name": null,
+            "metadata": {}
+          },
+          "create_time": 1748391221.667721,
+          "update_time": null,
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "Sample user message from conversation 2"
+            ]
+          },
+          "status": "finished_successfully",
+          "end_turn": null,
+          "weight": 1.0,
+          "metadata": {
+            "content_references": [],
+            "search_result_groups": [],
+            "search_queries": [],
+            "image_results": [],
+            "real_time_audio_has_video": false,
+            "image_gen_async": false,
+            "trigger_async_ux": false,
+            "request_id": "94698c2cf8d637ac-YVR",
+            "message_source": null,
+            "timestamp_": "absolute",
+            "message_type": null
+          },
+          "recipient": "all",
+          "channel": null
+        },
+        "parent": "bd4ea239-0252-482c-941c-714d83abcdea",
+        "children": [
+          "7a70e9e1-bd5b-4d3f-9801-a9b8eb1b8db4"
+        ]
+      },
+      "7a70e9e1-bd5b-4d3f-9801-a9b8eb1b8db4": {
+        "id": "7a70e9e1-bd5b-4d3f-9801-a9b8eb1b8db4",
+        "message": {
+          "id": "7a70e9e1-bd5b-4d3f-9801-a9b8eb1b8db4",
+          "author": {
+            "role": "assistant",
+            "name": null,
+            "metadata": {}
+          },
+          "create_time": 1748391221.715878,
+          "update_time": null,
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "Sample assistant response from conversation 2"
+            ]
+          },
+          "status": "finished_successfully",
+          "end_turn": true,
+          "weight": 1.0,
+          "metadata": {
+            "finish_details": {
+              "type": "stop",
+              "stop_tokens": [
+                200002
+              ]
+            },
+            "is_complete": true,
+            "citations": [],
+            "content_references": [],
+            "message_type": null,
+            "model_slug": "gpt-4o",
+            "default_model_slug": "auto",
+            "parent_id": "bbb21bac-0651-41bc-94e9-773813b8a7ac",
+            "request_id": "94698c2cf8d637ac-YVR",
+            "timestamp_": "absolute"
+          },
+          "recipient": "all",
+          "channel": null
+        },
+        "parent": "bbb21bac-0651-41bc-94e9-773813b8a7ac",
+        "children": [
+          "bbb219d7-22b6-4fac-8050-3c2f17962ceb"
+        ]
+      },
+      "bbb219d7-22b6-4fac-8050-3c2f17962ceb": {
+        "id": "bbb219d7-22b6-4fac-8050-3c2f17962ceb",
+        "message": {
+          "id": "bbb219d7-22b6-4fac-8050-3c2f17962ceb",
+          "author": {
+            "role": "user",
+            "name": null,
+            "metadata": {}
+          },
+          "create_time": 1748391243.187145,
+          "update_time": null,
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "Sample user message from conversation 2"
+            ]
+          },
+          "status": "finished_successfully",
+          "end_turn": null,
+          "weight": 1.0,
+          "metadata": {
+            "content_references": [],
+            "search_result_groups": [],
+            "search_queries": [],
+            "image_results": [],
+            "real_time_audio_has_video": false,
+            "image_gen_async": false,
+            "trigger_async_ux": false,
+            "request_id": "94698cb398ad37ac-YVR",
+            "message_source": null,
+            "timestamp_": "absolute",
+            "message_type": null
+          },
+          "recipient": "all",
+          "channel": null
+        },
+        "parent": "7a70e9e1-bd5b-4d3f-9801-a9b8eb1b8db4",
+        "children": [
+          "1a3eb866-f7cf-402d-8a20-6b7c520308ed"
+        ]
+      },
+      "1a3eb866-f7cf-402d-8a20-6b7c520308ed": {
+        "id": "1a3eb866-f7cf-402d-8a20-6b7c520308ed",
+        "message": {
+          "id": "1a3eb866-f7cf-402d-8a20-6b7c520308ed",
+          "author": {
+            "role": "assistant",
+            "name": null,
+            "metadata": {}
+          },
+          "create_time": 1748391243.23699,
+          "update_time": null,
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "Sample assistant response from conversation 2"
+            ]
+          },
+          "status": "finished_successfully",
+          "end_turn": true,
+          "weight": 1.0,
+          "metadata": {
+            "finish_details": {
+              "type": "stop",
+              "stop_tokens": [
+                200002
+              ]
+            },
+            "is_complete": true,
+            "citations": [],
+            "content_references": [],
+            "message_type": null,
+            "model_slug": "gpt-4o",
+            "default_model_slug": "auto",
+            "parent_id": "bbb219d7-22b6-4fac-8050-3c2f17962ceb",
+            "request_id": "94698cb398ad37ac-YVR",
+            "timestamp_": "absolute"
+          },
+          "recipient": "all",
+          "channel": null
+        },
+        "parent": "bbb219d7-22b6-4fac-8050-3c2f17962ceb",
+        "children": [
+          "bbb2186b-ee85-4df6-ad12-599023b103a0"
+        ]
+      },
+      "bbb2186b-ee85-4df6-ad12-599023b103a0": {
+        "id": "bbb2186b-ee85-4df6-ad12-599023b103a0",
+        "message": {
+          "id": "bbb2186b-ee85-4df6-ad12-599023b103a0",
+          "author": {
+            "role": "user",
+            "name": null,
+            "metadata": {}
+          },
+          "create_time": 1748391254.72124,
+          "update_time": null,
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "Sample user message from conversation 2"
+            ]
+          },
+          "status": "finished_successfully",
+          "end_turn": null,
+          "weight": 1.0,
+          "metadata": {
+            "content_references": [],
+            "search_result_groups": [],
+            "search_queries": [],
+            "image_results": [],
+            "real_time_audio_has_video": false,
+            "image_gen_async": false,
+            "trigger_async_ux": false,
+            "request_id": "94698cfb0b4f37ac-YVR",
+            "message_source": null,
+            "timestamp_": "absolute",
+            "message_type": null
+          },
+          "recipient": "all",
+          "channel": null
+        },
+        "parent": "1a3eb866-f7cf-402d-8a20-6b7c520308ed",
+        "children": [
+          "3eb2482e-03d4-4847-813c-2df5daf4ef9b"
+        ]
+      },
+      "3eb2482e-03d4-4847-813c-2df5daf4ef9b": {
+        "id": "3eb2482e-03d4-4847-813c-2df5daf4ef9b",
+        "message": {
+          "id": "3eb2482e-03d4-4847-813c-2df5daf4ef9b",
+          "author": {
+            "role": "assistant",
+            "name": null,
+            "metadata": {}
+          },
+          "create_time": 1748391254.794349,
+          "update_time": null,
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "Sample assistant response from conversation 2"
+            ]
+          },
+          "status": "finished_successfully",
+          "end_turn": true,
+          "weight": 1.0,
+          "metadata": {
+            "finish_details": {
+              "type": "stop",
+              "stop_tokens": [
+                200002
+              ]
+            },
+            "is_complete": true,
+            "citations": [],
+            "content_references": [],
+            "message_type": null,
+            "model_slug": "gpt-4o",
+            "default_model_slug": "auto",
+            "parent_id": "bbb2186b-ee85-4df6-ad12-599023b103a0",
+            "request_id": "94698cfb0b4f37ac-YVR",
+            "timestamp_": "absolute"
+          },
+          "recipient": "all",
+          "channel": null
+        },
+        "parent": "bbb2186b-ee85-4df6-ad12-599023b103a0",
+        "children": [
+          "bbb217cf-8eab-458d-a5af-a4d1c0f18a27"
+        ]
+      },
+      "bbb217cf-8eab-458d-a5af-a4d1c0f18a27": {
+        "id": "bbb217cf-8eab-458d-a5af-a4d1c0f18a27",
+        "message": {
+          "id": "bbb217cf-8eab-458d-a5af-a4d1c0f18a27",
+          "author": {
+            "role": "user",
+            "name": null,
+            "metadata": {}
+          },
+          "create_time": 1748391310.52742,
+          "update_time": null,
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "Sample user message from conversation 2"
+            ]
+          },
+          "status": "finished_successfully",
+          "end_turn": null,
+          "weight": 1.0,
+          "metadata": {
+            "content_references": [],
+            "search_result_groups": [],
+            "search_queries": [],
+            "image_results": [],
+            "real_time_audio_has_video": false,
+            "image_gen_async": false,
+            "trigger_async_ux": false,
+            "request_id": "94698e587b0c37ac-YVR",
+            "message_source": null,
+            "timestamp_": "absolute",
+            "message_type": null
+          },
+          "recipient": "all",
+          "channel": null
+        },
+        "parent": "3eb2482e-03d4-4847-813c-2df5daf4ef9b",
+        "children": [
+          "463780fb-af8b-4ce8-9519-0b1b4aef3d3a"
+        ]
+      },
+      "463780fb-af8b-4ce8-9519-0b1b4aef3d3a": {
+        "id": "463780fb-af8b-4ce8-9519-0b1b4aef3d3a",
+        "message": {
+          "id": "463780fb-af8b-4ce8-9519-0b1b4aef3d3a",
+          "author": {
+            "role": "assistant",
+            "name": null,
+            "metadata": {}
+          },
+          "create_time": 1748391310.589447,
+          "update_time": null,
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "Sample assistant response from conversation 2"
+            ]
+          },
+          "status": "finished_successfully",
+          "end_turn": true,
+          "weight": 1.0,
+          "metadata": {
+            "finish_details": {
+              "type": "stop",
+              "stop_tokens": [
+                200002
+              ]
+            },
+            "is_complete": true,
+            "citations": [],
+            "content_references": [],
+            "message_type": null,
+            "model_slug": "gpt-4o",
+            "default_model_slug": "auto",
+            "parent_id": "bbb217cf-8eab-458d-a5af-a4d1c0f18a27",
+            "request_id": "94698e587b0c37ac-YVR",
+            "timestamp_": "absolute"
+          },
+          "recipient": "all",
+          "channel": null
+        },
+        "parent": "bbb217cf-8eab-458d-a5af-a4d1c0f18a27",
+        "children": [
+          "bbb214e3-d7e8-4665-8a63-71a74f093d50"
+        ]
+      },
+      "bbb214e3-d7e8-4665-8a63-71a74f093d50": {
+        "id": "bbb214e3-d7e8-4665-8a63-71a74f093d50",
+        "message": {
+          "id": "bbb214e3-d7e8-4665-8a63-71a74f093d50",
+          "author": {
+            "role": "user",
+            "name": null,
+            "metadata": {}
+          },
+          "create_time": 1748391330.136968,
+          "update_time": null,
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "Sample user message from conversation 2"
+            ]
+          },
+          "status": "finished_successfully",
+          "end_turn": null,
+          "weight": 1.0,
+          "metadata": {
+            "content_references": [],
+            "search_result_groups": [],
+            "search_queries": [],
+            "image_results": [],
+            "real_time_audio_has_video": false,
+            "image_gen_async": false,
+            "trigger_async_ux": false,
+            "request_id": "94698ed30b9337ac-YVR",
+            "message_source": null,
+            "timestamp_": "absolute",
+            "message_type": null
+          },
+          "recipient": "all",
+          "channel": null
+        },
+        "parent": "463780fb-af8b-4ce8-9519-0b1b4aef3d3a",
+        "children": [
+          "69db3818-e1ec-41b6-9177-05c4c3160c46"
+        ]
+      },
+      "69db3818-e1ec-41b6-9177-05c4c3160c46": {
+        "id": "69db3818-e1ec-41b6-9177-05c4c3160c46",
+        "message": {
+          "id": "69db3818-e1ec-41b6-9177-05c4c3160c46",
+          "author": {
+            "role": "assistant",
+            "name": null,
+            "metadata": {}
+          },
+          "create_time": 1748391330.197897,
+          "update_time": null,
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "Sample assistant response from conversation 2"
+            ]
+          },
+          "status": "finished_successfully",
+          "end_turn": true,
+          "weight": 1.0,
+          "metadata": {
+            "finish_details": {
+              "type": "stop",
+              "stop_tokens": [
+                200002
+              ]
+            },
+            "is_complete": true,
+            "citations": [],
+            "content_references": [],
+            "message_type": null,
+            "model_slug": "gpt-4o",
+            "default_model_slug": "auto",
+            "parent_id": "bbb214e3-d7e8-4665-8a63-71a74f093d50",
+            "request_id": "94698ed30b9337ac-YVR",
+            "timestamp_": "absolute"
+          },
+          "recipient": "all",
+          "channel": null
+        },
+        "parent": "bbb214e3-d7e8-4665-8a63-71a74f093d50",
+        "children": [
+          "bbb216db-e47f-4748-aeae-3326620dec29"
+        ]
+      },
+      "bbb216db-e47f-4748-aeae-3326620dec29": {
+        "id": "bbb216db-e47f-4748-aeae-3326620dec29",
+        "message": {
+          "id": "bbb216db-e47f-4748-aeae-3326620dec29",
+          "author": {
+            "role": "user",
+            "name": null,
+            "metadata": {}
+          },
+          "create_time": 1748391345.035871,
+          "update_time": null,
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "Sample user message from conversation 2"
+            ]
+          },
+          "status": "finished_successfully",
+          "end_turn": null,
+          "weight": 1.0,
+          "metadata": {
+            "content_references": [],
+            "search_result_groups": [],
+            "search_queries": [],
+            "image_results": [],
+            "real_time_audio_has_video": false,
+            "image_gen_async": false,
+            "trigger_async_ux": false,
+            "request_id": "94698f2f7e2737ac-YVR",
+            "message_source": null,
+            "timestamp_": "absolute",
+            "message_type": null
+          },
+          "recipient": "all",
+          "channel": null
+        },
+        "parent": "69db3818-e1ec-41b6-9177-05c4c3160c46",
+        "children": [
+          "b1b57dd8-1b66-4f08-8bcd-29bed85f1484"
+        ]
+      },
+      "b1b57dd8-1b66-4f08-8bcd-29bed85f1484": {
+        "id": "b1b57dd8-1b66-4f08-8bcd-29bed85f1484",
+        "message": {
+          "id": "b1b57dd8-1b66-4f08-8bcd-29bed85f1484",
+          "author": {
+            "role": "assistant",
+            "name": null,
+            "metadata": {}
+          },
+          "create_time": 1748391345.112517,
+          "update_time": null,
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "Sample assistant response from conversation 2"
+            ]
+          },
+          "status": "finished_successfully",
+          "end_turn": true,
+          "weight": 1.0,
+          "metadata": {
+            "finish_details": {
+              "type": "stop",
+              "stop_tokens": [
+                200002
+              ]
+            },
+            "is_complete": true,
+            "citations": [],
+            "content_references": [],
+            "message_type": null,
+            "model_slug": "gpt-4o",
+            "default_model_slug": "auto",
+            "parent_id": "bbb216db-e47f-4748-aeae-3326620dec29",
+            "request_id": "94698f2f7e2737ac-YVR",
+            "timestamp_": "absolute"
+          },
+          "recipient": "all",
+          "channel": null
+        },
+        "parent": "bbb216db-e47f-4748-aeae-3326620dec29",
+        "children": [
+          "bbb21229-3d97-4bef-8d21-21ff999482f0"
+        ]
+      },
+      "bbb21229-3d97-4bef-8d21-21ff999482f0": {
+        "id": "bbb21229-3d97-4bef-8d21-21ff999482f0",
+        "message": {
+          "id": "bbb21229-3d97-4bef-8d21-21ff999482f0",
+          "author": {
+            "role": "user",
+            "name": null,
+            "metadata": {}
+          },
+          "create_time": 1748391365.794889,
+          "update_time": null,
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "Sample user message from conversation 2"
+            ]
+          },
+          "status": "finished_successfully",
+          "end_turn": null,
+          "weight": 1.0,
+          "metadata": {
+            "content_references": [],
+            "search_result_groups": [],
+            "search_queries": [],
+            "image_results": [],
+            "real_time_audio_has_video": false,
+            "image_gen_async": false,
+            "trigger_async_ux": false,
+            "request_id": "94698fb1dbc437ac-YVR",
+            "message_source": null,
+            "timestamp_": "absolute",
+            "message_type": null
+          },
+          "recipient": "all",
+          "channel": null
+        },
+        "parent": "b1b57dd8-1b66-4f08-8bcd-29bed85f1484",
+        "children": [
+          "f4e8e8e9-bf67-4f61-a93c-4a34997e737d"
+        ]
+      },
+      "f4e8e8e9-bf67-4f61-a93c-4a34997e737d": {
+        "id": "f4e8e8e9-bf67-4f61-a93c-4a34997e737d",
+        "message": {
+          "id": "f4e8e8e9-bf67-4f61-a93c-4a34997e737d",
+          "author": {
+            "role": "assistant",
+            "name": null,
+            "metadata": {}
+          },
+          "create_time": 1748391365.846541,
+          "update_time": null,
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "Sample assistant response from conversation 2"
+            ]
+          },
+          "status": "finished_successfully",
+          "end_turn": true,
+          "weight": 1.0,
+          "metadata": {
+            "finish_details": {
+              "type": "stop",
+              "stop_tokens": [
+                200002
+              ]
+            },
+            "is_complete": true,
+            "citations": [],
+            "content_references": [],
+            "message_type": null,
+            "model_slug": "gpt-4o",
+            "default_model_slug": "auto",
+            "parent_id": "bbb21229-3d97-4bef-8d21-21ff999482f0",
+            "request_id": "94698fb1dbc437ac-YVR",
+            "timestamp_": "absolute"
+          },
+          "recipient": "all",
+          "channel": null
+        },
+        "parent": "bbb21229-3d97-4bef-8d21-21ff999482f0",
+        "children": [
+          "bbb21316-acc8-4309-a40e-7c3fa3794507"
+        ]
+      },
+      "bbb21316-acc8-4309-a40e-7c3fa3794507": {
+        "id": "bbb21316-acc8-4309-a40e-7c3fa3794507",
+        "message": {
+          "id": "bbb21316-acc8-4309-a40e-7c3fa3794507",
+          "author": {
+            "role": "user",
+            "name": null,
+            "metadata": {}
+          },
+          "create_time": 1748391390.146803,
+          "update_time": null,
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "Sample user message from conversation 2"
+            ]
+          },
+          "status": "finished_successfully",
+          "end_turn": null,
+          "weight": 1.0,
+          "metadata": {
+            "content_references": [],
+            "search_result_groups": [],
+            "search_queries": [],
+            "image_results": [],
+            "real_time_audio_has_video": false,
+            "image_gen_async": false,
+            "trigger_async_ux": false,
+            "request_id": "946990491bab37ac-YVR",
+            "message_source": null,
+            "timestamp_": "absolute",
+            "message_type": null
+          },
+          "recipient": "all",
+          "channel": null
+        },
+        "parent": "f4e8e8e9-bf67-4f61-a93c-4a34997e737d",
+        "children": [
+          "eea36ed5-75af-461b-9e9f-8f598bc0c0c8"
+        ]
+      },
+      "eea36ed5-75af-461b-9e9f-8f598bc0c0c8": {
+        "id": "eea36ed5-75af-461b-9e9f-8f598bc0c0c8",
+        "message": {
+          "id": "eea36ed5-75af-461b-9e9f-8f598bc0c0c8",
+          "author": {
+            "role": "system",
+            "name": null,
+            "metadata": {}
+          },
+          "create_time": 1748391391.648462,
+          "update_time": null,
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "Sample system message from conversation 2"
+            ]
+          },
+          "status": "finished_successfully",
+          "end_turn": true,
+          "weight": 0.0,
+          "metadata": {
+            "rebase_system_message": true,
+            "message_type": null,
+            "model_slug": "gpt-4-1-mini",
+            "default_model_slug": "auto",
+            "parent_id": "bbb21316-acc8-4309-a40e-7c3fa3794507",
+            "request_id": "946990491bab37ac-YVR",
+            "timestamp_": "absolute",
+            "is_visually_hidden_from_conversation": true
+          },
+          "recipient": "all",
+          "channel": null
+        },
+        "parent": "bbb21316-acc8-4309-a40e-7c3fa3794507",
+        "children": [
+          "7d39b415-4746-4b48-84d0-71b00c69fe06"
+        ]
+      },
+      "7d39b415-4746-4b48-84d0-71b00c69fe06": {
+        "id": "7d39b415-4746-4b48-84d0-71b00c69fe06",
+        "message": {
+          "id": "7d39b415-4746-4b48-84d0-71b00c69fe06",
+          "author": {
+            "role": "assistant",
+            "name": null,
+            "metadata": {}
+          },
+          "create_time": 1748391390.235678,
+          "update_time": null,
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "Sample assistant response from conversation 2"
+            ]
+          },
+          "status": "finished_successfully",
+          "end_turn": true,
+          "weight": 1.0,
+          "metadata": {
+            "finish_details": {
+              "type": "stop",
+              "stop_tokens": [
+                200002
+              ]
+            },
+            "is_complete": true,
+            "citations": [],
+            "content_references": [],
+            "message_type": null,
+            "model_slug": "gpt-4-1-mini",
+            "default_model_slug": "auto",
+            "parent_id": "eea36ed5-75af-461b-9e9f-8f598bc0c0c8",
+            "request_id": "946990491bab37ac-YVR",
+            "timestamp_": "absolute"
+          },
+          "recipient": "all",
+          "channel": null
+        },
+        "parent": "eea36ed5-75af-461b-9e9f-8f598bc0c0c8",
+        "children": [
+          "bbb21bbb-d1f6-418d-af75-71fb29cff4aa"
+        ]
+      },
+      "bbb21bbb-d1f6-418d-af75-71fb29cff4aa": {
+        "id": "bbb21bbb-d1f6-418d-af75-71fb29cff4aa",
+        "message": {
+          "id": "bbb21bbb-d1f6-418d-af75-71fb29cff4aa",
+          "author": {
+            "role": "user",
+            "name": null,
+            "metadata": {}
+          },
+          "create_time": 1748399145.075145,
+          "update_time": null,
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "Sample user message from conversation 2"
+            ]
+          },
+          "status": "finished_successfully",
+          "end_turn": null,
+          "weight": 1.0,
+          "metadata": {
+            "content_references": [],
+            "search_result_groups": [],
+            "search_queries": [],
+            "image_results": [],
+            "real_time_audio_has_video": false,
+            "image_gen_async": false,
+            "trigger_async_ux": false,
+            "request_id": "946a4d9afff130a6-SEA",
+            "message_source": null,
+            "timestamp_": "absolute",
+            "message_type": null
+          },
+          "recipient": "all",
+          "channel": null
+        },
+        "parent": "7d39b415-4746-4b48-84d0-71b00c69fe06",
+        "children": [
+          "3d97a6ce-62d0-4e21-8af1-4744e40adf49"
+        ]
+      },
+      "3d97a6ce-62d0-4e21-8af1-4744e40adf49": {
+        "id": "3d97a6ce-62d0-4e21-8af1-4744e40adf49",
+        "message": {
+          "id": "3d97a6ce-62d0-4e21-8af1-4744e40adf49",
+          "author": {
+            "role": "system",
+            "name": null,
+            "metadata": {}
+          },
+          "create_time": 1748399156.898084,
+          "update_time": null,
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "Sample system message from conversation 2"
+            ]
+          },
+          "status": "finished_successfully",
+          "end_turn": true,
+          "weight": 0.0,
+          "metadata": {
+            "rebase_system_message": true,
+            "message_type": null,
+            "model_slug": "gpt-4o",
+            "default_model_slug": "auto",
+            "parent_id": "bbb21bbb-d1f6-418d-af75-71fb29cff4aa",
+            "request_id": "946a4d9afff130a6-SEA",
+            "timestamp_": "absolute",
+            "is_visually_hidden_from_conversation": true
+          },
+          "recipient": "all",
+          "channel": null
+        },
+        "parent": "bbb21bbb-d1f6-418d-af75-71fb29cff4aa",
+        "children": [
+          "eaee76a6-a97d-46f7-8224-024550734c18"
+        ]
+      },
+      "eaee76a6-a97d-46f7-8224-024550734c18": {
+        "id": "eaee76a6-a97d-46f7-8224-024550734c18",
+        "message": {
+          "id": "eaee76a6-a97d-46f7-8224-024550734c18",
+          "author": {
+            "role": "assistant",
+            "name": null,
+            "metadata": {}
+          },
+          "create_time": 1748399145.142883,
+          "update_time": null,
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "Sample assistant response from conversation 2"
+            ]
+          },
+          "status": "finished_successfully",
+          "end_turn": true,
+          "weight": 1.0,
+          "metadata": {
+            "finish_details": {
+              "type": "stop",
+              "stop_tokens": [
+                200002
+              ]
+            },
+            "is_complete": true,
+            "citations": [],
+            "content_references": [],
+            "message_type": null,
+            "model_slug": "gpt-4o",
+            "default_model_slug": "auto",
+            "parent_id": "3d97a6ce-62d0-4e21-8af1-4744e40adf49",
+            "request_id": "946a4d9afff130a6-SEA",
+            "timestamp_": "absolute"
+          },
+          "recipient": "all",
+          "channel": null
+        },
+        "parent": "3d97a6ce-62d0-4e21-8af1-4744e40adf49",
+        "children": []
+      }
+    },
+    "moderation_results": [],
+    "current_node": "eaee76a6-a97d-46f7-8224-024550734c18",
+    "plugin_ids": null,
+    "conversation_id": "6836550b-8a9c-8009-ab41-abc4f9df9531",
+    "conversation_template_id": null,
+    "gizmo_id": null,
+    "gizmo_type": null,
+    "is_archived": false,
+    "is_starred": null,
+    "safe_urls": [],
+    "blocked_urls": [],
+    "default_model_slug": "auto",
+    "conversation_origin": null,
+    "voice": null,
+    "async_status": null,
+    "disabled_tool_ids": [],
+    "is_do_not_remember": false,
+    "memory_scope": "global_enabled",
+    "id": "6836550b-8a9c-8009-ab41-abc4f9df9531"
+  },
+  {
+    "title": "Sample Conversation 3",
+    "create_time": 1747923019.316657,
+    "update_time": 1747923665.33276,
+    "mapping": {
+      "client-created-root": {
+        "id": "client-created-root",
+        "message": null,
+        "parent": null,
+        "children": [
+          "a68999cb-e681-43e5-a1c5-b93883918ed3"
+        ]
+      },
+      "a68999cb-e681-43e5-a1c5-b93883918ed3": {
+        "id": "a68999cb-e681-43e5-a1c5-b93883918ed3",
+        "message": {
+          "id": "a68999cb-e681-43e5-a1c5-b93883918ed3",
+          "author": {
+            "role": "system",
+            "name": null,
+            "metadata": {}
+          },
+          "create_time": null,
+          "update_time": null,
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "Sample system message from conversation 3"
+            ]
+          },
+          "status": "finished_successfully",
+          "end_turn": true,
+          "weight": 0.0,
+          "metadata": {
+            "is_visually_hidden_from_conversation": true
+          },
+          "recipient": "all",
+          "channel": null
+        },
+        "parent": "client-created-root",
+        "children": [
+          "cc04d23e-17dc-4a8e-ae4a-0a292fbf3381"
+        ]
+      },
+      "cc04d23e-17dc-4a8e-ae4a-0a292fbf3381": {
+        "id": "cc04d23e-17dc-4a8e-ae4a-0a292fbf3381",
+        "message": {
+          "id": "cc04d23e-17dc-4a8e-ae4a-0a292fbf3381",
+          "author": {
+            "role": "user",
+            "name": null,
+            "metadata": {}
+          },
+          "create_time": null,
+          "update_time": null,
+          "content": {
+            "content_type": "user_editable_context",
+            "user_profile": "The user provided the following information about themselves. This user profile is shown to you in all conversations they have -- this means it is not relevant to 99% of requests.\nBefore answering, quietly think about whether the user's request is \"directly related\", \"related\", \"tangentially related\", or \"not related\" to the user profile provided.\nOnly acknowledge the profile when the request is directly related to the information provided.\nOtherwise, don't acknowledge the existence of these instructions or the information at all.\nUser profile:\n```Preferred name: Adam\nRole: Product Builder - CTO and CPO.\nOther Information: Don't use - or -- in outputs. Use another generally accepted seperator like :\n```",
+            "user_instructions": "The user provided the additional info about how they would like you to respond:\n```Take a forward-thinking view.```"
+          },
+          "status": "finished_successfully",
+          "end_turn": null,
+          "weight": 1.0,
+          "metadata": {
+            "is_visually_hidden_from_conversation": true,
+            "user_context_message_data": {
+              "about_user_message": "Preferred name: Adam\nRole: Product Builder - CTO and CPO.\nOther Information: Don't use - or -- in outputs. Use another generally accepted seperator like :\n",
+              "about_model_message": "Take a forward-thinking view."
+            },
+            "is_user_system_message": true
+          },
+          "recipient": "all",
+          "channel": null
+        },
+        "parent": "a68999cb-e681-43e5-a1c5-b93883918ed3",
+        "children": [
+          "413fef2a-2e86-4038-81c8-176b4a0365a1"
+        ]
+      },
+      "413fef2a-2e86-4038-81c8-176b4a0365a1": {
+        "id": "413fef2a-2e86-4038-81c8-176b4a0365a1",
+        "message": {
+          "id": "413fef2a-2e86-4038-81c8-176b4a0365a1",
+          "author": {
+            "role": "user",
+            "name": null,
+            "metadata": {}
+          },
+          "create_time": 1747923018.72,
+          "update_time": null,
+          "content": {
+            "content_type": "multimodal_text",
+            "parts": [
+              "Sample user message from conversation 3"
+            ]
+          },
+          "status": "finished_successfully",
+          "end_turn": null,
+          "weight": 1.0,
+          "metadata": {
+            "attachments": [
+              {
+                "id": "file-QRuNDorbxUmENytCUC6ew9",
+                "size": 129671,
+                "name": "a12c5ee1-0b30-4847-b77a-0d689e55e020.png",
+                "mime_type": "image/png",
+                "width": 597,
+                "height": 388
+              }
+            ],
+            "selected_github_repos": [],
+            "serialization_metadata": {
+              "custom_symbol_offsets": []
+            },
+            "request_id": "943ce574a956aaae-DFW",
+            "message_source": null,
+            "timestamp_": "absolute",
+            "message_type": null
+          },
+          "recipient": "all",
+          "channel": null
+        },
+        "parent": "cc04d23e-17dc-4a8e-ae4a-0a292fbf3381",
+        "children": [
+          "9bd50813-72f7-4b4f-878e-43885c080d70"
+        ]
+      },
+      "9bd50813-72f7-4b4f-878e-43885c080d70": {
+        "id": "9bd50813-72f7-4b4f-878e-43885c080d70",
+        "message": {
+          "id": "9bd50813-72f7-4b4f-878e-43885c080d70",
+          "author": {
+            "role": "assistant",
+            "name": null,
+            "metadata": {}
+          },
+          "create_time": 1747923031.232683,
+          "update_time": null,
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "Sample assistant response from conversation 3"
+            ]
+          },
+          "status": "finished_successfully",
+          "end_turn": null,
+          "weight": 1.0,
+          "metadata": {
+            "message_type": null,
+            "model_slug": "gpt-4o",
+            "default_model_slug": "auto",
+            "parent_id": "413fef2a-2e86-4038-81c8-176b4a0365a1",
+            "request_id": "943ce574a956aaae-DFW",
+            "timestamp_": "absolute"
+          },
+          "recipient": "all",
+          "channel": null
+        },
+        "parent": "413fef2a-2e86-4038-81c8-176b4a0365a1",
+        "children": [
+          "5b56f7d3-7428-4882-8c3f-c6d44c97d14e"
+        ]
+      },
+      "5b56f7d3-7428-4882-8c3f-c6d44c97d14e": {
+        "id": "5b56f7d3-7428-4882-8c3f-c6d44c97d14e",
+        "message": {
+          "id": "5b56f7d3-7428-4882-8c3f-c6d44c97d14e",
+          "author": {
+            "role": "assistant",
+            "name": null,
+            "metadata": {}
+          },
+          "create_time": 1747923019.547997,
+          "update_time": null,
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "Sample assistant response from conversation 3"
+            ]
+          },
+          "status": "finished_successfully",
+          "end_turn": true,
+          "weight": 1.0,
+          "metadata": {
+            "finish_details": {
+              "type": "stop",
+              "stop_tokens": [
+                200002
+              ]
+            },
+            "is_complete": true,
+            "citations": [],
+            "content_references": [],
+            "message_type": null,
+            "model_slug": "gpt-4o",
+            "default_model_slug": "auto",
+            "parent_id": "9bd50813-72f7-4b4f-878e-43885c080d70",
+            "request_id": "943ce574a956aaae-DFW",
+            "timestamp_": "absolute"
+          },
+          "recipient": "all",
+          "channel": null
+        },
+        "parent": "9bd50813-72f7-4b4f-878e-43885c080d70",
+        "children": [
+          "3ace2d34-f7e0-4857-bcb1-b185373df2ac"
+        ]
+      },
+      "3ace2d34-f7e0-4857-bcb1-b185373df2ac": {
+        "id": "3ace2d34-f7e0-4857-bcb1-b185373df2ac",
+        "message": {
+          "id": "3ace2d34-f7e0-4857-bcb1-b185373df2ac",
+          "author": {
+            "role": "user",
+            "name": null,
+            "metadata": {}
+          },
+          "create_time": 1747923170.129,
+          "update_time": null,
+          "content": {
+            "content_type": "multimodal_text",
+            "parts": [
+              "Sample user message from conversation 3"
+            ]
+          },
+          "status": "finished_successfully",
+          "end_turn": null,
+          "weight": 1.0,
+          "metadata": {
+            "attachments": [
+              {
+                "id": "file-2syMrXHEKErGh3aBv9ToYc",
+                "size": 93087,
+                "name": "de6138e0-d9e9-4e30-b6b4-8825bcbe449b.png",
+                "mime_type": "image/png",
+                "width": 593,
+                "height": 293
+              }
+            ],
+            "selected_github_repos": [],
+            "serialization_metadata": {
+              "custom_symbol_offsets": []
+            },
+            "request_id": "943ce926fa05aaae-DFW",
+            "message_source": null,
+            "timestamp_": "absolute",
+            "message_type": null
+          },
+          "recipient": "all",
+          "channel": null
+        },
+        "parent": "5b56f7d3-7428-4882-8c3f-c6d44c97d14e",
+        "children": [
+          "2d65f339-edf2-4067-b6e3-e6e11bef2d25"
+        ]
+      },
+      "2d65f339-edf2-4067-b6e3-e6e11bef2d25": {
+        "id": "2d65f339-edf2-4067-b6e3-e6e11bef2d25",
+        "message": {
+          "id": "2d65f339-edf2-4067-b6e3-e6e11bef2d25",
+          "author": {
+            "role": "assistant",
+            "name": null,
+            "metadata": {}
+          },
+          "create_time": 1747923170.836361,
+          "update_time": null,
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "Sample assistant response from conversation 3"
+            ]
+          },
+          "status": "finished_successfully",
+          "end_turn": true,
+          "weight": 1.0,
+          "metadata": {
+            "finish_details": {
+              "type": "stop",
+              "stop_tokens": [
+                200002
+              ]
+            },
+            "is_complete": true,
+            "citations": [],
+            "content_references": [],
+            "message_type": null,
+            "model_slug": "gpt-4o",
+            "default_model_slug": "auto",
+            "parent_id": "3ace2d34-f7e0-4857-bcb1-b185373df2ac",
+            "request_id": "943ce926fa05aaae-DFW",
+            "timestamp_": "absolute"
+          },
+          "recipient": "all",
+          "channel": null
+        },
+        "parent": "3ace2d34-f7e0-4857-bcb1-b185373df2ac",
+        "children": [
+          "e044c89c-b5ed-4a93-be07-37dcc9957f44"
+        ]
+      },
+      "e044c89c-b5ed-4a93-be07-37dcc9957f44": {
+        "id": "e044c89c-b5ed-4a93-be07-37dcc9957f44",
+        "message": {
+          "id": "e044c89c-b5ed-4a93-be07-37dcc9957f44",
+          "author": {
+            "role": "user",
+            "name": null,
+            "metadata": {}
+          },
+          "create_time": 1747923469.736,
+          "update_time": null,
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "Sample user message from conversation 3"
+            ]
+          },
+          "status": "finished_successfully",
+          "end_turn": null,
+          "weight": 1.0,
+          "metadata": {
+            "selected_github_repos": [],
+            "serialization_metadata": {
+              "custom_symbol_offsets": []
+            },
+            "request_id": "943cf07788e7aaae-DFW",
+            "message_source": null,
+            "timestamp_": "absolute",
+            "message_type": null
+          },
+          "recipient": "all",
+          "channel": null
+        },
+        "parent": "2d65f339-edf2-4067-b6e3-e6e11bef2d25",
+        "children": [
+          "6d37c6f4-5f41-49fd-b1a0-56d4030a59c2"
+        ]
+      },
+      "6d37c6f4-5f41-49fd-b1a0-56d4030a59c2": {
+        "id": "6d37c6f4-5f41-49fd-b1a0-56d4030a59c2",
+        "message": {
+          "id": "6d37c6f4-5f41-49fd-b1a0-56d4030a59c2",
+          "author": {
+            "role": "assistant",
+            "name": null,
+            "metadata": {}
+          },
+          "create_time": 1747923470.292654,
+          "update_time": null,
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "Sample assistant response from conversation 3"
+            ]
+          },
+          "status": "finished_successfully",
+          "end_turn": true,
+          "weight": 1.0,
+          "metadata": {
+            "finish_details": {
+              "type": "stop",
+              "stop_tokens": [
+                200002
+              ]
+            },
+            "is_complete": true,
+            "citations": [],
+            "content_references": [],
+            "message_type": null,
+            "model_slug": "gpt-4o",
+            "default_model_slug": "auto",
+            "parent_id": "e044c89c-b5ed-4a93-be07-37dcc9957f44",
+            "request_id": "943cf07788e7aaae-DFW",
+            "timestamp_": "absolute"
+          },
+          "recipient": "all",
+          "channel": null
+        },
+        "parent": "e044c89c-b5ed-4a93-be07-37dcc9957f44",
+        "children": [
+          "3bff5226-62e3-4e98-91e3-351efb33eb84"
+        ]
+      },
+      "3bff5226-62e3-4e98-91e3-351efb33eb84": {
+        "id": "3bff5226-62e3-4e98-91e3-351efb33eb84",
+        "message": {
+          "id": "3bff5226-62e3-4e98-91e3-351efb33eb84",
+          "author": {
+            "role": "user",
+            "name": null,
+            "metadata": {}
+          },
+          "create_time": 1747923652.49,
+          "update_time": null,
+          "content": {
+            "content_type": "multimodal_text",
+            "parts": [
+              "Sample user message from conversation 3"
+            ]
+          },
+          "status": "finished_successfully",
+          "end_turn": null,
+          "weight": 1.0,
+          "metadata": {
+            "attachments": [
+              {
+                "id": "file-9h2Gb4XGzsz7g74axsrbuh",
+                "size": 80446,
+                "name": "378dfcb7-b321-4a54-bade-e738a344baf9.png",
+                "mime_type": "image/png",
+                "width": 369,
+                "height": 271
+              }
+            ],
+            "selected_github_repos": [],
+            "serialization_metadata": {
+              "custom_symbol_offsets": []
+            },
+            "request_id": "943cf4eecfe3aaae-DFW",
+            "message_source": null,
+            "timestamp_": "absolute",
+            "message_type": null
+          },
+          "recipient": "all",
+          "channel": null
+        },
+        "parent": "6d37c6f4-5f41-49fd-b1a0-56d4030a59c2",
+        "children": [
+          "a6bd8035-217d-4f4c-b243-d40e26cc2d63"
+        ]
+      },
+      "a6bd8035-217d-4f4c-b243-d40e26cc2d63": {
+        "id": "a6bd8035-217d-4f4c-b243-d40e26cc2d63",
+        "message": {
+          "id": "a6bd8035-217d-4f4c-b243-d40e26cc2d63",
+          "author": {
+            "role": "assistant",
+            "name": null,
+            "metadata": {}
+          },
+          "create_time": 1747923653.852174,
+          "update_time": null,
+          "content": {
+            "content_type": "text",
+            "parts": [
+              "Sample assistant response from conversation 3"
+            ]
+          },
+          "status": "finished_successfully",
+          "end_turn": true,
+          "weight": 1.0,
+          "metadata": {
+            "finish_details": {
+              "type": "stop",
+              "stop_tokens": [
+                200002
+              ]
+            },
+            "is_complete": true,
+            "citations": [],
+            "content_references": [],
+            "message_type": null,
+            "model_slug": "gpt-4o",
+            "default_model_slug": "auto",
+            "parent_id": "3bff5226-62e3-4e98-91e3-351efb33eb84",
+            "request_id": "943cf4eecfe3aaae-DFW",
+            "timestamp_": "absolute"
+          },
+          "recipient": "all",
+          "channel": null
+        },
+        "parent": "3bff5226-62e3-4e98-91e3-351efb33eb84",
+        "children": []
+      }
+    },
+    "moderation_results": [],
+    "current_node": "a6bd8035-217d-4f4c-b243-d40e26cc2d63",
+    "plugin_ids": null,
+    "conversation_id": "682f304b-1444-8009-9a72-69f7b5e8b533",
+    "conversation_template_id": null,
+    "gizmo_id": null,
+    "gizmo_type": null,
+    "is_archived": false,
+    "is_starred": null,
+    "safe_urls": [],
+    "blocked_urls": [],
+    "default_model_slug": "auto",
+    "conversation_origin": null,
+    "voice": null,
+    "async_status": null,
+    "disabled_tool_ids": [],
+    "is_do_not_remember": false,
+    "memory_scope": "global_enabled",
+    "id": "682f304b-1444-8009-9a72-69f7b5e8b533"
+  }
+]
