@@ -211,6 +211,9 @@ class CursorImporter(BaseImporter):
                 message, content_display = processed_interaction
                 messages.append(message)
                 content_parts.append(content_display)
+        
+        full_content = "\n\n".join(content_parts)
+        return messages, full_content
     
     def _add_session_header(self, content_parts: List[str], workspace: str, model: str, session_id: str) -> None:
         """Add session header to content parts."""

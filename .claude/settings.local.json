@@ -28,7 +28,12 @@
       "Bash(gh pr view:*)",
       "Bash(mkdir:*)",
       "Bash(python:*)",
-      "Bash(deactivate)"
+      "Bash(deactivate)",
+      "Bash(gh pr edit:*)",
+      "Bash(grep:*)",
+      "Bash(mv:*)",
+      "Bash(git fetch:*)",
+      "Bash(git merge:*)"
     ],
     "deny": []
   }

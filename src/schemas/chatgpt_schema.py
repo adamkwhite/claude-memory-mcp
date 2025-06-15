@@ -354,7 +354,7 @@ def validate_chatgpt_export(data: Any) -> Dict[str, Any]:
     except jsonschema.ValidationError as e:
         return {
             "valid": False,
-            "errors": [f"Schema validation error: {e.message}"],
+            "errors": [f"Schema validation error: {str(e)}"],
             "warnings": [],
             "conversation_count": 0
         }
@@ -402,9 +402,10 @@ def get_chatgpt_conversation_stats(conversation: Dict[str, Any]) -> Dict[str, An
         # Count characters in content parts
         content = message.get("content", {})
         parts = content.get("parts", [])
-        for part in parts:
-            if isinstance(part, str):
-                total_characters += len(part)
+        if parts is not None:
+            for part in parts:
+                if isinstance(part, str):
+                    total_characters += len(part)
     
     stats["role_counts"] = role_counts
     stats["total_characters"] = total_characters
