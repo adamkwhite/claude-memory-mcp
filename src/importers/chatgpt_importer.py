@@ -224,39 +224,47 @@ class ChatGPTImporter(BaseImporter):
         if not isinstance(data, dict):
             return False
         
-        # Must have conversations array
+        if not self._validate_conversations_array(data):
+            return False
+            
+        return self._validate_conversation_structure(data["conversations"])
+    
+    def _validate_conversations_array(self, data: Dict[str, Any]) -> bool:
+        """Validate conversations array exists and is valid."""
         if "conversations" not in data:
             return False
         
         conversations = data["conversations"]
-        if not isinstance(conversations, list):
+        return isinstance(conversations, list)
+    
+    def _validate_conversation_structure(self, conversations: List[Any]) -> bool:
+        """Validate conversation structure if conversations exist."""
+        if not conversations:
+            return True
+            
+        sample_conv = conversations[0]
+        if not isinstance(sample_conv, dict):
             return False
         
-        # Check at least one conversation has required structure
-        if conversations:
-            sample_conv = conversations[0]
-            if not isinstance(sample_conv, dict):
-                return False
-            
-            # Should have messages array
-            if "messages" not in sample_conv:
-                return False
-            
-            messages = sample_conv["messages"]
-            if not isinstance(messages, list):
-                return False
-            
-            # Check message structure
-            if messages:
-                sample_msg = messages[0]
-                if not isinstance(sample_msg, dict):
-                    return False
-                
-                # Should have role and content
-                if "role" not in sample_msg or "content" not in sample_msg:
-                    return False
+        return self._validate_messages_structure(sample_conv)
+    
+    def _validate_messages_structure(self, conversation: Dict[str, Any]) -> bool:
+        """Validate messages structure within conversation."""
+        if "messages" not in conversation:
+            return False
         
-        return True
+        messages = conversation["messages"]
+        if not isinstance(messages, list):
+            return False
+        
+        if not messages:
+            return True
+            
+        sample_msg = messages[0]
+        if not isinstance(sample_msg, dict):
+            return False
+        
+        return "role" in sample_msg and "content" in sample_msg
     
     def _extract_model_info(self, conversation_data: Dict[str, Any]) -> str:
         """Extract model information from conversation data."""
@@ -334,7 +342,7 @@ if __name__ == "__main__":
         importer = ChatGPTImporter(storage_path)
         result = importer.import_file(file_path)
         
-        print(f"Import Result:")
+        print("Import Result:")
         print(f"  Success: {result.success}")
         print(f"  Imported: {result.conversations_imported}")
         print(f"  Failed: {result.conversations_failed}")

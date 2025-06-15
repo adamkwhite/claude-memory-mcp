@@ -513,7 +513,7 @@ if __name__ == "__main__":
         importer = ClaudeImporter(storage_path)
         result = importer.import_file(file_path)
         
-        print(f"Import Result:")
+        print("Import Result:")
         print(f"  Success: {result.success}")
         print(f"  Imported: {result.conversations_imported}")
         print(f"  Failed: {result.conversations_failed}")

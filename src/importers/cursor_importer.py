@@ -200,70 +200,104 @@ class CursorImporter(BaseImporter):
         messages = []
         content_parts = []
         
-        # Add session header to content
-        content_parts.append("# Cursor AI Session")
-        content_parts.append(f"**Workspace**: {workspace}")
-        content_parts.append(f"**Model**: {model}")
-        content_parts.append(f"**Session ID**: {session_id}")
-        content_parts.append("")
+        self._add_session_header(content_parts, workspace, model, session_id)
         
         for interaction in interactions:
             if not isinstance(interaction, dict):
                 continue
             
-            interaction_type = interaction.get("type", "unknown")
-            content = interaction.get("content", "")
-            timestamp_str = interaction.get("timestamp", "")
-            
-            # Skip empty interactions
-            if not content or not content.strip():
-                continue
-            
-            # Parse timestamp
-            timestamp = self._parse_timestamp(timestamp_str) if timestamp_str else date
-            
-            # Determine role based on interaction type
-            if interaction_type == "user_input":
-                role = "user"
-                role_display = "**Human**"
-            elif interaction_type == "ai_response":
-                role = "assistant"
-                role_display = "**Cursor AI**"
-            else:
-                role = "system"
-                role_display = f"**{interaction_type.title()}**"
-            
-            # Create message metadata
-            metadata = {
-                "interaction_type": interaction_type,
-                "platform": "cursor"
-            }
-            
-            # Add file context if available
-            files = interaction.get("files", [])
-            if files:
-                metadata["files"] = files
-                file_context = f"\n*Files: {', '.join(files)}*"
-                content += file_context
-            
-            # Add code changes if available
-            changes = interaction.get("changes", [])
-            if changes:
-                metadata["changes"] = changes
-                change_summary = f"\n*{len(changes)} file(s) modified*"
-                content += change_summary
-            
-            # Create standardized message
-            message = self._create_message(
-                role=role,
-                content=content,
-                timestamp=timestamp,
-                metadata=metadata
-            )
-            messages.append(message)
-            
-            # Add to content string
-            content_parts.append(f"{role_display}: {content}")
+            processed_interaction = self._process_single_interaction(interaction, date)
+            if processed_interaction:
+                message, content_display = processed_interaction
+                messages.append(message)
+                content_parts.append(content_display)
+    
+    def _add_session_header(self, content_parts: List[str], workspace: str, model: str, session_id: str) -> None:
+        """Add session header to content parts."""
+        content_parts.append("# Cursor AI Session")
+        content_parts.append(f"**Workspace**: {workspace}")
+        content_parts.append(f"**Model**: {model}")
+        content_parts.append(f"**Session ID**: {session_id}")
+        content_parts.append("")
+    
+    def _process_single_interaction(self, interaction: Dict[str, Any], date: datetime) -> Optional[tuple]:
+        """Process a single interaction and return message and content display."""
+        interaction_type = interaction.get("type", "unknown")
+        content = interaction.get("content", "")
+        timestamp_str = interaction.get("timestamp", "")
+        
+        # Skip empty interactions
+        if not content or not content.strip():
+            return None
+        
+        # Parse timestamp
+        timestamp = self._parse_timestamp(timestamp_str) if timestamp_str else date
+        
+        # Determine role and display
+        role, role_display = self._get_role_info(interaction_type)
+        
+        # Enhance content with context
+        enhanced_content = self._enhance_interaction_content(interaction, content)
+        
+        # Create message metadata
+        metadata = self._create_interaction_metadata(interaction)
+        
+        # Create standardized message
+        message = self._create_message(
+            role=role,
+            content=enhanced_content,
+            timestamp=timestamp,
+            metadata=metadata
+        )
+        
+        content_display = f"{role_display}: {enhanced_content}"
+        return message, content_display
+    
+    def _get_role_info(self, interaction_type: str) -> tuple:
+        """Get role and display name based on interaction type."""
+        if interaction_type == "user_input":
+            return "user", "**Human**"
+        elif interaction_type == "ai_response":
+            return "assistant", "**Cursor AI**"
+        else:
+            return "system", f"**{interaction_type.title()}**"
+    
+    def _enhance_interaction_content(self, interaction: Dict[str, Any], content: str) -> str:
+        """Enhance content with file context and changes."""
+        enhanced_content = content
+        
+        # Add file context if available
+        files = interaction.get("files", [])
+        if files:
+            file_context = f"\n*Files: {', '.join(files)}*"
+            enhanced_content += file_context
+        
+        # Add code changes if available
+        changes = interaction.get("changes", [])
+        if changes:
+            change_summary = f"\n*{len(changes)} file(s) modified*"
+            enhanced_content += change_summary
+        
+        return enhanced_content
+    
+    def _create_interaction_metadata(self, interaction: Dict[str, Any]) -> Dict[str, Any]:
+        """Create metadata for interaction."""
+        metadata = {
+            "interaction_type": interaction.get("type", "unknown"),
+            "platform": "cursor"
+        }
+        
+        # Add file context if available
+        files = interaction.get("files", [])
+        if files:
+            metadata["files"] = files
+        
+        # Add code changes if available
+        changes = interaction.get("changes", [])
+        if changes:
+            metadata["changes"] = changes
+        
+        return metadata
         
         # Combine all interactions into content string
         full_content = "\n\n".join(content_parts)
@@ -393,7 +427,7 @@ if __name__ == "__main__":
         importer = CursorImporter(storage_path)
         result = importer.import_file(file_path)
         
-        print(f"Import Result:")
+        print("Import Result:")
         print(f"  Success: {result.success}")
         print(f"  Imported: {result.conversations_imported}")
         print(f"  Failed: {result.conversations_failed}")

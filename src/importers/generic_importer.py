@@ -16,6 +16,9 @@ from .base_importer import BaseImporter, ImportResult
 
 logger = logging.getLogger(__name__)
 
+# Constants
+DEFAULT_CONVERSATION_TITLE = "Generic Conversation"
+
 
 class GenericImporter(BaseImporter):
     """Importer for generic and custom conversation formats."""
@@ -219,7 +222,7 @@ class GenericImporter(BaseImporter):
         
         return conversations
     
-    def _parse_json_object(self, data: Dict[str, Any], file_path: Path) -> List[Dict[str, Any]]:
+    def _parse_json_object(self, data: Dict[str, Any]) -> List[Dict[str, Any]]:
         """Parse JSON object - single conversation or structured data."""
         conversations = []
         
@@ -248,14 +251,29 @@ class GenericImporter(BaseImporter):
         conversations = []
         
         for key, value in data.items():
-            if isinstance(value, list) and value:
-                if self._looks_like_conversation(value[0] if isinstance(value[0], dict) else {}):
-                    for item in value:
-                        try:
-                            conv = self.parse_conversation(item)
-                            conversations.append(conv)
-                        except Exception as e:
-                            self.logger.warning("Failed to parse nested conversation: %s", e)
+            if self._is_valid_conversation_array(value):
+                conversations.extend(self._process_conversation_array(value))
+        
+        return conversations
+    
+    def _is_valid_conversation_array(self, value: Any) -> bool:
+        """Check if value is a valid conversation array."""
+        if not isinstance(value, list) or not value:
+            return False
+        
+        first_item = value[0] if isinstance(value[0], dict) else {}
+        return self._looks_like_conversation(first_item)
+    
+    def _process_conversation_array(self, items: List[Any]) -> List[Dict[str, Any]]:
+        """Process array of conversation items."""
+        conversations = []
+        
+        for item in items:
+            try:
+                conv = self.parse_conversation(item)
+                conversations.append(conv)
+            except Exception as e:
+                self.logger.warning("Failed to parse nested conversation: %s", e)
         
         return conversations
 
@@ -412,23 +430,34 @@ class GenericImporter(BaseImporter):
             speaker_match = re.match(r'(\*\*)?(\w+)(\*\*)?\s*:\s*(.*)', line)
             
             if speaker_match:
-                # Save previous message if exists
-                if current_speaker and current_message:
-                    self._save_dialogue_message(current_speaker, current_message, messages, content_parts)
-                
-                # Start new message
-                current_speaker = speaker_match.group(2)
-                current_message = [speaker_match.group(4)] if speaker_match.group(4).strip() else []
+                self._process_speaker_change(current_speaker, current_message, messages, content_parts)
+                current_speaker, current_message = self._start_new_message(speaker_match)
             else:
-                # Continue current message
-                if current_speaker:
-                    current_message.append(line)
+                current_message = self._continue_current_message(current_speaker, current_message, line)
         
         # Save final message
-        if current_speaker and current_message:
-            self._save_dialogue_message(current_speaker, current_message, messages, content_parts)
+        self._process_speaker_change(current_speaker, current_message, messages, content_parts)
         
         return messages, content_parts
+    
+    def _process_speaker_change(self, current_speaker: Optional[str], current_message: List[str], 
+                              messages: List[Dict], content_parts: List[str]) -> None:
+        """Process speaker change and save previous message."""
+        if current_speaker and current_message:
+            self._save_dialogue_message(current_speaker, current_message, messages, content_parts)
+    
+    def _start_new_message(self, speaker_match: re.Match) -> tuple:
+        """Start new message from speaker match."""
+        speaker = speaker_match.group(2)
+        initial_content = speaker_match.group(4)
+        message = [initial_content] if initial_content.strip() else []
+        return speaker, message
+    
+    def _continue_current_message(self, current_speaker: Optional[str], current_message: List[str], line: str) -> List[str]:
+        """Continue current message with new line."""
+        if current_speaker:
+            current_message.append(line)
+        return current_message
 
     def _save_dialogue_message(self, speaker: str, message_lines: List[str], messages: List, content_parts: List):
         """Save a dialogue message to collections."""
@@ -448,7 +477,7 @@ class GenericImporter(BaseImporter):
         messages, content_parts = self._extract_dialogue_messages(lines)
         
         # Create conversation
-        title = "Generic Conversation"
+        title = DEFAULT_CONVERSATION_TITLE
         if file_path:
             title = file_path.stem.replace('_', ' ').title()
         
@@ -496,7 +525,7 @@ class GenericImporter(BaseImporter):
             content_parts.append(f"**{role.title()}**: {block}")
         
         # Create conversation
-        title = "Generic Conversation"
+        title = DEFAULT_CONVERSATION_TITLE
         if file_path:
             title = file_path.stem.replace('_', ' ').title()
         
@@ -544,7 +573,7 @@ class GenericImporter(BaseImporter):
         
         # Generate defaults if missing
         if not title:
-            title = "Generic Conversation"
+            title = DEFAULT_CONVERSATION_TITLE
         
         if not content and not messages:
             # Use entire data as content
@@ -718,7 +747,7 @@ if __name__ == "__main__":
         importer = GenericImporter(storage_path)
         result = importer.import_file(file_path)
         
-        print(f"Import Result:")
+        print("Import Result:")
         print(f"  Success: {result.success}")
         print(f"  Imported: {result.conversations_imported}")
         print(f"  Failed: {result.conversations_failed}")
