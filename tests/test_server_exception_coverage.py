@@ -59,7 +59,7 @@ class TestServerExceptionCoverage(unittest.TestCase):
         # Create temp dir in home directory for security validation
         home_dir = Path.home()
         home_dir = Path.home()
-        temp_dir = tempfile.mkdtemp(prefix="test_server_exception_", dir=home_dir)
+        temp_dir = tempfile.mkdtemp(prefix="test_server_exception_")
         
         # Mock json.dump to raise an exception during index file creation
         with patch('json.dump', side_effect=Exception("JSON write failed")):
@@ -75,7 +75,7 @@ class TestServerExceptionCoverage(unittest.TestCase):
     def test_index_file_creation_permission_error_lines_115_116(self):
         """Test index file creation permission errors (lines 115-116)"""
         home_dir = Path.home()
-        temp_dir = tempfile.mkdtemp(prefix="test_permission_", dir=home_dir)
+        temp_dir = tempfile.mkdtemp(prefix="test_permission_")
         
         # Mock Path.mkdir to raise PermissionError
         with patch('pathlib.Path.mkdir', side_effect=PermissionError("Permission denied")):
@@ -89,7 +89,7 @@ class TestServerExceptionCoverage(unittest.TestCase):
     def test_search_conversations_file_error_lines_212_215(self):
         """Test search_conversations file reading errors (lines 212-215)"""
         home_dir = Path.home()
-        temp_dir = tempfile.mkdtemp(prefix="test_search_error_", dir=home_dir)
+        temp_dir = tempfile.mkdtemp(prefix="test_search_error_")
         server = ConversationMemoryServer(temp_dir)
         
         # Mock file operations to trigger exception handling
@@ -108,7 +108,7 @@ class TestServerExceptionCoverage(unittest.TestCase):
     def test_add_conversation_file_error_lines_272_274(self):
         """Test add_conversation file writing errors (lines 272-274)"""
         home_dir = Path.home()
-        temp_dir = tempfile.mkdtemp(prefix="test_add_error_", dir=home_dir)
+        temp_dir = tempfile.mkdtemp(prefix="test_add_error_")
         server = ConversationMemoryServer(temp_dir)
         
         # Mock file operations to trigger exception handling  
@@ -126,7 +126,7 @@ class TestServerExceptionCoverage(unittest.TestCase):
     def test_missing_conversation_file_lines_493_494(self):
         """Test missing conversation file handling (lines 493-494)"""
         home_dir = Path.home()
-        temp_dir = tempfile.mkdtemp(prefix="test_missing_file_", dir=home_dir)
+        temp_dir = tempfile.mkdtemp(prefix="test_missing_file_")
         server = ConversationMemoryServer(temp_dir)
         
         # Create a mock conversation entry that points to non-existent file
@@ -145,7 +145,7 @@ class TestServerExceptionCoverage(unittest.TestCase):
     def test_additional_error_handling_lines_507_510(self):
         """Test additional error handling scenarios (lines 507-510)"""
         home_dir = Path.home()
-        temp_dir = tempfile.mkdtemp(prefix="test_additional_error_", dir=home_dir)
+        temp_dir = tempfile.mkdtemp(prefix="test_additional_error_")
         server = ConversationMemoryServer(temp_dir)
         
         # Test various error scenarios that might trigger lines 507-510
