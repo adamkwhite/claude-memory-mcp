@@ -12,12 +12,18 @@ import unittest
 import asyncio
 from pathlib import Path
 from unittest.mock import patch, MagicMock
+import shutil
 
 # Add project root and src directory to path using dynamic resolution
 project_root = Path(__file__).parent.parent
 import sys
 sys.path.insert(0, str(project_root))
 sys.path.insert(0, str(project_root / 'src'))
+
+
+def get_test_temp_dir(prefix="test_"):
+    """Create a test temp directory in the project root (safe for testing)"""
+    return tempfile.mkdtemp(prefix=prefix, dir=str(project_root))
 
 # Mock FastMCP before importing server
 class MockFastMCP:
@@ -37,28 +43,32 @@ class MockFastMCP:
 sys.modules['mcp.server.fastmcp'] = type(sys)('mcp.server.fastmcp')
 sys.modules['mcp.server.fastmcp'].FastMCP = MockFastMCP
 
-from server_fastmcp import ConversationMemoryServer
+from conversation_memory import ConversationMemoryServer
 
 
 class TestServerExceptionCoverage(unittest.TestCase):
     """Test exception handling in server_fastmcp.py for Phase 2 coverage"""
     
     def test_init_exception_handling_lines_96_98(self):
-        """Test __init__ exception handling (lines 96-98)"""
-        # Mock the storage path validation to raise an exception
-        with patch.object(ConversationMemoryServer, '_validate_storage_path', 
-                         side_effect=Exception("Storage validation failed")):
+        """Test __init__ exception handling for SQLite initialization (lines 61-63)"""
+        # Mock SearchDatabase to raise an exception during initialization
+        with patch('conversation_memory.SearchDatabase', 
+                   side_effect=Exception("SQLite initialization failed")):
             
-            with self.assertRaises(Exception) as context:
-                ConversationMemoryServer("invalid_path")
+            # Create server in project directory to pass security checks
+            temp_dir = get_test_temp_dir("test_sqlite_init_")
             
-            self.assertIn("Storage validation failed", str(context.exception))
+            try:
+                # This should catch the SQLite exception and continue
+                server = ConversationMemoryServer(temp_dir, enable_sqlite=True)
+                # Server should still be created but with SQLite disabled
+                self.assertFalse(server.use_sqlite_search)
+            finally:
+                shutil.rmtree(temp_dir, ignore_errors=True)
     
     def test_init_index_files_exception_lines_109_110(self):
         """Test _init_index_files exception handling (lines 109-110)"""
-        # Create temp dir in home directory for security validation
-        home_dir = Path.home()
-        home_dir = Path.home()
+        # Create temp dir in system temp directory to avoid project root clutter
         temp_dir = tempfile.mkdtemp(prefix="test_server_exception_")
         
         # Mock json.dump to raise an exception during index file creation
@@ -74,7 +84,6 @@ class TestServerExceptionCoverage(unittest.TestCase):
     
     def test_index_file_creation_permission_error_lines_115_116(self):
         """Test index file creation permission errors (lines 115-116)"""
-        home_dir = Path.home()
         temp_dir = tempfile.mkdtemp(prefix="test_permission_")
         
         # Mock Path.mkdir to raise PermissionError
@@ -88,7 +97,6 @@ class TestServerExceptionCoverage(unittest.TestCase):
     
     def test_search_conversations_file_error_lines_212_215(self):
         """Test search_conversations file reading errors (lines 212-215)"""
-        home_dir = Path.home()
         temp_dir = tempfile.mkdtemp(prefix="test_search_error_")
         server = ConversationMemoryServer(temp_dir)
         
@@ -107,7 +115,6 @@ class TestServerExceptionCoverage(unittest.TestCase):
     
     def test_add_conversation_file_error_lines_272_274(self):
         """Test add_conversation file writing errors (lines 272-274)"""
-        home_dir = Path.home()
         temp_dir = tempfile.mkdtemp(prefix="test_add_error_")
         server = ConversationMemoryServer(temp_dir)
         
@@ -125,7 +132,6 @@ class TestServerExceptionCoverage(unittest.TestCase):
     
     def test_missing_conversation_file_lines_493_494(self):
         """Test missing conversation file handling (lines 493-494)"""
-        home_dir = Path.home()
         temp_dir = tempfile.mkdtemp(prefix="test_missing_file_")
         server = ConversationMemoryServer(temp_dir)
         
@@ -140,11 +146,10 @@ class TestServerExceptionCoverage(unittest.TestCase):
         result = server._analyze_conversations([mock_conv_info])
         
         # The method should handle missing files gracefully
-        self.assertIsInstance(result, tuple)
+        self.assertIsInstance(result, list)
     
     def test_additional_error_handling_lines_507_510(self):
         """Test additional error handling scenarios (lines 507-510)"""
-        home_dir = Path.home()
         temp_dir = tempfile.mkdtemp(prefix="test_additional_error_")
         server = ConversationMemoryServer(temp_dir)
         
@@ -168,18 +173,18 @@ class TestServerExceptionCoverage(unittest.TestCase):
             result = server._analyze_conversations([mock_conv_info])
             
             # Should handle the error gracefully and return default values
-            self.assertIsInstance(result, tuple)
+            self.assertIsInstance(result, list)
     
     def test_initialization_with_invalid_permissions(self):
         """Test server initialization with permission issues"""
         # Try to create server in a restricted directory (triggers security validation)
         restricted_path = "/root/restricted_test"  # Should fail due to security validation
         
-        with self.assertRaises(ValueError) as context:
+        with self.assertRaises(PermissionError) as context:
             server = ConversationMemoryServer(restricted_path)
         
-        # This actually covers the security validation lines!
-        self.assertIn("Storage path must be within user's home directory", str(context.exception))
+        # This covers permission error during path detection
+        self.assertIn("Permission denied", str(context.exception))
     
     def test_malformed_storage_path_handling(self):
         """Test handling of malformed storage paths"""

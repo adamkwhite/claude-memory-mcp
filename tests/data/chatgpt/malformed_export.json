@@ -1,0 +1,23 @@
+{
+  "conversations": [
+    {
+      "id": "conv-malformed",
+      "title": "Broken Export",
+      "create_time": "invalid-date",
+      "messages": [
+        {
+          "role": "user",
+          "content": "This message has no id or timestamp"
+        },
+        {
+          "id": "msg-incomplete",
+          "role": "assistant"
+        }
+      ]
+    },
+    {
+      "title": "Missing ID Conversation",
+      "messages": "not an array"
+    }
+  ]
+}
