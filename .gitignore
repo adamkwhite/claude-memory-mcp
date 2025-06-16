@@ -75,6 +75,9 @@ coverage.xml
 # Personal todos
 todos.md
 
+# Claude Code local settings
+.claude/settings.local.json
+
 # Virtual environments (additional)
 claude-memory-mcp-venv/
 

@@ -55,12 +55,3 @@ jobs:
           git clean -fd || true
           git status
       
-      - name: SonarQube Badge
-        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-        uses: jadewon/sonar-badge@v1
-        with:
-          metrics: 'bugs, code_smells, coverage, duplicated_lines_density, ncloc, sqale_rating, alert_status, reliability_rating, security_hotspots, security_rating, sqale_index, vulnerabilities'
-        env:
-          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-          SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
-          SONAR_PROJECT: Claude-MCP
