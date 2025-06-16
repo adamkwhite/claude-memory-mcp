@@ -42,7 +42,10 @@
       "Bash(git cherry-pick:*)",
       "Bash(git stash:*)",
       "Bash(rg:*)",
-      "Bash(git add:*)"
+      "Bash(git add:*)",
+      "Bash(git merge:*)",
+      "Bash(git commit:*)",
+      "Bash(python3:*)"
     ],
     "deny": []
   }
