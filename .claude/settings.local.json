@@ -45,7 +45,15 @@
       "Bash(git add:*)",
       "Bash(git merge:*)",
       "Bash(git commit:*)",
-      "Bash(python3:*)"
+      "Bash(python3:*)",
+      "Bash(git push:*)",
+      "Bash(find:*)",
+      "Bash(ls:*)",
+      "WebFetch(domain:44.206.255.230)",
+      "Bash(gh run list:*)",
+      "Bash(gh run view:*)",
+      "Bash(rm:*)",
+      "Bash(git checkout:*)"
     ],
     "deny": []
   }
