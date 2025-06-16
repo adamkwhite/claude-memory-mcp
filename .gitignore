@@ -93,3 +93,16 @@ benchmark_data/
 /demo_*.py
 /temp_*.py
 /debug_*.py
+
+# Test directory patterns (prevent test artifacts in project root)
+/test_*_*/
+/claude_memory_test_*/
+/*_test_*/
+/None/
+/test_*/
+/*test*/
+
+# Test data artifacts  
+test_*.db
+test_*.db-journal
+**/test_*.json

@@ -33,7 +33,19 @@
       "Bash(grep:*)",
       "Bash(mv:*)",
       "Bash(git fetch:*)",
-      "Bash(git merge:*)"
+      "Bash(git merge:*)",
+      "WebFetch(domain:github.com)",
+      "Bash(gh run view:*)",
+      "Bash(gh pr create:*)",
+      "Bash(git checkout:*)",
+      "Bash(chmod:*)",
+      "Bash(git cherry-pick:*)",
+      "Bash(git stash:*)",
+      "Bash(rg:*)",
+      "Bash(git add:*)",
+      "Bash(git merge:*)",
+      "Bash(git commit:*)",
+      "Bash(python3:*)"
     ],
     "deny": []
   }
