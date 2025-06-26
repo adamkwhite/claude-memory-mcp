@@ -489,6 +489,8 @@ The system uses a pluggable importer architecture where each AI platform has a d
 ## MCP Server Deployment Notes
 
 ### **Local Development**
+
+**From project root directory:**
 ```bash
 # Install dependencies
 python3 -m venv claude-memory-mcp-venv
@@ -500,6 +502,18 @@ python3 src/server_fastmcp.py
 
 # Enable console logging for debugging
 CLAUDE_MCP_CONSOLE_OUTPUT=true python3 src/server_fastmcp.py
+```
+
+**From src/ directory:**
+```bash
+# Create virtual environment (if not exists)
+python3 -m venv ../claude-memory-mcp-venv
+
+# Install dependencies and run server
+source ../claude-memory-mcp-venv/bin/activate && pip install -e .. && python3 server_fastmcp.py
+
+# Or if already installed, just run server
+source ../claude-memory-mcp-venv/bin/activate && python3 server_fastmcp.py
 ```
 
 ### **Claude Desktop Integration**
