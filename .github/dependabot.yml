@@ -1,0 +1,49 @@
+# GitHub Dependabot configuration for claude-memory-mcp
+# MCP server with Python dependencies
+
+version: 2
+updates:
+  # Python dependencies (pyproject.toml)
+  - package-ecosystem: "pip"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:00"
+    open-pull-requests-limit: 5
+    reviewers:
+      - "adamkwhite"
+    assignees:
+      - "adamkwhite"
+    commit-message:
+      prefix: "deps"
+      prefix-development: "deps-dev"
+      include: "scope"
+    labels:
+      - "dependencies"
+      - "mcp"
+      - "python"
+    # Group MCP and related dependencies
+    groups:
+      mcp-dependencies:
+        patterns:
+          - "mcp*"
+          - "fastmcp*"
+        update-types:
+          - "minor"
+          - "patch"
+      dev-dependencies:
+        patterns:
+          - "pytest*"
+          - "black*"
+          - "flake8*"
+          - "mypy*"
+        update-types:
+          - "minor"
+          - "patch"
+    allow:
+      - dependency-type: "all"
+    ignore:
+      # Be careful with major MCP framework updates
+      - dependency-name: "mcp"
+        update-types: ["version-update:semver-major"]
