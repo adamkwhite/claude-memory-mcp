@@ -210,41 +210,59 @@ def get_logger(name: str = "claude_memory_mcp") -> logging.Logger:
 
 
 def log_function_call(func_name: str, **kwargs):
-    """Log a function call with parameters"""
+    """Log a function call with parameters and structured context"""
     try:
         logger = get_logger()
         # Only perform expensive parameter formatting if debug logging is enabled
         if logger.isEnabledFor(logging.DEBUG):
+            # Create structured context for JSON logging
+            context = {
+                "type": "function_call",
+                "function": func_name,
+                "params": kwargs
+            }
             params = ", ".join(f"{k}={v}" for k, v in kwargs.items() if v is not None)
-            logger.debug(f"Calling {func_name}({params})")
+            logger.debug(
+                f"Calling {func_name}({params})",
+                extra={"context": context}
+            )
     except Exception:
         # Fail silently to prevent logging from crashing the application
         pass
 
 
 def log_performance(func_name: str, duration: float, **metrics):
-    """Log performance metrics"""
+    """Log performance metrics with structured context"""
     try:
         logger = get_logger()
+        # Create structured context for JSON logging
+        context = {
+            "type": "performance",
+            "duration_seconds": duration,
+            **metrics
+        }
         metric_str = ", ".join(f"{k}={v}" for k, v in metrics.items())
-        logger.info(f"Performance: {func_name} completed in {duration:.3f}s | {metric_str}")
+        logger.info(
+            f"Performance: {func_name} completed in {duration:.3f}s | {metric_str}",
+            extra={"context": context}
+        )
     except Exception:
         # Fail silently to prevent logging from crashing the application
         pass
 
 
 def log_security_event(event_type: str, details: str, severity: str = "WARNING"):
-    """Log security-related events"""
+    """Log security-related events with structured context"""
     try:
         import re
         from pathlib import Path
         logger = get_logger("claude_memory_mcp.security")
         level = getattr(logging, severity.upper())
-        
+
         # Sanitize event_type and details to prevent log injection
         safe_event_type = re.sub(CONTROL_CHAR_PATTERN, '', str(event_type))
         safe_details = re.sub(CONTROL_CHAR_PATTERN, '', str(details))
-        
+
         # For path-related events, use relative paths to avoid information disclosure
         if 'path' in safe_details.lower():
             try:
@@ -258,15 +276,27 @@ def log_security_event(event_type: str, details: str, severity: str = "WARNING")
             except (ValueError, OSError):
                 # If path operations fail, just redact the paths
                 safe_details = re.sub(r'/[^\s]+', '<redacted_path>', safe_details)
-        
-        logger.log(level, f"Security Event: {safe_event_type} | {safe_details}")
+
+        # Create structured context for JSON logging (with sanitized values)
+        context = {
+            "type": "security",
+            "event_type": safe_event_type,
+            "severity": severity,
+            "details": safe_details
+        }
+
+        logger.log(
+            level,
+            f"Security Event: {safe_event_type} | {safe_details}",
+            extra={"context": context}
+        )
     except Exception:
         # Fail silently to prevent logging from crashing the application
         pass
 
 
 def log_validation_failure(field: str, value: str, reason: str):
-    """Log input validation failures"""
+    """Log input validation failures with structured context"""
     try:
         import re
         logger = get_logger("claude_memory_mcp.validation")
@@ -279,20 +309,32 @@ def log_validation_failure(field: str, value: str, reason: str):
         # Sanitize field and reason as well
         safe_field = re.sub(CONTROL_CHAR_PATTERN, '', str(field))
         safe_reason = re.sub(CONTROL_CHAR_PATTERN, '', str(reason))
-        logger.warning(f"Validation failed: {safe_field}='{safe_value}' | Reason: {safe_reason}")
+
+        # Create structured context for JSON logging (with sanitized values)
+        context = {
+            "type": "validation",
+            "field": safe_field,
+            "value": safe_value,
+            "reason": safe_reason
+        }
+
+        logger.warning(
+            f"Validation failed: {safe_field}='{safe_value}' | Reason: {safe_reason}",
+            extra={"context": context}
+        )
     except Exception:
         # Fail silently to prevent logging from crashing the application
         pass
 
 
 def log_file_operation(operation: str, file_path: str, success: bool, **details):
-    """Log file operations"""
+    """Log file operations with structured context"""
     try:
         import re
         from pathlib import Path
         logger = get_logger("claude_memory_mcp.files")
         status = "SUCCESS" if success else "FAILED"
-        
+
         # Sanitize file path for logging (use relative path when possible)
         safe_file_path = str(file_path)
         try:
@@ -302,16 +344,28 @@ def log_file_operation(operation: str, file_path: str, success: bool, **details)
         except (ValueError, OSError):
             # Use basename only if path operations fail
             safe_file_path = Path(file_path).name
-        
+
         # Sanitize details
         safe_details = {}
         for k, v in details.items():
             safe_k = re.sub(CONTROL_CHAR_PATTERN, '', str(k))
             safe_v = re.sub(CONTROL_CHAR_PATTERN, '', str(v))
             safe_details[safe_k] = safe_v
-        
+
+        # Create structured context for JSON logging (with sanitized values)
+        context = {
+            "type": "file_operation",
+            "operation": operation,
+            "path": safe_file_path,
+            "success": success,
+            **safe_details
+        }
+
         detail_str = ", ".join(f"{k}={v}" for k, v in safe_details.items())
-        logger.info(f"File {operation}: {safe_file_path} | {status} | {detail_str}")
+        logger.info(
+            f"File {operation}: {safe_file_path} | {status} | {detail_str}",
+            extra={"context": context}
+        )
     except Exception:
         # Fail silently to prevent logging from crashing the application
         pass

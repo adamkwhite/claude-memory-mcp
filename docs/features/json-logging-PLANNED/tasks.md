@@ -21,14 +21,14 @@
   - [x] 1.8 Ensure both console and file handlers use the same format (JSON or text)
   - [x] 1.9 Add inline documentation for JSONFormatter class and environment variable usage
 
-- [ ] 2.0 Update specialized logging functions with structured context
-  - [ ] 2.1 Update `log_performance()` (line 121-129) to include structured context: `{"type": "performance", "duration_seconds": duration, **metrics}`
-  - [ ] 2.2 Update `log_security_event()` (line 132-161) to include structured context: `{"type": "security", "event_type": event_type, "severity": severity, "details": details}`
-  - [ ] 2.3 Update `log_validation_failure()` (line 164-181) to include structured context: `{"type": "validation", "field": field, "value": value, "reason": reason}`
-  - [ ] 2.4 Update `log_file_operation()` (line 184-213) to include structured context: `{"type": "file_operation", "operation": operation, "path": file_path, "success": success, **details}`
-  - [ ] 2.5 Update `log_function_call()` (line 108-118) to include structured context: `{"type": "function_call", "function": func_name, "params": kwargs}`
-  - [ ] 2.6 Ensure all sanitization and redaction logic still works with JSON context fields
-  - [ ] 2.7 Test that text format still displays readable messages with context
+- [x] 2.0 Update specialized logging functions with structured context
+  - [x] 2.1 Update `log_performance()` (line 121-129) to include structured context: `{"type": "performance", "duration_seconds": duration, **metrics}`
+  - [x] 2.2 Update `log_security_event()` (line 132-161) to include structured context: `{"type": "security", "event_type": event_type, "severity": severity, "details": details}`
+  - [x] 2.3 Update `log_validation_failure()` (line 164-181) to include structured context: `{"type": "validation", "field": field, "value": value, "reason": reason}`
+  - [x] 2.4 Update `log_file_operation()` (line 184-213) to include structured context: `{"type": "file_operation", "operation": operation, "path": file_path, "success": success, **details}`
+  - [x] 2.5 Update `log_function_call()` (line 108-118) to include structured context: `{"type": "function_call", "function": func_name, "params": kwargs}`
+  - [x] 2.6 Ensure all sanitization and redaction logic still works with JSON context fields
+  - [x] 2.7 Test that text format still displays readable messages with context
 
 - [ ] 3.0 Create comprehensive test suite for JSON logging
   - [ ] 3.1 Create `tests/test_json_logging.py` file with pytest fixtures for JSON and text loggers
