@@ -764,6 +764,459 @@ class TestMCPToolWrapperFunctions:
             memory_server.search_conversations = original_search
 
 
+class TestConversationMemoryServerDirect:
+    """Direct tests for ConversationMemoryServer core functionality (merged from test_direct_coverage.py)"""
+
+    @pytest.mark.asyncio
+    async def test_server_initialization(self, server, temp_storage):
+        """Test server initialization creates all required directories"""
+        assert server.storage_path == Path(temp_storage).expanduser()
+        assert server.conversations_path.exists()
+        assert server.summaries_path.exists()
+        assert (server.summaries_path / "weekly").exists()
+        assert server.index_file.exists()
+        assert server.topics_file.exists()
+
+    def test_init_index_files(self, server):
+        """Test index file initialization"""
+        # Index files should already exist from initialization
+        with open(server.index_file, 'r') as f:
+            index_data = json.load(f)
+        assert "conversations" in index_data
+        assert "last_updated" in index_data
+        
+        with open(server.topics_file, 'r') as f:
+            topics_data = json.load(f)
+        assert "topics" in topics_data
+        assert "last_updated" in topics_data
+
+    def test_get_date_folder(self, server):
+        """Test date folder creation"""
+        test_date = datetime(2025, 3, 15, 10, 30, 45)
+        folder = server._get_date_folder(test_date)
+        
+        assert folder.exists()
+        assert "2025" in str(folder)
+        assert "03-march" in str(folder)
+
+    def test_extract_topics_basic(self, server):
+        """Test basic topic extraction"""
+        content = "Discussion about Python programming and MCP development"
+        topics = server._extract_topics(content)
+        
+        assert "python" in topics
+        assert "mcp" in topics
+
+    def test_extract_topics_edge_cases(self, server):
+        """Test topic extraction edge cases"""
+        # Empty content
+        assert server._extract_topics("") == []
+        
+        # Special characters only
+        assert server._extract_topics("!@#$%^&*()") == []
+        
+        # Short quoted terms (should be filtered)
+        topics = server._extract_topics('"a" "bb" "valid term"')
+        assert "a" not in topics
+        assert "bb" not in topics
+        assert "valid term" in topics
+
+    @pytest.mark.asyncio
+    async def test_add_conversation_basic(self, server):
+        """Test basic conversation addition"""
+        content = "Test conversation about Python MCP development"
+        title = "Test Conversation"
+        date = "2025-01-15T10:30:00"
+        
+        result = await server.add_conversation(content, title, date)
+        
+        assert result['status'] == 'success'
+        assert 'file_path' in result
+        assert 'topics' in result
+        assert Path(result['file_path']).exists()
+        
+        # Check topics were extracted
+        assert 'python' in result['topics']
+        assert 'mcp' in result['topics']
+
+    @pytest.mark.asyncio
+    async def test_add_conversation_no_title(self, server):
+        """Test conversation addition without title"""
+        content = "Test conversation content"
+        
+        result = await server.add_conversation(content)
+        
+        assert result['status'] == 'success'
+        assert Path(result['file_path']).exists()
+
+    @pytest.mark.asyncio
+    async def test_search_conversations_basic(self, server):
+        """Test basic conversation search"""
+        # Add test data
+        await server.add_conversation(
+            "Python programming discussion",
+            "Python Talk",
+            "2025-01-15T10:30:00"
+        )
+        
+        await server.add_conversation(
+            "JavaScript development tips",
+            "JS Tips",
+            "2025-01-15T11:00:00"
+        )
+        
+        # Search for Python
+        results = await server.search_conversations("Python", limit=5)
+        
+        assert len(results) > 0
+        python_found = any("Python" in r.get('title', '') for r in results)
+        assert python_found
+
+    @pytest.mark.asyncio
+    async def test_search_conversations_scoring(self, server):
+        """Test search result scoring"""
+        # Add conversation with multiple matches
+        await server.add_conversation(
+            "Python programming with python libraries and python tools",
+            "High Score Python Discussion",
+            "2025-01-15T10:30:00"
+        )
+        
+        await server.add_conversation(
+            "General programming discussion",
+            "Low Score Discussion",
+            "2025-01-15T11:00:00"
+        )
+        
+        results = await server.search_conversations("python", limit=2)
+        
+        assert len(results) > 0
+        # First result should have a score (could be 0 for no matches)
+        assert 'score' in results[0]
+        # If there are results with matching content, score should be reasonable
+        if len(results) >= 2:
+            # The high score conversation should be ranked higher or equal
+            assert results[0]['score'] >= results[1]['score']
+
+    @pytest.mark.asyncio
+    async def test_search_conversations_empty(self, server):
+        """Test search with no results"""
+        results = await server.search_conversations("nonexistentterm12345", limit=5)
+        assert len(results) == 0
+
+    @pytest.mark.asyncio
+    async def test_search_conversations_missing_file(self, server, temp_storage):
+        """Test search when conversation file is missing"""
+        # Add conversation
+        result = await server.add_conversation(
+            "Test content",
+            "Test Title",
+            "2025-01-15T10:30:00"
+        )
+        
+        # Remove the file but keep index entry
+        file_path = Path(result['file_path'])
+        if file_path.exists():
+            file_path.unlink()
+        
+        # Search should handle missing file gracefully
+        results = await server.search_conversations("Test", limit=5)
+        assert isinstance(results, list)  # Should not crash
+
+    def test_get_preview_basic(self, server, temp_storage):
+        """Test conversation preview generation"""
+        # Create a test file
+        test_file = Path(temp_storage) / "test_preview.md"
+        content = """Line 1: Introduction
+Line 2: This contains the search term
+Line 3: Context after match
+Line 4: More content"""
+        
+        with open(test_file, 'w') as f:
+            f.write(content)
+        
+        preview = server._get_preview(test_file, ["search", "term"])
+        assert len(preview) > 0
+        assert "search term" in preview.lower()
+
+    def test_get_preview_missing_file(self, server, temp_storage):
+        """Test preview generation with missing file"""
+        missing_file = Path(temp_storage) / "nonexistent.md"
+        preview = server._get_preview(missing_file, ["search"])
+        assert preview == "Preview unavailable"
+
+    @pytest.mark.asyncio
+    async def test_update_index(self, server, temp_storage):
+        """Test index updating functionality"""
+        test_date = datetime(2025, 1, 15, 10, 30)
+        test_topics = ["python", "mcp"]
+        test_title = "Index Test"
+        
+        # Create a fake file path
+        fake_path = server.conversations_path / "2025" / "01-january" / "test.md"
+        fake_path.parent.mkdir(parents=True, exist_ok=True)
+        fake_path.touch()
+        
+        conversation_data = {
+            "id": "test_conv_123",
+            "title": test_title,
+            "content": "Test content",
+            "date": test_date.isoformat(),
+            "topics": test_topics,
+            "created_at": test_date.isoformat()
+        }
+        server._update_index(conversation_data, fake_path)
+        
+        # Check index was updated
+        with open(server.index_file, 'r') as f:
+            index_data = json.load(f)
+        
+        assert len(index_data['conversations']) > 0
+        last_conv = index_data['conversations'][-1]
+        assert last_conv['title'] == test_title
+        assert last_conv['topics'] == test_topics
+
+    @pytest.mark.asyncio
+    async def test_update_topics_index(self, server):
+        """Test topics index updating"""
+        test_topics = ["python", "mcp", "python"]  # python appears twice
+        
+        server._update_topics_index(test_topics, "test_conv_123")
+        
+        with open(server.topics_file, 'r') as f:
+            topics_data = json.load(f)
+        
+        assert "python" in topics_data['topics']
+        assert "mcp" in topics_data['topics']
+        # Should have 2 entries for python (one for each occurrence)
+        assert len(topics_data['topics']['python']) == 2
+        # Should have 1 entry for mcp
+        assert len(topics_data['topics']['mcp']) == 1
+
+    @pytest.mark.asyncio
+    async def test_generate_weekly_summary_no_conversations(self, server):
+        """Test weekly summary with no conversations"""
+        summary = await server.generate_weekly_summary(0)
+        assert "No conversations found" in summary
+        assert "current week" in summary
+
+    @pytest.mark.asyncio
+    async def test_generate_weekly_summary_with_data(self, server):
+        """Test weekly summary with conversation data"""
+        # Add conversations for current week (use UTC to match _calculate_week_range)
+        from datetime import timezone
+        current_time = datetime.now(timezone.utc)
+        
+        await server.add_conversation(
+            "Python code development with git repository",
+            "Coding Discussion",
+            current_time.isoformat()
+        )
+        
+        await server.add_conversation(
+            "We decided to use the recommended approach",
+            "Decision Made",
+            current_time.isoformat()
+        )
+        
+        await server.add_conversation(
+            "Learning tutorial about new concepts",
+            "Learning Session",
+            current_time.isoformat()
+        )
+        
+        summary = await server.generate_weekly_summary(0)
+        
+        assert isinstance(summary, str)
+        assert len(summary) > 0
+        assert "Weekly Summary" in summary
+        assert "Coding Discussion" in summary
+        assert "Decision Made" in summary
+        assert "Learning Session" in summary
+
+    @pytest.mark.asyncio
+    async def test_generate_weekly_summary_past_week(self, server):
+        """Test weekly summary for past week"""
+        summary = await server.generate_weekly_summary(1)
+        assert "No conversations found" in summary
+        assert "1 week(s) ago" in summary
+
+    @pytest.mark.asyncio
+    async def test_generate_weekly_summary_error(self, server, temp_storage):
+        """Test weekly summary error handling"""
+        # Make the summaries directory unwritable to cause an error during file writing
+        summaries_dir = server.summaries_path / "weekly"
+        summaries_dir.chmod(0o444)  # Read-only
+        
+        try:
+            # Add a conversation so it tries to write a summary file
+            await server.add_conversation("Test", "Test", "2025-06-12T10:00:00")
+            summary = await server.generate_weekly_summary(0)
+            # Should either succeed with read-only directory or fail gracefully
+            assert isinstance(summary, str)
+        finally:
+            # Restore permissions for cleanup
+            summaries_dir.chmod(0o755)
+
+    @pytest.mark.asyncio
+    async def test_add_conversation_error_handling(self, server):
+        """Test add conversation error handling"""
+        # Test with invalid date
+        result = await server.add_conversation(
+            "Test content",
+            "Error Test",
+            "invalid-date-format"
+        )
+        
+        # Should handle gracefully
+        assert 'status' in result
+
+
+class TestServerExceptionCoverage:
+    """Test exception handling scenarios (merged from test_server_exception_coverage.py)"""
+    
+    def test_init_exception_handling_lines_96_98(self, temp_storage):
+        """Test __init__ exception handling for SQLite initialization"""
+        from unittest.mock import patch
+        # Mock SearchDatabase to raise an exception during initialization
+        with patch('conversation_memory.SearchDatabase', 
+                   side_effect=Exception("SQLite initialization failed")):
+            
+            try:
+                # This should catch the SQLite exception and continue
+                server = ConversationMemoryServer(temp_storage, enable_sqlite=True)
+                # Server should still be created but with SQLite disabled
+                assert not server.use_sqlite_search
+            finally:
+                pass
+    
+    def test_init_index_files_exception_lines_109_110(self, temp_storage):
+        """Test _init_index_files exception handling"""
+        from unittest.mock import patch
+        import json
+        
+        # Mock json.dump to raise an exception during index file creation
+        with patch('json.dump', side_effect=Exception("JSON write failed")):
+            try:
+                # This should trigger the exception in _init_index_files
+                server = ConversationMemoryServer(temp_storage)
+                # If no exception is raised, the lines might not be covered
+                # But we're testing the path exists
+            except Exception as e:
+                # Exception handling should log and possibly continue
+                assert "JSON write failed" in str(e)
+    
+    def test_index_file_creation_permission_error_lines_115_116(self, temp_storage):
+        """Test index file creation permission errors"""
+        from unittest.mock import patch
+        
+        # Mock Path.mkdir to raise PermissionError
+        with patch('pathlib.Path.mkdir', side_effect=PermissionError("Permission denied")):
+            try:
+                server = ConversationMemoryServer(temp_storage)
+                # Test that server handles permission errors gracefully
+            except PermissionError:
+                # Exception might be re-raised or handled
+                pass
+    
+    @pytest.mark.asyncio
+    async def test_search_conversations_file_error_lines_212_215(self, server):
+        """Test search_conversations file reading errors"""
+        from unittest.mock import patch
+        
+        # Mock file operations to trigger exception handling
+        with patch('builtins.open', side_effect=OSError("File read error")):
+            try:
+                # This should trigger exception handling in search_conversations
+                result = await server.search_conversations("test query")
+                # Should return error response (could be list with error dict)
+                assert isinstance(result, (str, list))
+                if isinstance(result, list) and result:
+                    assert "error" in result[0]
+            except OSError:
+                # Exception might propagate or be handled
+                pass
+    
+    @pytest.mark.asyncio
+    async def test_add_conversation_file_error_lines_272_274(self, server):
+        """Test add_conversation file writing errors"""
+        from unittest.mock import patch
+        
+        # Mock file operations to trigger exception handling  
+        with patch('builtins.open', side_effect=OSError("File write error")):
+            try:
+                # This should trigger exception handling in add_conversation
+                result = await server.add_conversation("test content", "test title", "2025-06-10T12:00:00Z")
+                # Should return error status or raise exception
+                if isinstance(result, str):
+                    assert "error" in result.lower()
+            except OSError:
+                # Exception might propagate or be handled
+                pass
+    
+    def test_missing_conversation_file_lines_493_494(self, server):
+        """Test missing conversation file handling"""
+        # Create a mock conversation entry that points to non-existent file
+        mock_conv_info = {
+            "file_path": "2025/06-june/non-existent-file.md",
+            "title": "Test Conversation"
+        }
+        
+        # This should trigger lines 493-494 in _analyze_conversations method
+        # when checking if conversation file exists
+        result = server._analyze_conversations([mock_conv_info])
+        
+        # The method should handle missing files gracefully
+        assert isinstance(result, list)
+    
+    def test_additional_error_handling_lines_507_510(self, server, temp_storage):
+        """Test additional error handling scenarios"""
+        from unittest.mock import patch
+        
+        # Create a conversation file that exists but can't be read  
+        conv_dir = Path(temp_storage) / "conversations" / "2025" / "06-june"
+        conv_dir.mkdir(parents=True, exist_ok=True)
+        conv_file = conv_dir / "test-conversation.md"
+        conv_file.write_text("Test content")
+        
+        mock_conv_info = {
+            "file_path": "2025/06-june/test-conversation.md",
+            "title": "Test Conversation"
+        }
+        
+        # Mock file reading to raise an exception (triggers lines 507-510)
+        with patch('builtins.open', side_effect=OSError("File read error")):
+            # This should trigger lines 507-510 exception handling
+            result = server._analyze_conversations([mock_conv_info])
+            
+            # Should handle the error gracefully and return default values
+            assert isinstance(result, list)
+    
+    def test_initialization_with_invalid_permissions(self):
+        """Test server initialization with permission issues"""
+        # Try to create server in a restricted directory (triggers security validation)
+        restricted_path = "/root/restricted_test"  # Should fail due to security validation
+        
+        with pytest.raises(PermissionError):
+            server = ConversationMemoryServer(restricted_path)
+    
+    def test_malformed_storage_path_handling(self):
+        """Test handling of malformed storage paths"""
+        malformed_paths = [
+            "",  # Empty path
+            "None",  # String "None" 
+            "invalid\x00path",  # Path with null character
+        ]
+        
+        for path in malformed_paths:
+            try:
+                server = ConversationMemoryServer(path)
+                # Some paths might be accepted and handled
+            except (ValueError, OSError, TypeError) as e:
+                # Expected for malformed paths
+                assert isinstance(e, (ValueError, OSError, TypeError))
+
+
 if __name__ == "__main__":
     # Run tests with coverage
     pytest.main([__file__, "-v", "--cov=server_fastmcp", "--cov-report=html", "--cov-report=term"])
