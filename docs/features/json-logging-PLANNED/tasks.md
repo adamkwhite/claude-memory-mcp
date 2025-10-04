@@ -10,16 +10,16 @@
 
 ## Tasks
 
-- [ ] 1.0 Implement JSONFormatter class and environment variable configuration
+- [x] 1.0 Implement JSONFormatter class and environment variable configuration
   - [x] 1.1 Create `JSONFormatter` class extending `logging.Formatter` in `src/logging_config.py`
   - [x] 1.2 Implement `format()` method to return newline-delimited JSON with standard fields (timestamp, level, logger, function, line, message)
   - [x] 1.3 Add support for optional `context` field via `record.context` attribute
   - [x] 1.4 Add try/except block for JSON serialization errors with fallback to string representation
-  - [ ] 1.5 Add `_get_log_format()` helper function to read `CLAUDE_MCP_LOG_FORMAT` environment variable (default: "text")
-  - [ ] 1.6 Add validation logic for environment variable (json/text), log warning for invalid values
-  - [ ] 1.7 Update `setup_logging()` function to select formatter based on environment variable
-  - [ ] 1.8 Ensure both console and file handlers use the same format (JSON or text)
-  - [ ] 1.9 Add inline documentation for JSONFormatter class and environment variable usage
+  - [x] 1.5 Add `_get_log_format()` helper function to read `CLAUDE_MCP_LOG_FORMAT` environment variable (default: "text")
+  - [x] 1.6 Add validation logic for environment variable (json/text), log warning for invalid values
+  - [x] 1.7 Update `setup_logging()` function to select formatter based on environment variable
+  - [x] 1.8 Ensure both console and file handlers use the same format (JSON or text)
+  - [x] 1.9 Add inline documentation for JSONFormatter class and environment variable usage
 
 - [ ] 2.0 Update specialized logging functions with structured context
   - [ ] 2.1 Update `log_performance()` (line 121-129) to include structured context: `{"type": "performance", "duration_seconds": duration, **metrics}`

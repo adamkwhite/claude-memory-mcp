@@ -84,7 +84,7 @@ class JSONFormatter(logging.Formatter):
 
 class ColoredFormatter(logging.Formatter):
     """Colored log formatter for console output"""
-    
+
     COLORS = {
         'DEBUG': '\033[36m',    # Cyan
         'INFO': '\033[32m',     # Green
@@ -93,12 +93,41 @@ class ColoredFormatter(logging.Formatter):
         'CRITICAL': '\033[35m', # Magenta
     }
     RESET = '\033[0m'
-    
+
     def format(self, record):
         if hasattr(record, 'levelname'):
             color = self.COLORS.get(record.levelname, '')
             record.levelname = f"{color}{record.levelname}{self.RESET}"
         return super().format(record)
+
+
+def _get_log_format() -> str:
+    """
+    Get the log format from environment variable.
+
+    Reads CLAUDE_MCP_LOG_FORMAT environment variable and validates the value.
+    Valid values are 'json' or 'text'. Defaults to 'text' for backward compatibility.
+
+    Returns:
+        str: Log format ('json' or 'text')
+
+    Environment Variables:
+        CLAUDE_MCP_LOG_FORMAT: Log output format (json|text). Default: text
+    """
+    log_format = os.getenv("CLAUDE_MCP_LOG_FORMAT", "text").lower()
+
+    # Validate format value
+    valid_formats = ["json", "text"]
+    if log_format not in valid_formats:
+        # Log warning for invalid value and default to text
+        logger = logging.getLogger("claude_memory_mcp")
+        logger.warning(
+            f"Invalid CLAUDE_MCP_LOG_FORMAT value: '{log_format}'. "
+            f"Valid values are: {', '.join(valid_formats)}. Defaulting to 'text'."
+        )
+        return "text"
+
+    return log_format
 
 
 def setup_logging(
@@ -110,34 +139,45 @@ def setup_logging(
 ) -> logging.Logger:
     """
     Set up comprehensive logging for the application
-    
+
     Args:
         log_level: Logging level (DEBUG, INFO, WARNING, ERROR, CRITICAL)
         log_file: Path to log file (optional)
         console_output: Whether to output to console
         max_bytes: Maximum size of log file before rotation
         backup_count: Number of backup files to keep
-        
+
     Returns:
         Configured logger instance
+
+    Environment Variables:
+        CLAUDE_MCP_LOG_FORMAT: Log format (json|text). Default: text
     """
     # Get logger
     logger = logging.getLogger("claude_memory_mcp")
     logger.setLevel(getattr(logging, log_level.upper()))
-    
+
     # Clear existing handlers
     logger.handlers = []
-    
-    # Create formatters
-    file_formatter = logging.Formatter(
-        '%(asctime)s | %(levelname)-8s | %(name)s:%(lineno)d | %(funcName)s() | %(message)s',
-        datefmt='%Y-%m-%d %H:%M:%S'
-    )
-    
-    console_formatter = ColoredFormatter(
-        '%(asctime)s | %(levelname)-8s | %(funcName)s() | %(message)s',
-        datefmt='%H:%M:%S'
-    )
+
+    # Determine log format from environment variable
+    log_format = _get_log_format()
+
+    # Create formatters based on log format
+    if log_format == "json":
+        # Use JSON formatter for both console and file
+        file_formatter = JSONFormatter(datefmt='%Y-%m-%dT%H:%M:%S')
+        console_formatter = JSONFormatter(datefmt='%Y-%m-%dT%H:%M:%S')
+    else:
+        # Use text formatters (default)
+        file_formatter = logging.Formatter(
+            '%(asctime)s | %(levelname)-8s | %(name)s:%(lineno)d | %(funcName)s() | %(message)s',
+            datefmt='%Y-%m-%d %H:%M:%S'
+        )
+        console_formatter = ColoredFormatter(
+            '%(asctime)s | %(levelname)-8s | %(funcName)s() | %(message)s',
+            datefmt='%H:%M:%S'
+        )
     
     # Console handler
     if console_output:
