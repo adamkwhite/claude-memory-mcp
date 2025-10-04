@@ -1,5 +1,6 @@
 """Logging configuration for Claude Memory MCP system"""
 
+import json
 import logging
 import logging.handlers
 import os
@@ -16,6 +17,69 @@ except ImportError:
 
 # Control character removal pattern for log injection prevention
 CONTROL_CHAR_PATTERN = r'[\x00-\x08\x0B\x0C\x0E-\x1F\x7F-\x9F]'
+
+
+class JSONFormatter(logging.Formatter):
+    """
+    JSON formatter for structured logging output.
+
+    Outputs newline-delimited JSON (NDJSON) with standard fields:
+    - timestamp: ISO 8601 formatted timestamp
+    - level: Log level (DEBUG, INFO, WARNING, ERROR, CRITICAL)
+    - logger: Logger name
+    - function: Function name where log was called
+    - line: Line number where log was called
+    - message: Log message
+    - context: Optional structured context data (if present in record.context)
+
+    Example output:
+    {"timestamp": "2025-01-15T10:30:45.123Z", "level": "INFO", "logger": "claude_memory_mcp",
+     "function": "add_conversation", "line": 145, "message": "Added conversation successfully",
+     "context": {"conversation_id": "abc123", "topics": ["python", "mcp"]}}
+    """
+
+    def format(self, record):
+        """
+        Format a log record as a JSON object.
+
+        Args:
+            record: LogRecord instance to format
+
+        Returns:
+            str: JSON-formatted log message (single line)
+        """
+        # Build standard log data structure
+        log_data = {
+            "timestamp": self.formatTime(record, self.datefmt or "%Y-%m-%dT%H:%M:%S"),
+            "level": record.levelname,
+            "logger": record.name,
+            "function": record.funcName,
+            "line": record.lineno,
+            "message": record.getMessage()
+        }
+
+        # Add context if present in the log record
+        if hasattr(record, 'context'):
+            log_data['context'] = record.context
+
+        # Serialize to JSON with error handling
+        try:
+            return json.dumps(log_data)
+        except (TypeError, ValueError) as e:
+            # Fallback for non-serializable objects
+            # Convert context to string representation if serialization fails
+            if 'context' in log_data:
+                log_data['context'] = str(log_data['context'])
+            try:
+                return json.dumps(log_data)
+            except Exception:
+                # Ultimate fallback: return basic error message
+                return json.dumps({
+                    "timestamp": self.formatTime(record, self.datefmt or "%Y-%m-%dT%H:%M:%S"),
+                    "level": "ERROR",
+                    "logger": "logging_config",
+                    "message": f"Failed to serialize log record: {str(e)}"
+                })
 
 
 class ColoredFormatter(logging.Formatter):
