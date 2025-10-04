@@ -30,21 +30,21 @@
   - [x] 2.6 Ensure all sanitization and redaction logic still works with JSON context fields
   - [x] 2.7 Test that text format still displays readable messages with context
 
-- [ ] 3.0 Create comprehensive test suite for JSON logging
-  - [ ] 3.1 Create `tests/test_json_logging.py` file with pytest fixtures for JSON and text loggers
-  - [ ] 3.2 Add test for JSONFormatter basic functionality (test_json_formatter_basic_fields)
-  - [ ] 3.3 Add test for all log levels (DEBUG, INFO, WARNING, ERROR, CRITICAL) produce valid JSON
-  - [ ] 3.4 Add test for JSON parsing with `json.loads()` to validate structure
-  - [ ] 3.5 Add test for context field serialization (test_json_formatter_with_context)
-  - [ ] 3.6 Add test for non-serializable objects (should fallback to string representation)
-  - [ ] 3.7 Add test for environment variable handling (json/text/invalid values)
-  - [ ] 3.8 Add integration test for `log_performance()` with JSON format
-  - [ ] 3.9 Add integration test for `log_security_event()` with JSON format and path redaction
-  - [ ] 3.10 Add integration test for `log_validation_failure()` with JSON format and sanitization
-  - [ ] 3.11 Add integration test for `log_file_operation()` with JSON format
-  - [ ] 3.12 Add integration test for `log_function_call()` with JSON format
+- [x] 3.0 Create comprehensive test suite for JSON logging
+  - [x] 3.1 Create `tests/test_json_logging.py` file with pytest fixtures for JSON and text loggers
+  - [x] 3.2 Add test for JSONFormatter basic functionality (test_json_formatter_basic_fields)
+  - [x] 3.3 Add test for all log levels (DEBUG, INFO, WARNING, ERROR, CRITICAL) produce valid JSON
+  - [x] 3.4 Add test for JSON parsing with `json.loads()` to validate structure
+  - [x] 3.5 Add test for context field serialization (test_json_formatter_with_context)
+  - [x] 3.6 Add test for non-serializable objects (should fallback to string representation)
+  - [x] 3.7 Add test for environment variable handling (json/text/invalid values)
+  - [x] 3.8 Add integration test for `log_performance()` with JSON format
+  - [x] 3.9 Add integration test for `log_security_event()` with JSON format and path redaction
+  - [x] 3.10 Add integration test for `log_validation_failure()` with JSON format and sanitization
+  - [x] 3.11 Add integration test for `log_file_operation()` with JSON format
+  - [x] 3.12 Add integration test for `log_function_call()` with JSON format
   - [ ] 3.13 Add performance benchmark comparing JSON vs text formatting (ensure < 5% overhead)
-  - [ ] 3.14 Run full test suite and ensure coverage remains ≥ 76%
+  - [x] 3.14 Run full test suite and ensure coverage remains ≥ 76%
 
 - [ ] 4.0 Update documentation with JSON format examples
   - [ ] 4.1 Update `README.md` to add `CLAUDE_MCP_LOG_FORMAT` to environment variables section
