@@ -164,6 +164,45 @@ Override with environment variable:
 export CLAUDE_MEMORY_PATH="/custom/path"
 ```
 
+### Logging Configuration
+
+#### Log Format
+
+Switch between human-readable text logs (default) and structured JSON logs for production:
+
+```bash
+# JSON format (for production log aggregation)
+export CLAUDE_MCP_LOG_FORMAT=json
+
+# Text format (default, for development)
+export CLAUDE_MCP_LOG_FORMAT=text
+```
+
+**JSON Log Example:**
+```json
+{
+  "timestamp": "2025-01-15T10:30:45",
+  "level": "INFO",
+  "logger": "claude_memory_mcp",
+  "function": "add_conversation",
+  "line": 145,
+  "message": "Added conversation successfully",
+  "context": {
+    "type": "performance",
+    "duration_seconds": 0.045,
+    "conversation_id": "conv_abc123"
+  }
+}
+```
+
+JSON logging is ideal for:
+- Production deployments with log aggregation (Datadog, ELK, CloudWatch)
+- Automated monitoring and alerting
+- Structured log analysis and querying
+- Performance tracking and debugging
+
+See `docs/json-logging.md` for detailed JSON logging documentation.
+
 ## File Structure
 
 ```

@@ -46,15 +46,15 @@
   - [ ] 3.13 Add performance benchmark comparing JSON vs text formatting (ensure < 5% overhead)
   - [x] 3.14 Run full test suite and ensure coverage remains ≥ 76%
 
-- [ ] 4.0 Update documentation with JSON format examples
-  - [ ] 4.1 Update `README.md` to add `CLAUDE_MCP_LOG_FORMAT` to environment variables section
-  - [ ] 4.2 Add JSON logging examples to README showing sample JSON output
-  - [ ] 4.3 Create `docs/json-logging.md` with comprehensive documentation
-  - [ ] 4.4 Document JSON schema specification with all standard fields in `docs/json-logging.md`
-  - [ ] 4.5 Add examples for each log type (performance, security, validation, file operation) in `docs/json-logging.md`
-  - [ ] 4.6 Create migration guide section explaining how to switch from text to JSON format
-  - [ ] 4.7 Add example configurations for log aggregation platforms (Datadog, ELK, CloudWatch)
-  - [ ] 4.8 Add troubleshooting section for common JSON logging issues
+- [x] 4.0 Update documentation with JSON format examples
+  - [x] 4.1 Update `README.md` to add `CLAUDE_MCP_LOG_FORMAT` to environment variables section
+  - [x] 4.2 Add JSON logging examples to README showing sample JSON output
+  - [x] 4.3 Create `docs/json-logging.md` with comprehensive documentation
+  - [x] 4.4 Document JSON schema specification with all standard fields in `docs/json-logging.md`
+  - [x] 4.5 Add examples for each log type (performance, security, validation, file operation) in `docs/json-logging.md`
+  - [x] 4.6 Create migration guide section explaining how to switch from text to JSON format
+  - [x] 4.7 Add example configurations for log aggregation platforms (Datadog, ELK, CloudWatch)
+  - [x] 4.8 Add troubleshooting section for common JSON logging issues
 
 - [ ] 5.0 Performance validation and backward compatibility verification
   - [ ] 5.1 Run performance benchmarks with 1000 log messages (JSON vs text)
