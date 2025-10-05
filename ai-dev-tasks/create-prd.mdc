@@ -1,0 +1,311 @@
+# Rule: Generating a Product Requirements Document (PRD)
+
+## Goal
+
+To guide an AI assistant in creating a detailed Product Requirements Document (PRD) in Markdown format, based on an initial user prompt. The PRD should be clear, actionable, and suitable for a junior developer to understand and implement the feature.
+
+## Process
+
+1. **Receive Initial Prompt:** The user provides a brief description or request for a new feature or functionality. It could be a few lines, or a github issue.
+2. **Get a perspective on the project** by reading details from Readme.md, Claude.md, docs/, the last 5 PRs in github, and any logged github issues
+3. **Ask Clarifying Questions:** Before writing the PRD, the AI *must* ask clarifying questions to gather sufficient detail. The goal is to understand the "what" and "why" of the feature, not necessarily the "how" (which the developer will figure out).
+4. **Determine Issue Strategy:** Ask the user whether to create:
+   - Single PRD with multiple GitHub issues (for related changes that share context)
+   - Single PRD with single GitHub issue (for focused, atomic features)
+   - Multiple PRDs with separate issues (for independent features)
+5. **Generate PRD:** Based on the initial prompt and the user's answers to the clarifying questions, generate a PRD using the structure outlined below.
+6. **Save PRD:** Create a new feature directory `docs/features/[feature-name]-PLANNED/` and save the generated document as `prd.md` inside that directory.
+7. **Create GitHub Issues:** Immediately after saving the PRD:
+   - Create ALL issues sequentially using `gh issue create` with clear titles and descriptions
+   - Each issue should include: Problem, Solution, Implementation Steps, Files Affected, Acceptance Criteria
+   - Add placeholder text for PRD and related issues (e.g., "Related issues: #TBD")
+   - **Batching Strategy**: Create issues one at a time to capture issue numbers for cross-referencing
+8. **Cross-Reference Everything:**
+   - Update the PRD's "Related Work" section with all created issue numbers
+   - Update each GitHub issue's description to reference the PRD location and other related issues
+   - Use `gh issue edit` to add the cross-references
+   - **Automation Note**: Steps 7-9 can be scripted to reduce manual effort and errors (see Automation section below)
+9. **Verify Links:** Run validation checklist to ensure all cross-references are bidirectional:
+   - [ ] All issues link back to PRD location
+   - [ ] PRD "Related Work" section lists all created issues
+   - [ ] Inter-issue references are complete (each issue links to related issues)
+   - [ ] All issue URLs in PRD are valid and clickable
+   - [ ] Test by clicking through each link to verify they work
+
+## Status Management
+- **PLANNED**: Feature is documented but not yet started
+- **IN_PROGRESS**: Feature is being actively developed
+- **COMPLETED**: Feature is fully implemented and deployed
+
+Rename the directory to reflect current status (e.g., `user-auth-PLANNED` → `user-auth-IN_PROGRESS` → `user-auth-COMPLETED`).
+
+## Clarifying Questions (Examples)
+
+The AI should adapt its questions based on the prompt, but here are some common areas to explore:
+
+*   **Problem/Goal:** "What problem does this feature solve for the user?" or "What is the main goal we want to achieve with this feature?"
+*   **Target User:** "Who is the primary user of this feature?"
+*   **Core Functionality:** "Can you describe the key actions a user should be able to perform with this feature?"
+*   **User Stories:** "Could you provide a few user stories? (e.g., As a [type of user], I want to [perform an action] so that [benefit].)"
+*   **Acceptance Criteria:** "How will we know when this feature is successfully implemented? What are the key success criteria?"
+*   **Scope/Boundaries:** "Are there any specific things this feature *should not* do (non-goals)?"
+*   **Data Requirements:** "What kind of data does this feature need to display or manipulate?"
+*   **Design/UI:** "Are there any existing design mockups or UI guidelines to follow?" or "Can you describe the desired look and feel?"
+*   **Edge Cases:** "Are there any potential edge cases or error conditions we should consider?"
+*   **Platforms:** Will this be used on desktop, phone and tablet?
+
+## Vibe Coding Assessment (New Section)
+
+Ask the user:
+## Vibe Coding Assessment Questions (New)
+*   **Development Speed:** "Is rapid prototyping more important than detailed planning for this feature?"
+*   **Prototype First:** "Would you like to create a working prototype using natural language generation before full implementation?"
+*   **Component Granularity:** "Should we generate complete features at once, or build individual components iteratively?"
+*   **Iteration Style:** "Do you prefer quick iterations with frequent review, or complete implementation per task?"
+*   **Code Quality vs Speed:** "For this feature, what's the balance between getting something working quickly vs. production-ready code?"
+*   **Refinement Approach:** "Would you like to start with a functional prototype and refine through specific prompts?"
+
+## PRD Structure Options
+
+### Option 1: Standard PRD Structure
+
+The generated PRD should include the following sections:
+
+1.  **Introduction/Overview:** Briefly describe the feature and the problem it solves. State the goal.
+2.  **Goals:** List the specific, measurable objectives for this feature.
+3.  **User Stories:** Detail the user narratives describing feature usage and benefits.
+4.  **Functional Requirements:** List the specific functionalities the feature must have. Use clear, concise language (e.g., "The system must allow users to upload a profile picture."). Number these requirements.
+5.  **Non-Goals (Out of Scope):** Clearly state what this feature will *not* include to manage scope.
+6.  **Design Considerations (Optional):** Link to mockups, describe UI/UX requirements, or mention relevant components/styles if applicable.
+7.  **Technical Considerations (Optional):** Mention any known technical constraints, dependencies, or suggestions (e.g., "Should integrate with the existing Auth module").
+8.  **Success Metrics:** How will the success of this feature be measured? (e.g., "Increase user engagement by 10%", "Reduce support tickets related to X").
+9.  **Open Questions:** List any remaining questions or areas needing further clarification.
+
+### Option 2: Comprehensive Engineering PRD Structure
+
+For complex technical features or when requested by the user, use this more detailed structure:
+
+1.  **Overview:** Brief feature description and problem it solves
+2.  **Problem Statement:** Detailed context and justification
+3.  **Goals:** Organized into Primary and Secondary goals
+4.  **Success Criteria:** Specific, measurable checkboxes for validation
+5.  **Requirements:** Subdivided into:
+    - **Functional Requirements** (numbered, specific features)
+    - **Technical Requirements** (numbered, system/environment needs)
+    - **Non-Functional Requirements** (numbered, performance/security/maintainability)
+6.  **User Stories:** Organized by persona/role
+7.  **Technical Specifications:** Include code examples, configurations, API specs
+8.  **Dependencies:** Split into External and Internal dependencies
+9.  **Timeline:** Phased approach with estimated timeframes
+10. **Risks and Mitigation:** Risk/mitigation strategy pairs
+11. **Out of Scope:** Clear exclusions and boundaries
+12. **Acceptance Criteria:** Grouped validation criteria
+
+### Option 3: Vibe-Coded Prototype Structure (New)
+For features suitable for rapid prototyping:
+
+1. **Prototype Requirements:** Natural language description of desired behavior
+2. **Refinement Prompts:** List of specific iterations to improve the prototype
+3. **Quality Gates:** 
+   - [ ] No exposed API keys/secrets
+   - [ ] Input validation present
+   - [ ] Mobile responsive
+   - [ ] Under 400 lines per component
+   - [ ] No untrusted npm packages
+4. **Production Migration Path:** How to move from prototype to production code
+
+### When to Use Each Structure
+
+- **Use Option 1** for simple features, UI changes, or when working with product managers
+- **Use Option 2** for complex technical features, integrations, infrastructure changes, or when the user requests "comprehensive" or "detailed" PRDs
+- **Use Option 3 (Vibe-Coded)** for:
+  - UI-heavy components with clear visual requirements
+  - Standard CRUD operations
+  - Form-based interfaces
+  - Rapid prototypes for user testing
+  - Features where iteration speed matters more than initial perfection
+  - **NOT suitable for:** Authentication, payment processing, complex algorithms, data migrations, security-critical code
+- **Ask the user** which structure they prefer if unclear from the prompt
+
+# Vibe Coding Suitability Matrix (New)
+
+When the user chooses vibe coding approach, assess suitability:
+
+| Feature Type | Suitability | Approach |
+|-------------|-------------|----------|
+| UI Components | ✅ High | Vibe with iterations |
+| CRUD Operations | ✅ High | Vibe with validation focus |
+| Forms & Data Entry | ✅ High | Vibe with Zod validation |
+| Dashboards | ✅ High | Vibe with responsive focus |
+| API Integration | ⚠️ Medium | Vibe with careful testing |
+| Business Logic | ⚠️ Medium | Hybrid approach |
+| Authentication | ❌ Low | Traditional only |
+| Payment Processing | ❌ Low | Traditional only |
+| Data Migrations | ❌ Low | Traditional only |
+| Security Features | ❌ Low | Traditional only |
+
+## Target Audience
+
+Assume the primary reader of the PRD is a **junior developer**. Therefore, requirements should be explicit, unambiguous, and avoid jargon where possible. Provide enough detail for them to understand the feature's purpose and core logic.
+
+For vibe-coded features, include:
+- Example prompts they can use
+- Expected iteration count (typically 3-5 refinements)
+- Clear quality gates they must verify
+
+## Output
+*   **Format:** Markdown (`.md`)
+*   **Location:** `docs/features/[feature-name]-PLANNED/`
+*   **Filename:** `[feature-name]-prd.md`
+*   **Additional Files (for vibe coding):**
+    - `prompts.md` - Collection of generation and refinement prompts
+    - `quality-checklist.md` - Specific quality gates for this feature
+
+## GitHub Issue Template
+
+
+Choose the appropriate template based on implementation approach selected in Step 5:
+
+### Standard Issue Template (Traditional Implementation)
+
+Each issue should follow this structure:
+
+```markdown
+## Problem
+[Describe the issue with code examples if applicable]
+
+## Solution
+[Describe the approach with code examples]
+
+## Implementation Steps
+1. [Step 1]
+2. [Step 2]
+...
+
+## Files Affected
+- `path/to/file.py:line_number`
+- New file: `path/to/new_file.py`
+
+## Acceptance Criteria
+- [ ] Criterion 1
+- [ ] Criterion 2
+- [ ] Full test suite passes (adapt for project: pytest/jest/npm test/etc.)
+- [ ] Test coverage remains at X%+ (if applicable)
+
+## Related
+- PRD: `docs/features/[feature-name]-PLANNED/prd.md`
+- Related issues: #XX, #YY
+
+🤖 Generated with [Claude Code](https://claude.com/claude-code)
+```
+```markdown
+## Problem
+[Describe the issue with code examples if applicable]
+## Feature to Generate
+[Natural language description of desired functionality]
+
+## Generation Approach
+- **Initial Prompt:** [Primary generation prompt]
+- **Expected Iterations:** [3-5 typically]
+- **Review Points:** [When to pause for human review]
+
+## Quality Gates (Must Pass Before Closing)
+- [ ] No hardcoded secrets or API keys
+- [ ] All inputs validated with Zod
+- [ ] Mobile responsive verified
+- [ ] Code under 400 lines per file
+- [ ] npm packages security-audited
+- [ ] Error states handled
+- [ ] Loading states implemented
+
+## Refinement Prompts
+1. [First refinement focus]
+2. [Second refinement focus]
+3. [Production-ready refinement]
+
+## Files to Generate
+- `path/to/component.tsx` (under 200 lines)
+- `path/to/component.test.tsx`
+- `path/to/styles.css`
+
+## Production Migration
+- [ ] Add comprehensive tests
+- [ ] Add TypeScript types
+- [ ] Document API surface
+- [ ] Performance audit
+
+## Related
+- PRD: `docs/features/[feature-name]-PLANNED/prd.md`
+- Related issues: #XX, #YY
+
+🤖 Generated with vibe coding approach
+```
+
+## Cross-Referencing Pattern
+
+**In PRD (Related Work section):**
+```markdown
+## Related Work
+- **Issue #XX**: Brief description
+- **Issue #YY**: Brief description
+- **PR #ZZ**: Related pull request
+
+## Implementation Approach
+- **Method**: [Traditional/Vibe-coded/Hybrid]
+- **Estimated Iterations**: [If vibe-coded]
+- **Review Checkpoints**: [If vibe-coded]
+
+## References
+- GitHub Issues: [#XX](url), [#YY](url)
+```
+
+**In GitHub Issues:**
+```markdown
+## Related
+## Related
+- PRD: `docs/features/[feature-name]-PLANNED/prd.md`
+- Related issues: #XX (description), #YY (description)
+- Implementation approach: [Traditional/Vibe-coded]
+```
+
+## Automation Considerations
+
+While steps 7-9 (issue creation and cross-referencing) are currently manual, they can be automated to reduce effort and errors:
+
+**Potential Script Approach:**
+```bash
+#!/bin/bash
+# prd-to-issues.sh - Automate PRD → GitHub Issues workflow
+
+PRD_FILE="$1"
+FEATURE_NAME="$2"
+
+# Extract issue definitions from PRD
+# Create issues sequentially and capture numbers
+# Update PRD with issue numbers
+# Update each issue with cross-references
+# Run validation checklist
+```
+
+**Benefits of Automation:**
+- Reduces manual effort and copy-paste errors
+- Ensures consistent formatting across all issues
+- Guarantees all cross-references are bidirectional
+- Can be integrated into CI/CD or pre-commit hooks
+
+**Trade-offs:**
+- Manual approach allows for nuanced issue descriptions and context
+- Automation requires PRD structure to be machine-parseable
+- Human review still needed for quality and accuracy
+
+**Recommendation:** Start with manual workflow to establish patterns, then automate once the pattern is stable and proven across multiple PRDs.
+
+## Final Instructions
+1. Do NOT start implementing the PRD
+2. Make sure to ask the user clarifying questions
+3. Ask about issue strategy (single/multiple PRD and issues)
+4. Take the user's answers to the clarifying questions and improve the PRD
+5. Create GitHub issues immediately after saving PRD (sequential creation for numbering)
+6. Cross-reference everything (PRD ↔ Issues, Issues ↔ Issues)
+7. **Run validation checklist** to verify all links are bidirectional and working
+8. Ask the user if they want to break the PRD down into dev tasks using generate-tasks.mdc (Reply "yes" or "y" to continue)

@@ -4,12 +4,12 @@ Standalone Test for Claude Conversation Memory System
 Tests core functionality without MCP dependencies
 """
 
-import json
 import asyncio
+import json
+import re
 from datetime import datetime, timedelta
 from pathlib import Path
-import re
-from typing import Dict, List, Optional, Any
+from typing import Any, Dict, List, Optional
 
 
 class ConversationMemoryServer:

@@ -4,22 +4,23 @@ Additional tests for FastMCP server functionality and weekly summary generation
 to achieve 50% test coverage
 """
 
-import pytest
 import asyncio
 import json
-import tempfile
+import os
 import shutil
 import sys
-import os
-from pathlib import Path
+import tempfile
 from datetime import datetime, timedelta
+from pathlib import Path
+
+import pytest
 
 # Add src directory to path
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'src'))
 
 try:
-    from conversation_memory import ConversationMemoryServer
     import server_fastmcp
+    from conversation_memory import ConversationMemoryServer
     FASTMCP_AVAILABLE = True
 except ImportError:
     FASTMCP_AVAILABLE = False

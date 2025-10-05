@@ -3,21 +3,16 @@
 import os
 import sys
 from pathlib import Path
-from unittest.mock import patch, MagicMock
+from unittest.mock import MagicMock, patch
+
 import pytest
 
 # Add src to path for imports
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "src"))
 
-from path_utils import (
-    get_project_root,
-    get_data_directory,
-    get_log_directory,
-    get_default_log_file,
-    resolve_user_path,
-    ensure_directory_exists,
-    get_uv_command
-)
+from path_utils import (ensure_directory_exists, get_data_directory,
+                        get_default_log_file, get_log_directory,
+                        get_project_root, get_uv_command, resolve_user_path)
 
 
 class TestGetProjectRoot:

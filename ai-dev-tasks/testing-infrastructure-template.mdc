@@ -1,0 +1,560 @@
+# Template: Comprehensive Testing Infrastructure Setup
+
+## Overview
+
+This template provides a complete testing infrastructure setup for web applications with both frontend (JavaScript) and backend (Python/Flask) components. It includes organized test result management, HTML coverage reports, and CI/CD integration.
+
+## When to Use This Template
+
+- Web applications with JavaScript frontend and Python backend
+- Projects requiring comprehensive test coverage (unit, integration, E2E)
+- Teams that need organized test result tracking over multiple iterations
+- Applications that need CI/CD integration with test automation
+- Projects where you want professional HTML coverage reports
+
+## Technology Stack
+
+### Frontend Testing
+- **Jest** - JavaScript testing framework
+- **jsdom** - DOM testing environment
+- **@testing-library/jest-dom** - DOM testing utilities
+- **Puppeteer** - E2E browser automation (if available)
+
+### Backend Testing
+- **pytest** - Python testing framework
+- **pytest-cov** - Coverage reporting
+- **pytest-flask** - Flask application testing
+- **unittest.mock** - API mocking
+
+### Result Management
+- **Timestamped directories** - Preserve test history
+- **Symlink management** - Easy access to latest results
+- **Automatic cleanup** - Prevent result accumulation
+- **HTML reports** - Professional coverage visualization
+
+## Directory Structure Template
+
+```
+project-root/
+├── tests/                           # All test files
+│   ├── setup.js                    # Jest configuration
+│   ├── api/                        # Backend API tests
+│   │   ├── test_*.py               # Python test files
+│   ├── integration/                # Integration tests
+│   │   ├── *.test.js              # JavaScript integration tests
+│   ├── e2e/                       # End-to-end tests
+│   │   ├── setup.js               # E2E configuration
+│   │   └── *.test.js              # E2E test suites
+│   └── performance/               # Performance tests
+├── test-results/                  # Organized test outputs
+│   ├── coverage-TIMESTAMP/        # Frontend coverage (timestamped)
+│   ├── backend-coverage-TIMESTAMP/ # Backend coverage (timestamped)
+│   ├── backend-coverage-latest/   # Symlink to latest backend
+│   └── *.xml                     # JUnit XML for CI
+├── scripts/
+│   └── run-tests.py              # Smart test runner
+├── jest.config.js                # Jest configuration
+├── pytest.ini                    # pytest configuration
+├── package.json                  # Frontend dependencies
+└── requirements.txt              # Backend dependencies
+```
+
+## Configuration Files
+
+### Jest Configuration (`jest.config.js`)
+
+```javascript
+const timestamp = new Date().toISOString().slice(0, 19).replace(/[:.]/g, '-');
+
+module.exports = {
+  testEnvironment: 'jsdom',
+  setupFilesAfterEnv: ['<rootDir>/tests/setup.js'],
+  collectCoverage: true,
+  coverageDirectory: process.env.CI ? 'coverage' : \`test-results/coverage-\${timestamp}\`,
+  coverageReporters: ['text', 'lcov', 'html'],
+  coverageThreshold: {
+    global: {
+      branches: 80,
+      functions: 85,
+      lines: 85,
+      statements: 85
+    }
+  },
+  testMatch: ['**/tests/**/*.test.js'],
+  testPathIgnorePatterns: [
+    '<rootDir>/node_modules/',
+    '<rootDir>/venv/',
+    '<rootDir>/static/',
+    '<rootDir>/templates/'
+  ],
+  modulePathIgnorePatterns: ['<rootDir>/venv/'],
+  roots: ['<rootDir>/tests/']
+};
+```
+
+### pytest Configuration (`pytest.ini`)
+
+```ini
+[tool:pytest]
+testpaths = tests
+python_files = test_*.py
+python_classes = Test*
+python_functions = test_*
+addopts = --cov=app --cov-report=html --cov-report=term-missing --cov-fail-under=80 --cov-report=html:test-results/backend-coverage --junit-xml=test-results/pytest-results.xml
+```
+
+### Test Setup (`tests/setup.js`)
+
+```javascript
+import '@testing-library/jest-dom';
+
+// Global test setup
+global.fetch = jest.fn();
+
+// Mock DOM APIs that aren't available in jsdom
+Object.defineProperty(window, 'location', {
+  value: {
+    href: 'http://localhost',
+    assign: jest.fn(),
+    reload: jest.fn()
+  },
+  writable: true
+});
+
+// Mock localStorage
+const localStorageMock = {
+  getItem: jest.fn(),
+  setItem: jest.fn(),
+  removeItem: jest.fn(),
+  clear: jest.fn(),
+};
+global.localStorage = localStorageMock;
+
+// Reset all mocks before each test
+beforeEach(() => {
+  jest.clearAllMocks();
+  fetch.mockClear();
+});
+```
+
+## Smart Test Runner (`scripts/run-tests.py`)
+
+```python
+#!/usr/bin/env python3
+import os
+import subprocess
+import datetime
+import shutil
+from pathlib import Path
+
+def run_tests_with_timestamped_results():
+    """Run tests and organize results with timestamps while maintaining 'latest' links"""
+    timestamp = datetime.datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
+
+    # Create test-results directory structure
+    results_dir = Path('test-results')
+    results_dir.mkdir(exist_ok=True)
+
+    # Backend tests with timestamped coverage
+    backend_coverage_dir = results_dir / f'backend-coverage-{timestamp}'
+    subprocess.run([
+        'pytest',
+        '--cov=app',
+        '--cov-report=html:' + str(backend_coverage_dir),
+        '--cov-report=term-missing',
+        '--junit-xml=' + str(results_dir / f'backend-results-{timestamp}.xml')
+    ])
+
+    # Create/update 'latest' symlinks for easy access
+    latest_backend = results_dir / 'backend-coverage-latest'
+    if latest_backend.exists():
+        latest_backend.unlink()
+    latest_backend.symlink_to(backend_coverage_dir.name)
+
+    # Frontend tests (Jest handles timestamping via config)
+    subprocess.run(['npm', 'test', '--', '--coverage'])
+
+    print(f"\\n✅ Test results saved with timestamp: {timestamp}")
+    print(f"📊 Latest backend coverage: test-results/backend-coverage-latest/index.html")
+    print(f"📊 Latest frontend coverage: test-results/coverage-{timestamp}/index.html")
+
+    # Cleanup old results (keep last 10)
+    cleanup_old_results(results_dir, keep_count=10)
+
+def cleanup_old_results(results_dir, keep_count=10):
+    """Remove old test result directories, keeping only the most recent ones"""
+    coverage_dirs = sorted([
+        d for d in results_dir.iterdir()
+        if d.is_dir() and (d.name.startswith('backend-coverage-') or d.name.startswith('coverage-'))
+    ], key=lambda x: x.stat().st_mtime, reverse=True)
+
+    for old_dir in coverage_dirs[keep_count:]:
+        if 'latest' not in old_dir.name:
+            shutil.rmtree(old_dir)
+            print(f"🗑️  Cleaned up old results: {old_dir.name}")
+
+if __name__ == '__main__':
+    run_tests_with_timestamped_results()
+```
+
+## Package Dependencies
+
+### Frontend (`package.json` additions)
+
+```json
+{
+  "devDependencies": {
+    "jest": "^29.7.0",
+    "@testing-library/jest-dom": "^6.1.4",
+    "jest-environment-jsdom": "^29.7.0"
+  },
+  "scripts": {
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "test:coverage": "jest --coverage"
+  }
+}
+```
+
+### Backend (`requirements.txt` additions)
+
+```
+pytest==7.4.3
+pytest-cov==4.1.0
+pytest-flask==1.3.0
+```
+
+## Test Templates
+
+### Frontend Unit Test Template
+
+```javascript
+// tests/example.test.js
+describe('ExampleComponent', () => {
+  beforeEach(() => {
+    // Setup before each test
+    document.body.innerHTML = '';
+  });
+
+  test('should render correctly', () => {
+    // Arrange
+    const expectedValue = 'test';
+
+    // Act
+    const result = someFunction(expectedValue);
+
+    // Assert
+    expect(result).toBe(expectedValue);
+  });
+
+  test('should handle DOM interactions', () => {
+    // Setup DOM
+    document.body.innerHTML = \`
+      <div id="test-element">
+        <button id="test-button">Click me</button>
+      </div>
+    \`;
+
+    const button = document.getElementById('test-button');
+    button.click();
+
+    expect(button).toHaveBeenCalled();
+  });
+});
+```
+
+### Backend API Test Template
+
+```python
+# tests/api/test_example.py
+import pytest
+from unittest.mock import patch, Mock
+from app import app
+
+@pytest.fixture
+def client():
+    app.config['TESTING'] = True
+    with app.test_client() as client:
+        with app.app_context():
+            yield client
+
+def test_api_endpoint_success(client):
+    """Test successful API response"""
+    with patch('app.external_api_call') as mock_api:
+        mock_api.return_value = {'data': 'test'}
+
+        response = client.get('/api/endpoint')
+        assert response.status_code == 200
+        data = response.get_json()
+        assert 'data' in data
+
+def test_api_endpoint_error_handling(client):
+    """Test API error handling"""
+    with patch('app.external_api_call', side_effect=Exception('API Error')):
+        response = client.get('/api/endpoint')
+        assert response.status_code == 500
+        data = response.get_json()
+        assert 'error' in data
+```
+
+### E2E Test Template (Puppeteer)
+
+```javascript
+// tests/e2e/example.test.js
+const { setupBrowser, teardownBrowser } = require('./setup');
+
+describe('User Journey', () => {
+  let browser, page;
+
+  beforeAll(async () => {
+    ({ browser, page } = await setupBrowser());
+  });
+
+  afterAll(async () => {
+    await teardownBrowser();
+  });
+
+  beforeEach(async () => {
+    await page.goto('http://localhost:5000');
+  });
+
+  test('user can complete main workflow', async () => {
+    // Navigate through user workflow
+    await page.waitForSelector('#main-section', { visible: true });
+    await page.click('#start-button');
+    await page.waitForSelector('#next-section', { visible: true });
+
+    // Verify expected outcome
+    const result = await page.$eval('#result', el => el.textContent);
+    expect(result).toContain('Success');
+  });
+});
+```
+
+### E2E Setup Template (`tests/e2e/setup.js`)
+
+```javascript
+const puppeteer = require('puppeteer');
+
+const config = {
+  headless: true,
+  slowMo: 0,
+  args: ['--no-sandbox', '--disable-setuid-sandbox'],
+  defaultViewport: {
+    width: 1280,
+    height: 720
+  },
+  timeout: 30000
+};
+
+let browser;
+let page;
+
+async function setupBrowser() {
+  browser = await puppeteer.launch(config);
+  page = await browser.newPage();
+
+  // Set up error handling
+  page.on('pageerror', error => {
+    console.error('Page error:', error.message);
+  });
+
+  page.on('console', msg => {
+    console.log('Page log:', msg.text());
+  });
+
+  return { browser, page };
+}
+
+async function teardownBrowser() {
+  if (page) await page.close();
+  if (browser) await browser.close();
+}
+
+module.exports = { setupBrowser, teardownBrowser, config };
+```
+
+## CI/CD Integration
+
+### GitHub Actions Workflow (`.github/workflows/tests.yml`)
+
+```yaml
+name: Tests
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.9'
+
+    - name: Set up Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+
+    - name: Install Python dependencies
+      run: |
+        pip install -r requirements.txt
+
+    - name: Install Node dependencies
+      run: |
+        npm install
+
+    - name: Run backend tests
+      run: |
+        pytest --cov=app --cov-report=xml --cov-fail-under=80
+
+    - name: Run frontend tests
+      run: |
+        npm test -- --coverage --watchAll=false
+
+    - name: Upload coverage reports
+      uses: codecov/codecov-action@v3
+      with:
+        files: ./coverage.xml,./coverage/lcov.info
+        fail_ci_if_error: true
+```
+
+## Usage Instructions
+
+### Initial Setup
+
+1. **Install dependencies:**
+   ```bash
+   pip install -r requirements.txt
+   npm install
+   ```
+
+2. **Create directory structure:**
+   ```bash
+   mkdir -p tests/{api,integration,e2e,performance}
+   mkdir -p test-results
+   mkdir -p scripts
+   ```
+
+3. **Copy configuration files** from this template
+
+4. **Make test runner executable:**
+   ```bash
+   chmod +x scripts/run-tests.py
+   ```
+
+### Running Tests
+
+```bash
+# Run all tests with organized results
+python scripts/run-tests.py
+
+# Run specific test types
+npm test                    # Frontend only
+pytest                      # Backend only
+npm run test:coverage       # Frontend with coverage
+```
+
+### Viewing Results
+
+```bash
+# Open latest results in browser
+open test-results/backend-coverage-latest/index.html
+open test-results/coverage-latest/index.html  # Will be timestamped directory
+```
+
+## Customization Points
+
+### For Different Tech Stacks
+
+1. **React Projects**: Add `@testing-library/react`
+2. **Django Projects**: Replace Flask fixtures with Django test client
+3. **TypeScript**: Update Jest config for `.ts` files and add `ts-jest`
+4. **Vue Projects**: Add `@vue/test-utils`
+5. **Different E2E Tools**: Replace Puppeteer with Playwright/Cypress
+
+### Coverage Thresholds
+
+Adjust in `jest.config.js` and `pytest.ini`:
+
+```javascript
+// jest.config.js
+coverageThreshold: {
+  global: {
+    branches: 75,     // Adjust as needed
+    functions: 80,    // Adjust as needed
+    lines: 85,        // Adjust as needed
+    statements: 85    // Adjust as needed
+  }
+}
+```
+
+### Result Retention
+
+Modify `keep_count` in `scripts/run-tests.py`:
+
+```python
+cleanup_old_results(results_dir, keep_count=5)  # Keep fewer results
+```
+
+## Benefits of This Setup
+
+1. **Professional Results**: HTML coverage reports with visual indicators
+2. **Historical Tracking**: Compare test results over time
+3. **Zero Clutter**: Automatic cleanup prevents accumulation
+4. **CI/CD Ready**: Works seamlessly with automation
+5. **Multi-Stack**: Handles both frontend and backend testing
+6. **Organized**: Clear separation of concerns and test types
+7. **Maintainable**: Easy to understand and modify
+
+## Migration Guide
+
+### From Basic Testing
+1. Install additional dependencies
+2. Create configuration files
+3. Move existing tests to `tests/` directory
+4. Update test commands to use new structure
+
+### From Other Testing Setups
+1. Map existing test types to directory structure
+2. Update import paths in test files
+3. Migrate coverage configuration
+4. Update CI/CD workflows
+
+## Vibe-Generated Code Testing (New Section)
+
+### Special Considerations for AI-Generated Code
+
+#### Additional Test Focus Areas
+1. **Unexpected Behaviors:** AI might implement undocumented features
+2. **Edge Cases:** AI often misses boundary conditions
+3. **Data Type Assumptions:** Verify all type coercions
+4. **State Management:** Check for race conditions in generated async code
+5. **Error Messages:** Ensure user-friendly error handling
+
+### Vibe Code Test Template
+```javascript
+describe('Vibe-Generated Component', () => {
+  // Essential: Test the happy path the AI intended
+  test('works as described in prompt', () => {});
+  
+  // Critical: Test what AI might have missed
+  test('handles null/undefined inputs', () => {});
+  test('validates all user inputs', () => {});
+  test('no hardcoded secrets', () => {
+    const codeString = componentFunction.toString();
+    expect(codeString).not.toMatch(/api[_-]?key/i);
+    expect(codeString).not.toMatch(/password.*=.*['"]/i);
+  });
+  
+  // Verify AI didn't add unexpected features
+  test('only implements specified requirements', () => {});
+});
