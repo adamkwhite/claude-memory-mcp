@@ -4,13 +4,11 @@ Additional tests for FastMCP server functionality and weekly summary generation
 to achieve 50% test coverage
 """
 
-import asyncio
-import json
 import os
 import shutil
 import sys
 import tempfile
-from datetime import datetime, timedelta
+from datetime import datetime
 from pathlib import Path
 
 import pytest
@@ -58,27 +56,27 @@ class TestWeeklySummaryGeneration:
         # Add conversations for current week (use UTC to match _calculate_week_range)
         from datetime import timezone
         current_time = datetime.now(timezone.utc).isoformat()
-        
+
         await server.add_conversation(
             "Python coding discussion about functions and classes",
             "Coding Discussion",
             current_time
         )
-        
+
         await server.add_conversation(
             "We decided to use FastMCP for our approach",
             "Decision Making",
             current_time
         )
-        
+
         await server.add_conversation(
             "Learning how to implement MCP servers tutorial",
             "Learning Session",
             current_time
         )
-        
+
         summary = await server.generate_weekly_summary(0)
-        
+
         assert isinstance(summary, str)
         assert len(summary) > 0
         assert "Weekly Summary" in summary
@@ -92,16 +90,16 @@ class TestWeeklySummaryGeneration:
         # Use UTC time to match _calculate_week_range
         from datetime import timezone
         current_time = datetime.now(timezone.utc).isoformat()
-        
+
         # Add conversation with multiple python mentions
         await server.add_conversation(
             "Python development with python libraries and python frameworks",
             "Python Discussion",
             current_time
         )
-        
+
         summary = await server.generate_weekly_summary(0)
-        
+
         assert "Popular Topics" in summary
         assert "python" in summary.lower()
 
@@ -111,30 +109,30 @@ class TestWeeklySummaryGeneration:
         # Use UTC time to match _calculate_week_range
         from datetime import timezone
         current_time = datetime.now(timezone.utc).isoformat()
-        
+
         # Add coding conversation
         await server.add_conversation(
             "Writing code for a new function with git repository management",
             "Coding Task",
             current_time
         )
-        
+
         # Add decision conversation
         await server.add_conversation(
             "We decided to use the recommended approach for this feature",
             "Architecture Decision",
             current_time
         )
-        
+
         # Add learning conversation
         await server.add_conversation(
             "Learning how to explain complex concepts in tutorials",
             "Learning Topic",
             current_time
         )
-        
+
         summary = await server.generate_weekly_summary(0)
-        
+
         # Check for category sections or conversation titles
         assert "💻 Coding & Development" in summary or "Coding Task" in summary
         assert "🎯 Decisions & Recommendations" in summary or "Architecture Decision" in summary
@@ -154,18 +152,18 @@ class TestWeeklySummaryGeneration:
         # Use UTC time to match _calculate_week_range
         from datetime import timezone
         current_time = datetime.now(timezone.utc).isoformat()
-        
+
         await server.add_conversation(
             "Test conversation for file saving",
             "File Save Test",
             current_time
         )
-        
+
         summary = await server.generate_weekly_summary(0)
-        
+
         # Check that summary mentions file saving
         assert "Summary saved to" in summary
-        
+
         # Check that file actually exists
         weekly_dir = Path(temp_storage) / "data" / "summaries" / "weekly"
         summary_files = list(weekly_dir.glob("*.md"))
@@ -178,7 +176,7 @@ class TestWeeklySummaryGeneration:
         index_file = Path(temp_storage) / "data" / "conversations" / "index.json"
         if index_file.exists():
             index_file.unlink()
-        
+
         summary = await server.generate_weekly_summary(0)
         # Should handle error gracefully
         assert isinstance(summary, str)
@@ -203,7 +201,7 @@ class TestMCPToolFunctions:
             "MCP Search Test",
             "2025-06-01T11:00:00Z"
         )
-        
+
         # Test the MCP tool function
         result = await server_fastmcp.search_conversations("MCP search", limit=1)
         assert "Found" in result or "No conversations found" in result
@@ -221,7 +219,7 @@ class TestMCPToolFunctions:
             "MCP Add Test",
             "2025-06-01T12:00:00Z"
         )
-        
+
         assert "Status: success" in result
         assert "Conversation saved successfully" in result
 
@@ -234,7 +232,7 @@ class TestMCPToolFunctions:
             "Error Test",
             "invalid-date-format"
         )
-        
+
         # Should handle error gracefully
         assert "Status:" in result
 
@@ -250,7 +248,7 @@ class TestMCPToolFunctions:
             "Weekly Test",
             current_time
         )
-        
+
         # Test weekly summary tool
         result = await server_fastmcp.generate_weekly_summary(0)
         assert isinstance(result, str)
@@ -270,12 +268,12 @@ class TestErrorHandlingAndEdgeCases:
             "Test Title",
             "2025-01-15T10:30:00"
         )
-        
+
         # Remove the conversation file but keep index entry
         file_path = Path(result['file_path'])
         if file_path.exists():
             file_path.unlink()
-        
+
         # Search should handle missing files gracefully
         results = await server.search_conversations("Test", limit=5)
         # Should return empty or handle error gracefully
@@ -288,16 +286,16 @@ class TestErrorHandlingAndEdgeCases:
         conversations_dir = Path(temp_storage) / "data" / "conversations"
         try:
             conversations_dir.chmod(0o444)  # Read-only
-            
+
             result = await server.add_conversation(
                 "Test content",
                 "Error Test",
                 "2025-01-15T10:30:00"
             )
-            
+
             # Should handle error gracefully
             assert result['status'] in ['success', 'error']
-            
+
         finally:
             # Restore permissions for cleanup
             conversations_dir.chmod(0o755)
@@ -309,14 +307,14 @@ class TestErrorHandlingAndEdgeCases:
         index_file = Path(temp_storage) / "data" / "conversations" / "index.json"
         with open(index_file, 'w') as f:
             f.write("invalid json content")
-        
+
         # This should either succeed by recreating the file or handle error gracefully
         result = await server.add_conversation(
             "Test content after corruption",
             "Corruption Test",
             "2025-01-15T10:30:00"
         )
-        
+
         # Check that operation either succeeded or failed gracefully
         assert 'status' in result
 
@@ -324,7 +322,7 @@ class TestErrorHandlingAndEdgeCases:
         """Test topic extraction with unicode characters"""
         content = "Discussion about Pythön and machine léarning with émojis 🐍"
         topics = server._extract_topics(content)
-        
+
         # Should handle unicode gracefully
         assert isinstance(topics, list)
 
@@ -334,7 +332,7 @@ class TestErrorHandlingAndEdgeCases:
         # Empty query
         results = await server.search_conversations("", limit=5)
         assert isinstance(results, list)
-        
+
         # Whitespace only query
         results = await server.search_conversations("   ", limit=5)
         assert isinstance(results, list)
@@ -344,16 +342,16 @@ class TestErrorHandlingAndEdgeCases:
         """Test handling of various text encodings"""
         # Content with various special characters
         special_content = "Content with special chars: àáâãäåæçèéêë ñ 中文 русский العربية"
-        
+
         result = await server.add_conversation(
             content=special_content,
             title="Encoding Test",
             conversation_date="2025-01-15T10:30:00"
         )
-        
+
         # Should handle encoding gracefully
         assert result['status'] == 'success'
-        
+
         # Search should also handle special characters
         search_results = await server.search_conversations("special", limit=1)
         assert isinstance(search_results, list)
@@ -368,19 +366,19 @@ Line 3: This is context after the match
 Line 4: More content
 Line 5: Final line
         """
-        
+
         # Add conversation
         result = await server.add_conversation(
             content=content,
             title="Preview Test",
             conversation_date="2025-01-15T10:30:00"
         )
-        
+
         file_path = Path(result['file_path'])
-        
+
         # Test preview generation
         preview = server._get_preview(file_path, ["search", "term"])
-        
+
         assert len(preview) > 0
         assert "search term" in preview.lower() or "term" in preview.lower()
 
@@ -392,7 +390,7 @@ Line 5: Final line
             datetime(2025, 12, 31),  # December
             datetime(2024, 2, 29),  # Leap year
         ]
-        
+
         for test_date in test_dates:
             folder = server._get_date_folder(test_date)
             assert folder.exists()

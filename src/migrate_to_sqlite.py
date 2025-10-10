@@ -6,13 +6,14 @@ This script processes all existing conversation JSON files and imports them
 into the new SQLite FTS5 database for optimized search performance.
 """
 
+from search_database import SearchDatabase
 import argparse
 import json
 import logging
 import sys
 from datetime import datetime
 from pathlib import Path
-from typing import Dict, List, Optional
+from typing import Dict
 
 # Constants
 INDEX_JSON_FILENAME = "index.json"
@@ -20,8 +21,6 @@ TOPICS_JSON_FILENAME = "topics.json"
 
 # Add src to path for imports
 sys.path.append(str(Path(__file__).parent))
-
-from search_database import SearchDatabase
 
 
 class ConversationMigrator:

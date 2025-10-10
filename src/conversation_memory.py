@@ -463,7 +463,8 @@ class ConversationMemoryServer:
             # Add conversation to each topic
             for topic in topics:
                 if topic not in topics_index or isinstance(topics_index[topic], int):
-                    # Initialize new topics or handle legacy format where topics were stored as counts
+                    # Initialize new topics or handle legacy format where topics were stored
+                    # as counts
                     topics_index[topic] = []
 
                 topics_index[topic].append(
@@ -495,9 +496,11 @@ class ConversationMemoryServer:
             )
             if not week_conversations:
                 if week_offset == 0:
-                    return f"No conversations found for current week ({start_of_week.strftime('%Y-%m-%d')})"
+                    return f"No conversations found for current week ({
+                        start_of_week.strftime('%Y-%m-%d')})"
                 else:
-                    return f"No conversations found for week of {start_of_week.strftime('%Y-%m-%d')} ({week_offset} week(s) ago)"
+                    return f"No conversations found for week of {
+                        start_of_week.strftime('%Y-%m-%d')} ({week_offset} week(s) ago)"
 
             summary_text = self._build_weekly_summary_text(
                 start_of_week, end_of_week, week_conversations
@@ -559,7 +562,8 @@ class ConversationMemoryServer:
         """Build the markdown summary text for the week"""
         summary_parts = []
         summary_parts.append(
-            f"# Weekly Summary: {start_of_week.strftime('%Y-%m-%d')} to {end_of_week.strftime('%Y-%m-%d')}"
+            f"# Weekly Summary: {start_of_week.strftime('%Y-%m-%d')} "
+            f"to {end_of_week.strftime('%Y-%m-%d')}"
         )
         summary_parts.append(
             f"\n## Overview\n- Total conversations: {len(week_conversations)}"

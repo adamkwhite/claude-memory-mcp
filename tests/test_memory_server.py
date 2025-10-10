@@ -4,9 +4,8 @@
 Pytest-compatible tests for Claude Memory MCP Server
 """
 
-import asyncio
+from conversation_memory import ConversationMemoryServer as StandaloneServer
 import json
-import os
 import shutil
 import sys
 import tempfile
@@ -26,7 +25,6 @@ try:
     FASTMCP_AVAILABLE = True
 except ImportError:
     FASTMCP_AVAILABLE = False
-from conversation_memory import ConversationMemoryServer as StandaloneServer
 
 
 @pytest.fixture
@@ -68,13 +66,13 @@ class TestStandaloneMemoryServer:
     @pytest.mark.asyncio
     async def test_server_initialization(self, temp_storage):
         """Test that server initializes properly"""
-        server = StandaloneServer(temp_storage)
-        
+        StandaloneServer(temp_storage)
+
         # Check that directories were created (using new data/ structure)
         assert (Path(temp_storage) / "data" / "conversations").exists()
         assert (Path(temp_storage) / "data" / "summaries").exists()
         assert (Path(temp_storage) / "data" / "summaries" / "weekly").exists()
-        
+
         # Check that index files were created
         assert (Path(temp_storage) / "data" / "conversations" / "index.json").exists()
         assert (Path(temp_storage) / "data" / "conversations" / "topics.json").exists()
@@ -87,12 +85,12 @@ class TestStandaloneMemoryServer:
             title="MCP Server Setup Discussion",
             conversation_date="2025-01-15T10:30:00"
         )
-        
+
         assert result['status'] == 'success'
         assert 'file_path' in result
         assert 'topics' in result
         assert Path(result['file_path']).exists()
-        
+
         # Check that topics were extracted
         topics = result['topics']
         assert 'mcp' in topics
@@ -107,13 +105,13 @@ class TestStandaloneMemoryServer:
             title="MCP Server Setup Discussion",
             conversation_date="2025-01-15T10:30:00"
         )
-        
+
         # Then search for it
         results = await standalone_server.search_conversations("MCP server", limit=3)
-        
+
         assert len(results) > 0
         assert not any("error" in result for result in results)
-        
+
         # Check that the result has expected fields
         first_result = results[0]
         assert 'title' in first_result
@@ -130,28 +128,32 @@ class TestStandaloneMemoryServer:
         We talked about "machine learning" and "data science" projects.
         The conversation covered AWS deployment and React frontend.
         """
-        
+
         result = await standalone_server.add_conversation(
             content=content_with_topics,
             title="Tech Discussion",
             conversation_date="2025-01-15T11:00:00"
         )
-        
+
         topics = result['topics']
-        
+
         # Check for common tech terms
         assert 'python' in topics
         assert 'docker' in topics
         assert 'kubernetes' in topics
         assert 'aws' in topics
         assert 'react' in topics
-        
+
         # Check for quoted terms
         assert 'machine learning' in topics
         assert 'data science' in topics
 
     @pytest.mark.asyncio
-    async def test_index_updates(self, standalone_server, sample_conversation_content, temp_storage):
+    async def test_index_updates(
+            self,
+            standalone_server,
+            sample_conversation_content,
+            temp_storage):
         """Test that index files are updated correctly"""
         # Add a conversation
         await standalone_server.add_conversation(
@@ -159,23 +161,23 @@ class TestStandaloneMemoryServer:
             title="Test Conversation",
             conversation_date="2025-01-15T10:30:00"
         )
-        
+
         # Check index.json
         index_file = Path(temp_storage) / "data" / "conversations" / "index.json"
         with open(index_file, 'r') as f:
             index_data = json.load(f)
-        
+
         assert len(index_data['conversations']) == 1
         conv = index_data['conversations'][0]
         assert conv['title'] == "Test Conversation"
         assert 'topics' in conv
         assert 'file_path' in conv
-        
+
         # Check topics.json
         topics_file = Path(temp_storage) / "data" / "conversations" / "topics.json"
         with open(topics_file, 'r') as f:
             topics_data = json.load(f)
-        
+
         assert len(topics_data['topics']) > 0
 
     @pytest.mark.asyncio
@@ -186,9 +188,9 @@ class TestStandaloneMemoryServer:
             title="Date Test Conversation",
             conversation_date="2025-03-15T14:30:00"
         )
-        
+
         file_path = Path(result['file_path'])
-        
+
         # Check that it's in the correct year/month folder
         assert "2025" in str(file_path)
         assert "03-march" in str(file_path)
@@ -203,18 +205,18 @@ class TestStandaloneMemoryServer:
             title="High Score Conversation",
             conversation_date="2025-01-15T10:00:00"
         )
-        
+
         await standalone_server.add_conversation(
             content="Discussion about general programming concepts",
-            title="Low Score Conversation", 
+            title="Low Score Conversation",
             conversation_date="2025-01-15T11:00:00"
         )
-        
+
         # Search for python
         results = await standalone_server.search_conversations("python", limit=2)
-        
+
         assert len(results) >= 1
-        
+
         # The conversation with python in both content and topics should score higher
         high_score_found = any(r['title'] == "High Score Conversation" for r in results)
         assert high_score_found
@@ -233,7 +235,7 @@ class TestStandaloneMemoryServer:
             title="Invalid Date Test",
             conversation_date="invalid-date-format"
         )
-        
+
         # Should handle error gracefully (may succeed or fail depending on implementation)
         assert result['status'] in ['success', 'error']
         if result['status'] == 'error':
@@ -248,7 +250,7 @@ class TestFastMCPServer:
     async def test_fastmcp_server_initialization(self):
         """Test that FastMCP server initializes properly"""
         server = ConversationMemoryServer()
-        
+
         # Basic smoke test - server should initialize without errors
         assert server is not None
 
@@ -256,7 +258,7 @@ class TestFastMCPServer:
     async def test_fastmcp_search_functionality(self):
         """Test search functionality in FastMCP server"""
         server = ConversationMemoryServer()
-        
+
         # Test search (assuming some data exists)
         try:
             results = await server.search_conversations("test", limit=1)
@@ -273,16 +275,16 @@ class TestCoverageTarget:
         """Test error handling for file operations"""
         # Create a scenario where file operations might fail
         conversations_dir = Path(temp_storage) / "conversations"
-        
+
         # Test with missing directory (should be created)
         shutil.rmtree(conversations_dir, ignore_errors=True)
-        
+
         result = await standalone_server.add_conversation(
             content="Test content",
             title="Error Test",
             conversation_date="2025-01-15T10:30:00"
         )
-        
+
         # Should succeed by recreating directories
         assert result['status'] == 'success'
 
@@ -291,11 +293,11 @@ class TestCoverageTarget:
         # Test with empty content
         topics = standalone_server._extract_topics("")
         assert len(topics) == 0
-        
+
         # Test with only special characters
         topics = standalone_server._extract_topics("!@#$%^&*()")
         assert len(topics) == 0
-        
+
         # Test with very short quoted terms (should be filtered out)
         topics = standalone_server._extract_topics('"a" "bb" "longer term"')
         assert 'a' not in topics
@@ -306,7 +308,7 @@ class TestCoverageTarget:
         """Test date folder generation"""
         test_date = datetime(2025, 12, 25, 15, 30, 45)
         folder = standalone_server._get_date_folder(test_date)
-        
+
         assert "2025" in str(folder)
         assert "12-december" in str(folder)
         assert folder.exists()
@@ -317,14 +319,14 @@ class TestCoverageTarget:
         # Create an invalid JSON file that will trigger ValueError during json.load()
         index_file = Path(temp_storage) / "conversations" / "index.json"
         index_file.parent.mkdir(parents=True, exist_ok=True)
-        
+
         # Write invalid JSON that will cause json.load() to raise ValueError
         with open(index_file, 'w') as f:
             f.write('{"conversations": [invalid json content}')  # Invalid JSON syntax
-        
+
         # This should trigger the exception handling when searching
         results = await standalone_server.search_conversations("test")
-        
+
         # Should handle gracefully and return error or empty results
         assert isinstance(results, list)
         if len(results) > 0:
@@ -341,55 +343,55 @@ Line 3: This is context after the match
 Line 4: More content
 Line 5: Final line
         """
-        
+
         # Add conversation
         result = await standalone_server.add_conversation(
             content=content,
             title="Preview Test",
             conversation_date="2025-01-15T10:30:00"
         )
-        
+
         file_path = Path(result['file_path'])
-        
+
         # Test preview generation
         preview = standalone_server._get_preview(file_path, ["search", "term"])
-        
+
         assert len(preview) > 0
         assert "search term" in preview.lower() or "term" in preview.lower()
 
 
 class TestServerIntegration:
     """Integration tests for the memory server"""
-    
+
     @pytest.mark.asyncio
     async def test_server_basic_functionality(self, temp_storage):
         """Test basic server functionality end-to-end"""
         # Initialize server with test directory
         test_path = Path(temp_storage)
         server = ConversationMemoryServer(str(test_path))
-        
+
         # Test adding conversation
         test_conversation = {
             "content": "This is a test conversation about Python programming",
             "title": "Python Test",
             "conversation_date": "2024-01-01T10:00:00Z"
         }
-        
+
         result = await server.add_conversation(**test_conversation)
         assert result["status"] == "success"
         assert "file_path" in result
-        
-        # Test searching for the conversation  
+
+        # Test searching for the conversation
         search_results = await server.search_conversations("Python", limit=5)
         assert len(search_results) > 0
-        
+
         found = False
         for conversation in search_results:
             if "Python" in conversation.get("title", ""):
                 found = True
                 break
         assert found, "Added conversation should be found in search results"
-    
+
     def test_imports_available(self):
         """Test that all required imports are available"""
         # Test core imports
@@ -400,12 +402,9 @@ class TestServerIntegration:
             assert True, "Core imports successful"
         except ImportError as e:
             pytest.fail(f"Import failed: {e}")
-        
+
         # Test optional imports
         try:
-            import asyncio
-            import json
-            from pathlib import Path
             assert True, "Standard library imports successful"
         except ImportError as e:
             pytest.fail(f"Standard library import failed: {e}")

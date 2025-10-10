@@ -5,14 +5,13 @@ Base importer class for Universal Memory MCP.
 Defines the interface and common functionality for all platform importers.
 """
 
-import json
 import logging
 import uuid
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, List, Optional
 
 logger = logging.getLogger(__name__)
 
@@ -68,7 +67,6 @@ class BaseImporter(ABC):
         Returns:
             ImportResult with import statistics and any errors
         """
-        pass
 
     @abstractmethod
     def parse_conversation(self, raw_data: Any) -> Dict[str, Any]:
@@ -81,7 +79,6 @@ class BaseImporter(ABC):
         Returns:
             Conversation in universal internal format
         """
-        pass
 
     def create_universal_conversation(
         self,
@@ -311,7 +308,6 @@ class BaseImporter(ABC):
     @abstractmethod
     def get_supported_formats(self) -> List[str]:
         """Return list of supported file formats for this importer."""
-        pass
 
     def batch_import(self, file_paths: List[Path]) -> ImportResult:
         """Import multiple files and combine results."""

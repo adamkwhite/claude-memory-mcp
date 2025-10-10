@@ -3,6 +3,7 @@
 Validate and test the memory system after bulk import
 """
 
+from conversation_memory import ConversationMemoryServer
 import asyncio
 import sys
 from pathlib import Path
@@ -10,7 +11,6 @@ from pathlib import Path
 # Add the project root to path using dynamic resolution
 project_root = Path(__file__).parent.parent
 sys.path.insert(0, str(project_root))
-from conversation_memory import ConversationMemoryServer
 
 
 async def validate_memory_system():
