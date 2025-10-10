@@ -53,7 +53,7 @@ async def validate_memory_system():
                 print(f"❌ Search '{query}' failed: {e}")
 
         # Test 2: Add a test conversation
-        print(f"\n➕ Test 2: Add conversation")
+        print("\n➕ Test 2: Add conversation")
         print("-" * 30)
 
         test_content = """
@@ -81,7 +81,7 @@ This is a test conversation to validate the memory system is working.
             print(f"❌ Add conversation failed: {e}")
 
         # Test 3: Search for the test conversation
-        print(f"\n🔎 Test 3: Search for test conversation")
+        print("\n🔎 Test 3: Search for test conversation")
         print("-" * 30)
 
         try:
@@ -101,7 +101,7 @@ This is a test conversation to validate the memory system is working.
             print(f"❌ Search for test conversation failed: {e}")
 
         # Test 4: Weekly summary generation
-        print(f"\n📅 Test 4: Weekly summary generation")
+        print("\n📅 Test 4: Weekly summary generation")
         print("-" * 30)
 
         try:
@@ -119,7 +119,7 @@ This is a test conversation to validate the memory system is working.
         except Exception as e:
             print(f"❌ Weekly summary failed: {e}")
 
-        print(f"\n🎯 Validation Complete")
+        print("\n🎯 Validation Complete")
         print("=" * 40)
         print("💡 If all tests show ✅, your memory system is working correctly!")
 
@@ -133,7 +133,7 @@ This is a test conversation to validate the memory system is working.
 async def show_system_stats():
     """Show statistics about the imported conversations"""
 
-    print(f"\n📊 System Statistics")
+    print("\n📊 System Statistics")
     print("=" * 40)
 
     try:
@@ -172,7 +172,7 @@ async def show_system_stats():
             avg_results = total_results / total_searches
             print(f"\n📈 Average results per search: {avg_results:.1f}")
 
-        print(f"\n💾 Memory system is operational and searchable!")
+        print("\n💾 Memory system is operational and searchable!")
 
     except Exception as e:
         print(f"❌ Error getting system stats: {e}")

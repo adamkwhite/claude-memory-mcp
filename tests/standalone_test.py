@@ -283,7 +283,7 @@ The key is to implement the proper MCP protocol.
         for i, result in enumerate(search_results, 1):
             print(f"   {i}. {result['title']} (score: {result['score']})")
     else:
-        print(f"❌ Search failed or no results found")
+        print("❌ Search failed or no results found")
         return False
 
     # Test 3: Verify file structure
