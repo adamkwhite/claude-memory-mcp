@@ -73,7 +73,7 @@ class FastMCPConversationMemoryServer(CoreMemoryServer):
     """FastMCP-specific wrapper around the core ConversationMemoryServer."""
 
     def __init__(
-        self, storage_path: str = "~/claude-memory", use_data_dir: bool = None
+        self, storage_path: str = "~/claude-memory", use_data_dir: Optional[bool] = None
     ):
         # Initialize logging for FastMCP
         init_default_logging()

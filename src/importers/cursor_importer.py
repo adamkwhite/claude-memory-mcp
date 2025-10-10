@@ -211,7 +211,7 @@ class CursorImporter(BaseImporter):
     ) -> tuple:
         """Process interactions and return messages and content."""
         messages = []
-        content_parts = []
+        content_parts: List[str] = []
 
         self._add_session_header(content_parts, workspace, model, session_id)
 

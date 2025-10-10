@@ -252,7 +252,7 @@ class GenericImporter(BaseImporter):
         else:
             # Array of messages or other data - combine into single conversation
             try:
-                combined_conv = self._combine_array_into_conversation(data, file_path)
+                combined_conv = self._parse_list_as_conversation(data)
                 conversations.append(combined_conv)
             except Exception as e:
                 self.logger.warning(f"Failed to combine array into conversation: {e}")
@@ -477,10 +477,10 @@ class GenericImporter(BaseImporter):
 
     def _extract_dialogue_messages(self, lines: List[str]) -> tuple:
         """Extract messages from dialogue lines."""
-        messages = []
-        content_parts = []
+        messages: List[Dict[str, Any]] = []
+        content_parts: List[str] = []
         current_speaker = None
-        current_message = []
+        current_message: List[str] = []
 
         for line in lines:
             speaker_match = re.match(r"(\*\*)?(\w+)(\*\*)?\s*:\s*(.*)", line)
@@ -551,7 +551,7 @@ class GenericImporter(BaseImporter):
             content_parts.append(f"**{speaker}**: {message_text}")
 
     def _parse_dialogue_text(
-        self, content: str, file_path: Path = None
+        self, content: str, file_path: Optional[Path] = None
     ) -> Dict[str, Any]:
         """Parse text with dialogue markers."""
         lines = content.split("\n")
@@ -575,7 +575,7 @@ class GenericImporter(BaseImporter):
         )
 
     def _parse_message_blocks(
-        self, content: str, file_path: Path = None
+        self, content: str, file_path: Optional[Path] = None
     ) -> Dict[str, Any]:
         """Parse text with message block structure."""
         # Split by common separators
@@ -625,7 +625,7 @@ class GenericImporter(BaseImporter):
         )
 
     def _parse_text_as_conversation(
-        self, content: str, file_path: Path = None
+        self, content: str, file_path: Optional[Path] = None
     ) -> Dict[str, Any]:
         """Parse entire text as single conversation."""
         # Create a single message from entire content

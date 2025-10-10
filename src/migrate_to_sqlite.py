@@ -12,7 +12,7 @@ import logging
 import sys
 from datetime import datetime
 from pathlib import Path
-from typing import Dict
+from typing import Any, Dict, Optional
 
 from search_database import SearchDatabase
 
@@ -27,7 +27,7 @@ sys.path.append(str(Path(__file__).parent))
 class ConversationMigrator:
     """Migrates JSON conversations to SQLite database."""
 
-    def __init__(self, storage_path: str, use_data_dir: bool = None):
+    def __init__(self, storage_path: str, use_data_dir: Optional[bool] = None):
         """Initialize migrator with storage path."""
         self.storage_path = Path(storage_path).expanduser()
 
@@ -60,11 +60,11 @@ class ConversationMigrator:
             return False
         return True
 
-    def migrate_all_conversations(self) -> Dict[str, int]:
+    def migrate_all_conversations(self) -> Dict[str, Any]:
         """Migrate all conversations from JSON to SQLite."""
         self.logger.info("Starting migration of conversations to SQLite...")
 
-        stats = {
+        stats: Dict[str, Any] = {
             "total_found": 0,
             "successfully_migrated": 0,
             "failed_migrations": 0,
@@ -202,7 +202,7 @@ class ConversationMigrator:
             self.logger.error(f"Error migrating file {file_path}: {e}")
             return False
 
-    def verify_migration(self) -> Dict[str, any]:
+    def verify_migration(self) -> Dict[str, Any]:
         """Verify migration by comparing counts and testing search."""
         self.logger.info("Verifying migration...")
 
