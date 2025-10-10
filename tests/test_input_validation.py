@@ -4,11 +4,20 @@ from datetime import datetime, timezone
 
 import pytest
 
-from src.exceptions import (ContentValidationError, DateValidationError,
-                            QueryValidationError, TitleValidationError,
-                            ValidationError)
-from src.validators import (validate_content, validate_date, validate_limit,
-                            validate_search_query, validate_title)
+from src.exceptions import (
+    ContentValidationError,
+    DateValidationError,
+    QueryValidationError,
+    TitleValidationError,
+    ValidationError,
+)
+from src.validators import (
+    validate_content,
+    validate_date,
+    validate_limit,
+    validate_search_query,
+    validate_title,
+)
 
 
 class TestTitleValidation:

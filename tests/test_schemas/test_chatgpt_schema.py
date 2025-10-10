@@ -10,9 +10,11 @@ from unittest.mock import MagicMock, mock_open, patch
 
 import pytest
 
-from src.schemas.chatgpt_schema import (CHATGPT_SCHEMA,
-                                        get_chatgpt_conversation_stats,
-                                        validate_chatgpt_export)
+from src.schemas.chatgpt_schema import (
+    CHATGPT_SCHEMA,
+    get_chatgpt_conversation_stats,
+    validate_chatgpt_export,
+)
 
 
 class TestChatGPTSchema:

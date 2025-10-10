@@ -14,10 +14,16 @@ from pathlib import Path
 
 import pytest
 
-from src.logging_config import (JSONFormatter, _get_log_format,
-                                log_file_operation, log_function_call,
-                                log_performance, log_security_event,
-                                log_validation_failure, setup_logging)
+from src.logging_config import (
+    JSONFormatter,
+    _get_log_format,
+    log_file_operation,
+    log_function_call,
+    log_performance,
+    log_security_event,
+    log_validation_failure,
+    setup_logging,
+)
 
 
 @pytest.fixture

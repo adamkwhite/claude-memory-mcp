@@ -8,11 +8,17 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from src.logging_config import (ColoredFormatter, get_logger,
-                                init_default_logging, log_file_operation,
-                                log_function_call, log_performance,
-                                log_security_event, log_validation_failure,
-                                setup_logging)
+from src.logging_config import (
+    ColoredFormatter,
+    get_logger,
+    init_default_logging,
+    log_file_operation,
+    log_function_call,
+    log_performance,
+    log_security_event,
+    log_validation_failure,
+    setup_logging,
+)
 
 
 class TestLoggingSetup:
