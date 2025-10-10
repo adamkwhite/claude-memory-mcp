@@ -70,20 +70,12 @@ jobs:
         run: |
          PYTHONPATH=. python -m pytest tests/ --ignore=tests/standalone_test.py --ignore=tests/test_performance_benchmarks.py --cov=src --cov-report=xml --cov-report=term
 
-      - name: SonarQube Scan
+      - name: SonarCloud Scan
         if: github.actor != 'dependabot[bot]'
-        uses: SonarSource/sonarqube-scan-action@v6
+        uses: SonarSource/sonarcloud-github-action@master
         env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-          SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
-
-      - name: SonarQube Quality Gate Check
-        if: github.actor != 'dependabot[bot]'
-        uses: SonarSource/sonarqube-quality-gate-action@master
-        env:
-          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-          SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
-        timeout-minutes: 5
 
       - name: Clean up build artifacts
         if: always() && github.event_name == 'push'
