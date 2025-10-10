@@ -6,7 +6,7 @@ import logging.handlers
 import os
 import sys
 from pathlib import Path
-from typing import Callable, Optional, Union
+from typing import Optional
 
 # Import path utilities for dynamic path resolution
 try:
