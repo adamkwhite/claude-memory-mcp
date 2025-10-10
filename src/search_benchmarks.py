@@ -377,8 +377,14 @@ async def main():
         # Save to JSON if requested
         if args.output_json:
             output_file = Path(args.output_json)
-            with open(output_file, "w") as f:
-                json.dump(results, f, indent=2)
+
+            # Helper function for async-safe file I/O
+            def write_json():
+                with open(output_file, "w") as f:
+                    json.dump(results, f, indent=2)
+
+            # Use asyncio.to_thread for async-safe file I/O
+            await asyncio.to_thread(write_json)
             print(f"\nResults saved to: {output_file}")
 
     finally:
