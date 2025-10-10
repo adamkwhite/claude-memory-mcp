@@ -105,7 +105,7 @@ class SearchBenchmark:
                 content_parts.append(f"{template} {random_detail}")
 
             content = ". ".join(content_parts)
-            title = f"Conversation {i+1}: {selected_topics[0]} discussion"
+            title = f"Conversation {i + 1}: {selected_topics[0]} discussion"
 
             conversations.append(
                 {"title": title, "content": content, "topics": selected_topics}
@@ -276,16 +276,16 @@ class SearchBenchmark:
 
     def print_benchmark_report(self, results: Dict[str, Any]):
         """Print a formatted benchmark report."""
-        print(f"\n{'='*60}")
+        print(f"\n{'=' * 60}")
         print("SEARCH PERFORMANCE BENCHMARK REPORT")
-        print(f"{'='*60}")
+        print(f"{'=' * 60}")
         print("Test Setup:")
         print(f"  • Conversations: {results['setup']['num_conversations']}")
         print(f"  • Storage Path: {results['setup']['storage_path']}")
         print(f"  • Timestamp: {time.ctime(results['setup']['timestamp'])}")
 
         print(f"\n{'Query Results:'}")
-        print(f"{'─'*60}")
+        print(f"{'─' * 60}")
 
         for query_result in results["queries"]:
             query = query_result["query"]
@@ -304,7 +304,7 @@ class SearchBenchmark:
             print(f"  Improvement:    {perf['percentage_improvement']:.1f}%")
 
         print(f"\n{'Overall Performance:'}")
-        print(f"{'─'*60}")
+        print(f"{'─' * 60}")
         overall = results["overall"]
         print(f"  Average Linear:   {overall['linear_mean_ms']:.2f}ms")
         print(f"  Average SQLite:   {overall['sqlite_mean_ms']:.2f}ms")
@@ -312,7 +312,7 @@ class SearchBenchmark:
         print(f"  Overall Improvement: {overall['overall_improvement_percent']:.1f}%")
 
         print(f"\n{'Conclusion:'}")
-        print(f"{'─'*60}")
+        print(f"{'─' * 60}")
         if overall["overall_speedup"] > 1:
             print(
                 f"  ✅ SQLite FTS is {overall['overall_speedup']:.1f}x faster than linear search"
@@ -323,7 +323,7 @@ class SearchBenchmark:
         else:
             print("  ⚠️  Linear search performed better in this test")
 
-        print(f"\n{'='*60}")
+        print(f"\n{'=' * 60}")
 
     def cleanup(self):
         """Clean up benchmark data."""

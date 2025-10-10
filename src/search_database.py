@@ -9,9 +9,8 @@ extension for full-text search, replacing the linear search approach.
 import json
 import logging
 import sqlite3
-from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List
 
 
 class SearchDatabase:
@@ -85,7 +84,8 @@ class SearchDatabase:
                 # Create triggers to maintain FTS5 table
                 conn.execute(
                     """
-                    CREATE TRIGGER IF NOT EXISTS conversations_ai AFTER INSERT ON conversations BEGIN
+                    CREATE TRIGGER IF NOT EXISTS conversations_ai
+                    AFTER INSERT ON conversations BEGIN
                         INSERT INTO conversations_fts(id, title, content, topics_text)
                         VALUES (new.id, new.title, new.content, new.topics_text);
                     END
@@ -94,7 +94,8 @@ class SearchDatabase:
 
                 conn.execute(
                     """
-                    CREATE TRIGGER IF NOT EXISTS conversations_ad AFTER DELETE ON conversations BEGIN
+                    CREATE TRIGGER IF NOT EXISTS conversations_ad
+                    AFTER DELETE ON conversations BEGIN
                         DELETE FROM conversations_fts WHERE id = old.id;
                     END
                 """
@@ -102,8 +103,9 @@ class SearchDatabase:
 
                 conn.execute(
                     """
-                    CREATE TRIGGER IF NOT EXISTS conversations_au AFTER UPDATE ON conversations BEGIN
-                        UPDATE conversations_fts SET 
+                    CREATE TRIGGER IF NOT EXISTS conversations_au
+                    AFTER UPDATE ON conversations BEGIN
+                        UPDATE conversations_fts SET
                             title = new.title,
                             content = new.content,
                             topics_text = new.topics_text
@@ -130,7 +132,7 @@ class SearchDatabase:
                 # Insert into main table
                 conn.execute(
                     """
-                    INSERT OR REPLACE INTO conversations 
+                    INSERT OR REPLACE INTO conversations
                     (id, title, content, date, created_at, file_path, topics_json, topics_text)
                     VALUES (?, ?, ?, ?, ?, ?, ?, ?)
                 """,
@@ -266,10 +268,10 @@ class SearchDatabase:
 
                 cursor = conn.execute(
                     """
-                    SELECT topic, COUNT(*) as count 
-                    FROM conversation_topics 
-                    GROUP BY topic 
-                    ORDER BY count DESC 
+                    SELECT topic, COUNT(*) as count
+                    FROM conversation_topics
+                    GROUP BY topic
+                    ORDER BY count DESC
                     LIMIT 10
                 """
                 )

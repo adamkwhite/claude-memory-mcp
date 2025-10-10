@@ -6,12 +6,8 @@ This MCP server provides tools for managing and searching Claude conversation hi
 Supports storing conversations locally and retrieving context for current sessions.
 """
 
-import json
-import re
-import time
-from datetime import datetime, timedelta
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Union
+from typing import Optional
 
 from mcp.server.fastmcp import FastMCP
 
@@ -20,17 +16,8 @@ try:
     from .logging_config import (
         get_logger,
         init_default_logging,
-        log_file_operation,
         log_function_call,
-        log_performance,
         log_security_event,
-    )
-    from .validators import (
-        validate_content,
-        validate_date,
-        validate_limit,
-        validate_search_query,
-        validate_title,
     )
 except ImportError:
     # For direct imports during testing
@@ -38,17 +25,8 @@ except ImportError:
     from logging_config import (
         get_logger,
         init_default_logging,
-        log_file_operation,
         log_function_call,
-        log_performance,
         log_security_event,
-    )
-    from validators import (
-        validate_content,
-        validate_date,
-        validate_limit,
-        validate_search_query,
-        validate_title,
     )
 
 # Constants
