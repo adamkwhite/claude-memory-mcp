@@ -204,8 +204,9 @@ class TestSearchPerformance:
 
                 # Check against README claim for 159 conversations
                 if dataset_size == 159:
-                    assert avg_duration < 5.0, f"Search took {
-                        avg_duration:.2f}s, README claims < 5s"
+                    assert avg_duration < 5.0, (
+                        f"Search took {avg_duration:.2f}s, README claims < 5s"
+                    )
 
         finally:
             shutil.rmtree(temp_dir, ignore_errors=True)
@@ -240,9 +241,10 @@ class TestSearchPerformance:
         # Memory delta should be reasonable for the search system in use
         # SQLite FTS uses more memory for caching and indexing than linear search
         memory_threshold = 200 if server.use_sqlite_search else 10
-        assert metrics["memory_delta_mb"] < memory_threshold, f"Potential memory leak: {
-            metrics['memory_delta_mb']:.2f}MB (threshold: {memory_threshold}MB, using SQLite: {
-            server.use_sqlite_search})"
+        assert metrics["memory_delta_mb"] < memory_threshold, (
+            f"Potential memory leak: {metrics['memory_delta_mb']:.2f}MB "
+            f"(threshold: {memory_threshold}MB, using SQLite: {server.use_sqlite_search})"
+        )
 
     def _copy_test_data_subset(self, source_path: Path, dest_path: str, count: int):
         """Copy a subset of test data for benchmarking."""
