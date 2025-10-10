@@ -6,14 +6,15 @@ Tests Claude conversation import functionality for various export formats.
 """
 
 import json
-import pytest
 import tempfile
+from datetime import datetime
 from pathlib import Path
 from unittest.mock import Mock, patch
-from datetime import datetime
 
-from src.importers.claude_importer import ClaudeImporter
+import pytest
+
 from src.importers.base_importer import ImportResult
+from src.importers.claude_importer import ClaudeImporter
 
 
 class TestClaudeImporter:

@@ -6,14 +6,13 @@ Tests JSON schema validation for ChatGPT export formats.
 """
 
 import json
-import pytest
-from unittest.mock import patch, mock_open, MagicMock
+from unittest.mock import MagicMock, mock_open, patch
 
-from src.schemas.chatgpt_schema import (
-    CHATGPT_SCHEMA,
-    validate_chatgpt_export,
-    get_chatgpt_conversation_stats
-)
+import pytest
+
+from src.schemas.chatgpt_schema import (CHATGPT_SCHEMA,
+                                        get_chatgpt_conversation_stats,
+                                        validate_chatgpt_export)
 
 
 class TestChatGPTSchema:
@@ -499,7 +498,7 @@ class TestMainModule:
         """Test main module execution with valid file."""
         # Import the module to trigger main execution
         import src.schemas.chatgpt_schema
-        
+
         # If we get here without errors, the main execution worked
         assert True
     

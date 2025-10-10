@@ -6,14 +6,15 @@ Tests Cursor AI session import functionality and conversation format conversion.
 """
 
 import json
-import pytest
 import tempfile
+from datetime import datetime
 from pathlib import Path
 from unittest.mock import Mock, patch
-from datetime import datetime
 
-from src.importers.cursor_importer import CursorImporter
+import pytest
+
 from src.importers.base_importer import ImportResult
+from src.importers.cursor_importer import CursorImporter
 
 
 class TestCursorImporter:

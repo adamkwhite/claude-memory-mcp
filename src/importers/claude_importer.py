@@ -7,11 +7,11 @@ Supports Claude web interface exports, Claude Desktop exports, and existing Clau
 """
 
 import json
-import re
 import logging
+import re
 from datetime import datetime
 from pathlib import Path
-from typing import Dict, Any, List, Optional, Union
+from typing import Any, Dict, List, Optional, Union
 
 from .base_importer import BaseImporter, ImportResult
 

@@ -6,15 +6,15 @@ This script generates test conversations, runs both search methods,
 and provides detailed performance comparisons.
 """
 
-import time
-import json
-import random  # nosec B311 - Used for test data generation, not security purposes
-import string
-import statistics
-from pathlib import Path
-from typing import List, Dict, Any
 import argparse
+import json
 import logging
+import random  # nosec B311 - Used for test data generation, not security purposes
+import statistics
+import string
+import time
+from pathlib import Path
+from typing import Any, Dict, List
 
 from conversation_memory import ConversationMemoryServer
 

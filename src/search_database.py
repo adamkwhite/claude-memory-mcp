@@ -6,12 +6,12 @@ This module provides optimized search functionality using SQLite's FTS5
 extension for full-text search, replacing the linear search approach.
 """
 
-import sqlite3
 import json
+import logging
+import sqlite3
 from datetime import datetime
 from pathlib import Path
-from typing import Dict, List, Optional, Any, Tuple
-import logging
+from typing import Any, Dict, List, Optional, Tuple
 
 
 class SearchDatabase:

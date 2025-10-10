@@ -6,13 +6,13 @@ This script processes all existing conversation JSON files and imports them
 into the new SQLite FTS5 database for optimized search performance.
 """
 
-import json
 import argparse
+import json
 import logging
-from pathlib import Path
-from typing import Dict, List, Optional
 import sys
 from datetime import datetime
+from pathlib import Path
+from typing import Dict, List, Optional
 
 # Constants
 INDEX_JSON_FILENAME = "index.json"

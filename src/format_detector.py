@@ -7,11 +7,11 @@ from various AI assistants (ChatGPT, Cursor, Claude, etc.).
 """
 
 import json
-import re
-from pathlib import Path
-from typing import Dict, Any, Optional, List
-from enum import Enum
 import logging
+import re
+from enum import Enum
+from pathlib import Path
+from typing import Any, Dict, List, Optional
 
 logger = logging.getLogger(__name__)
 

@@ -6,14 +6,15 @@ Tests ChatGPT-specific conversation import functionality and OpenAI export forma
 """
 
 import json
-import pytest
 import tempfile
 from datetime import datetime
 from pathlib import Path
 from unittest.mock import Mock, patch
 
-from src.importers.chatgpt_importer import ChatGPTImporter
+import pytest
+
 from src.importers.base_importer import ImportResult
+from src.importers.chatgpt_importer import ChatGPTImporter
 
 
 class TestChatGPTImporter:

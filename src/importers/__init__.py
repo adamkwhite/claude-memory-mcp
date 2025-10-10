@@ -6,8 +6,8 @@ Provides format-specific importers for different AI platforms.
 
 from .base_importer import BaseImporter, ImportResult
 from .chatgpt_importer import ChatGPTImporter
-from .cursor_importer import CursorImporter
 from .claude_importer import ClaudeImporter
+from .cursor_importer import CursorImporter
 from .generic_importer import GenericImporter
 
 __all__ = [

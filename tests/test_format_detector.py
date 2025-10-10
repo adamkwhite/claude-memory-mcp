@@ -6,9 +6,10 @@ Tests automatic platform detection for AI conversation exports.
 """
 
 import json
-import pytest
 import tempfile
 from pathlib import Path
+
+import pytest
 
 from src.format_detector import FormatDetector, PlatformType
 
