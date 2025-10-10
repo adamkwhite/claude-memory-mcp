@@ -5,14 +5,22 @@ from datetime import datetime
 from typing import Optional
 
 try:
-    from .exceptions import (ContentValidationError, DateValidationError,
-                             QueryValidationError, TitleValidationError,
-                             ValidationError)
+    from .exceptions import (
+        ContentValidationError,
+        DateValidationError,
+        QueryValidationError,
+        TitleValidationError,
+        ValidationError,
+    )
 except ImportError:
     # For direct imports during testing
-    from exceptions import (ContentValidationError, DateValidationError,
-                            QueryValidationError, TitleValidationError,
-                            ValidationError)
+    from exceptions import (
+        ContentValidationError,
+        DateValidationError,
+        QueryValidationError,
+        TitleValidationError,
+        ValidationError,
+    )
 
 # Constants for validation
 MAX_TITLE_LENGTH = 200
