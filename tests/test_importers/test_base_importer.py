@@ -13,7 +13,6 @@ from unittest.mock import Mock, patch
 
 import pytest
 
-from src.exceptions import ValidationError
 from src.importers.base_importer import BaseImporter, ImportResult
 
 

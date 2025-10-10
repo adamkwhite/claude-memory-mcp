@@ -17,7 +17,6 @@ from mcp.server.fastmcp import FastMCP
 
 try:
     from .conversation_memory import ConversationMemoryServer as CoreMemoryServer
-    from .exceptions import ValidationError
     from .logging_config import (
         get_logger,
         init_default_logging,
@@ -25,7 +24,6 @@ try:
         log_function_call,
         log_performance,
         log_security_event,
-        log_validation_failure,
     )
     from .validators import (
         validate_content,
@@ -37,7 +35,6 @@ try:
 except ImportError:
     # For direct imports during testing
     from conversation_memory import ConversationMemoryServer as CoreMemoryServer
-    from exceptions import ValidationError
     from logging_config import (
         get_logger,
         init_default_logging,
@@ -45,7 +42,6 @@ except ImportError:
         log_function_call,
         log_performance,
         log_security_event,
-        log_validation_failure,
     )
     from validators import (
         validate_content,
