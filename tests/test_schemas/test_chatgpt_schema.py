@@ -7,7 +7,6 @@ Tests JSON schema validation for ChatGPT export formats.
 
 from unittest.mock import MagicMock, mock_open, patch
 
-
 from src.schemas.chatgpt_schema import (
     CHATGPT_SCHEMA,
     get_chatgpt_conversation_stats,

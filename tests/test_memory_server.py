@@ -4,7 +4,6 @@
 Pytest-compatible tests for Claude Memory MCP Server
 """
 
-from conversation_memory import ConversationMemoryServer as StandaloneServer
 import json
 import shutil
 import sys
@@ -13,6 +12,8 @@ from datetime import datetime
 from pathlib import Path
 
 import pytest
+
+from conversation_memory import ConversationMemoryServer as StandaloneServer
 
 # Add project root and src directory to path using dynamic resolution
 project_root = Path(__file__).parent.parent

@@ -4,7 +4,6 @@ Additional tests to achieve 100% coverage for the MCP server
 Targets the remaining 28 uncovered lines from previous coverage report
 """
 
-from conversation_memory import ConversationMemoryServer
 import json
 import shutil
 import sys
@@ -13,6 +12,8 @@ from datetime import datetime
 from pathlib import Path
 
 import pytest
+
+from conversation_memory import ConversationMemoryServer
 
 
 # Mock the FastMCP import to avoid dependency issues

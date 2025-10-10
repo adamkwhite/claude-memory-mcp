@@ -5,7 +5,6 @@ Performance benchmark tests for Claude Memory MCP Server.
 Tests search performance, memory usage, and validates README claims.
 """
 
-from conversation_memory import ConversationMemoryServer
 import json
 import os
 import shutil
@@ -19,6 +18,8 @@ from typing import Dict
 
 import psutil
 import pytest
+
+from conversation_memory import ConversationMemoryServer
 
 # Add src to path
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'src'))

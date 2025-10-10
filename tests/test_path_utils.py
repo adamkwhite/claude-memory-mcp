@@ -1,5 +1,10 @@
 """Tests for path_utils module."""
 
+import os
+import sys
+from pathlib import Path
+from unittest.mock import MagicMock, patch
+
 from path_utils import (
     ensure_directory_exists,
     get_data_directory,
@@ -9,11 +14,6 @@ from path_utils import (
     get_uv_command,
     resolve_user_path,
 )
-import os
-import sys
-from pathlib import Path
-from unittest.mock import MagicMock, patch
-
 
 # Add src to path for imports
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "src"))
