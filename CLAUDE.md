@@ -16,7 +16,7 @@
 - ✅ **ChatGPT Integration**: Production-ready with real export validation and jsonschema validation
 - ✅ **SQLite FTS Search**: 4.4x performance improvement over linear search
 - ✅ **Comprehensive Testing**: 417/417 tests passing with complete edge case coverage
-- ✅ **CI/CD Pipeline**: GitHub Actions with SonarQube integration fully operational
+- ✅ **CI/CD Pipeline**: GitHub Actions with SonarCloud integration fully operational
 - ✅ **Full Test Suite**: Fixed all failing tests and implemented robust test coverage for all importers
 
 ## Technology Stack
@@ -35,7 +35,7 @@
 - **Generic**: Flexible parsing for custom formats
 
 **Quality Assurance:**
-- **SonarQube**: Code quality analysis with zero tolerance
+- **SonarCloud**: Code quality analysis with public dashboard visibility
 - **GitHub Actions**: CI/CD with quality gate enforcement
 - **98.68% Test Coverage**: Industry-leading reliability standards
 
@@ -87,23 +87,24 @@ python3.11 -m venv .venv
 source .venv/bin/activate
 ```
 
-### SonarQube Quality Gate
+### SonarCloud Quality Gate
 
-Recent fixes applied to resolve SonarQube issues:
+Recent fixes applied to resolve code quality issues:
 - ✅ Replaced bare except clauses with specific exception types
 - ✅ Removed unused import statements
 - ✅ Extracted magic numbers to named constants
 - ✅ Broke down complex methods (generate_weekly_summary)
 - ✅ Added path validation for security
-- ✅ Fixed README badge URLs to point to correct SonarQube instance
+- ✅ Migrated from self-hosted SonarQube to SonarCloud for public visibility
 - ✅ Fixed return type hint for add_conversation method
 - ✅ Reduced cognitive complexity in search_conversations method
-- ✅ Excluded archive/ and scripts/ folders from SonarQube analysis
+- ✅ Excluded archive/ and scripts/ folders from code analysis
 - ✅ Added proper file formatting (newlines at end of files)
 
-**SonarQube Configuration:**
-- Instance: http://44.206.255.230:9000/
-- Project Key: Claude-MCP
+**SonarCloud Configuration:**
+- Organization: adamkwhite
+- Project Key: adamkwhite_claude-memory-mcp
+- Dashboard: https://sonarcloud.io/summary/overall?id=adamkwhite_claude-memory-mcp
 - Exclusions: `tests/**,**/*test*.py,**/test_*.py,**/*benchmark*.py,**/*performance*.py,scripts/**,**/__pycache__/**,htmlcov/**,archive/**,examples/**,docs/generated/**,benchmark_results/**`
 
 **Current Test Coverage: 98.68%** | Duplications: **7%**
@@ -114,8 +115,8 @@ Recent fixes applied to resolve SonarQube issues:
 - 🎯 **Total Project**: 98.68% coverage (11 lines remaining)
 - 📈 **Progress**: Achieved near-perfect coverage
 
-**SonarQube Exclusion Workflow:**
-When creating new files, automatically check if they need SonarQube coverage analysis:
+**SonarCloud Exclusion Workflow:**
+When creating new files, automatically check if they need SonarCloud coverage analysis:
 
 **Files that DON'T need coverage (auto-exclude):**
 - Tests: `tests/*`, `test_*.py`, `*_test.py`, `*benchmark*.py`, `*performance*.py`
@@ -164,8 +165,8 @@ pip install pytest pytest-cov pytest-asyncio
 - Target: 90%+ coverage maintained through layered testing approach
 
 **PR Quality Gate Enforcement:**
-- All PRs trigger GitHub Actions workflow with SonarQube analysis
-- PRs are blocked if tests fail or SonarQube quality gate fails
+- All PRs trigger GitHub Actions workflow with SonarCloud analysis
+- PRs are blocked if tests fail or SonarCloud quality gate fails
 - Quality gate enforces: Coverage on New Code ≥ 90%
 - Failed quality gates prevent PR merging (requires branch protection rules)
 - This ensures all new code meets quality standards before merge
@@ -193,13 +194,13 @@ git push origin feature/your-feature-name
 
 # 5. Open Pull Request on GitHub
 # - ALWAYS mention @claude in PR body or comments for review
-# - PR triggers automated testing and SonarQube analysis
+# - PR triggers automated testing and SonarCloud analysis
 # - Must pass all quality gates before merge is allowed
 # - Coverage on new code must be ≥ 90%
 
 # 6. Merge PR (only after quality gates pass)
 # - Tests must pass ✅
-# - SonarQube quality gate must pass ✅
+# - SonarCloud quality gate must pass ✅
 # - PR conversations must be resolved ✅
 ```
 
@@ -212,7 +213,7 @@ git push origin feature/your-feature-name
 
 ### **Quality Gate Requirements:**
 - All tests must pass
-- SonarQube analysis must pass
+- SonarCloud analysis must pass
 - Coverage on new code ≥ 90%
 - No unresolved PR conversations
 - Linear history maintained
@@ -289,7 +290,7 @@ This prevents back-and-forth in PRs due to test failures.
 - [ ] **3. Check Coverage Baseline** (expect ≥76% coverage)
 - [ ] **4. Test Supporting Scripts** (if modified any scripts/ files)
 - [ ] **5. Validate Async Compatibility** (if modified async methods)
-- [ ] **6. Run SonarQube Locally** (if available)
+- [ ] **6. Run SonarCloud Analysis** (triggered automatically on PR)
 - [ ] **7. Document Breaking Changes** (if any API changes)
 
 **Before creating ANY Pull Request:**
@@ -303,9 +304,9 @@ This prevents back-and-forth in PRs due to test failures.
 **⚠️ ZERO TOLERANCE:** Committing without completing this checklist violates workflow standards and creates technical debt.
 
 **GitHub Actions Workflow Notes:**
-- ✅ **Fixed**: SonarQube Badge action no longer runs during PR builds (PR #31)
+- ✅ **Migrated to SonarCloud**: Public code quality dashboard with automatic PR decoration
 - **Two build phases**: PR testing (cannot push) + post-merge execution (can push badges)
-- **Badge updates**: Only occur after successful merge to main branch
+- **Badge updates**: SonarCloud badges auto-update from cloud platform
 - **PR builds**: Test code without attempting repository modifications
 
 ## 100% Test Coverage Initiative
@@ -376,8 +377,8 @@ The system uses a pluggable importer architecture where each AI platform has a d
 **Complete System Implementation Achieved:**
 - **417 Tests Passing** - Comprehensive test coverage with zero failures
 - **76% Overall Coverage** - Major improvement from 50% baseline after adding new framework
-- **CI/CD Fully Functional** - GitHub Actions pipeline operational with SonarQube integration
-- **All SonarQube Issues Resolved** - Clean codebase with zero code smells/security issues
+- **CI/CD Fully Functional** - GitHub Actions pipeline operational with SonarCloud integration
+- **Public Code Quality Dashboard** - Clean codebase with zero code smells/security issues visible to recruiters
 
 ### **Universal Memory MCP Framework Implementation ✅ MAJOR FEATURE**
 - **Achievement**: Complete architecture transformation from Claude-specific to universal AI platform support
@@ -421,7 +422,7 @@ The system uses a pluggable importer architecture where each AI platform has a d
 - **Merge Conflict Resolution**: Successfully resolved conflicts in generic_importer.py and schemas/__init__.py
 - **Test Framework Stabilization**: Fixed all 20 failing tests through systematic debugging
 - **CI/CD Pipeline Repair**: Added missing jsonschema dependency to fix GitHub Actions failures
-- **SonarQube Integration**: Resolved all quality gate issues for successful PR merging
+- **SonarCloud Migration**: Migrated from self-hosted SonarQube to public SonarCloud dashboard for visibility
 
 ### **Previous Major Fix: MCP JSON Parsing (PR #33)**
 
@@ -476,7 +477,7 @@ The system uses a pluggable importer architecture where each AI platform has a d
 - **Format**: `1.1.1`, `2.3.2`, etc. for hierarchical task organization
 - **Structure**: 9 major sections, each with 2-4 subsections, each with 3-5 specific tasks
 - **Purpose**: Enables intermediate developers to implement complex features step-by-step
-- **Examples**: Encryption (69 tasks), Path Portability (46 tasks), SonarQube Workflow (46 tasks), Project Cleanup (57 tasks)
+- **Examples**: Encryption (69 tasks), Path Portability (46 tasks), SonarCloud Migration (46 tasks), Project Cleanup (57 tasks)
 - **Benefits**: Clear progress tracking, logical task dependencies, comprehensive coverage
 
 **Plan Creation Guidelines:**
