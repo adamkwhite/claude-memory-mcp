@@ -1,22 +1,23 @@
 """Test logging functionality for Claude Memory MCP system"""
 
-import pytest
 import logging
-import tempfile
 import os
+import tempfile
 from pathlib import Path
-from unittest.mock import patch, MagicMock
+from unittest.mock import MagicMock, patch
+
+import pytest
 
 from src.logging_config import (
-    setup_logging,
+    ColoredFormatter,
     get_logger,
+    init_default_logging,
+    log_file_operation,
     log_function_call,
     log_performance,
     log_security_event,
     log_validation_failure,
-    log_file_operation,
-    init_default_logging,
-    ColoredFormatter
+    setup_logging,
 )
 
 

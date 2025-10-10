@@ -17,12 +17,12 @@ import pytest
 from src.logging_config import (
     JSONFormatter,
     _get_log_format,
-    setup_logging,
+    log_file_operation,
+    log_function_call,
     log_performance,
     log_security_event,
     log_validation_failure,
-    log_file_operation,
-    log_function_call,
+    setup_logging,
 )
 
 

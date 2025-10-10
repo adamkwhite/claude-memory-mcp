@@ -7,6 +7,7 @@ import json
 import sys
 from pathlib import Path
 
+
 def analyze_json_structure(file_path):
     """Analyze the JSON structure and show sample data"""
     try:

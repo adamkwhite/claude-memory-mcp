@@ -5,18 +5,19 @@ Performance benchmark tests for Claude Memory MCP Server.
 Tests search performance, memory usage, and validates README claims.
 """
 
-import pytest
-import time
 import json
-import psutil
 import os
+import shutil
+import statistics
 import sys
 import tempfile
-import shutil
-from pathlib import Path
+import time
 from datetime import datetime, timedelta
+from pathlib import Path
 from typing import Dict, List, Tuple
-import statistics
+
+import psutil
+import pytest
 
 # Add src to path
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'src'))

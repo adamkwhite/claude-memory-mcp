@@ -5,17 +5,18 @@ Test suite for GenericImporter.
 Tests generic conversation import functionality for various file formats.
 """
 
-import json
-import pytest
-import tempfile
 import csv
+import json
+import tempfile
 import xml.etree.ElementTree as ET
+from datetime import datetime
 from pathlib import Path
 from unittest.mock import Mock, patch
-from datetime import datetime
 
-from src.importers.generic_importer import GenericImporter
+import pytest
+
 from src.importers.base_importer import ImportResult
+from src.importers.generic_importer import GenericImporter
 
 
 class TestGenericImporter:

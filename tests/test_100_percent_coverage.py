@@ -4,15 +4,17 @@ Additional tests to achieve 100% coverage for the MCP server
 Targets the remaining 28 uncovered lines from previous coverage report
 """
 
-import pytest
 import asyncio
 import json
-import tempfile
-import shutil
-from pathlib import Path
-from datetime import datetime, timedelta
-import sys
 import os
+import shutil
+import sys
+import tempfile
+from datetime import datetime, timedelta
+from pathlib import Path
+
+import pytest
+
 
 # Mock the FastMCP import to avoid dependency issues
 class MockFastMCP:
@@ -262,6 +264,7 @@ class TestCompleteEdgeCaseCoverage:
         """Test weekly summary topic counting and top topics section"""
         # Add conversations with topics to test counting
         from datetime import datetime
+
         # Use local time to match generate_weekly_summary behavior
         current_week_date = datetime.now().strftime("%Y-%m-%dT%H:%M:%S")
         await server.add_conversation(
@@ -294,8 +297,8 @@ class TestCompleteEdgeCaseCoverage:
     @pytest.mark.asyncio
     async def test_weekly_summary_comprehensive_sections(self, server):
         """Test weekly summary includes all expected sections"""
-        from datetime import datetime, timezone, timedelta
-        
+        from datetime import datetime, timedelta, timezone
+
         # Get current time in local timezone to match generate_weekly_summary
         now = datetime.now()
         current_week_date = now.strftime("%Y-%m-%dT%H:%M:%S")
@@ -516,7 +519,7 @@ Line 5: Final line"""
     async def test_weekly_summary_file_read_exception(self, server):
         """Test weekly summary file read exception (lines 348-349)"""
         from datetime import datetime, timezone
-        
+
         # Add a conversation first 
         result = await server.add_conversation(
             "Test conversation for read exception",
@@ -540,7 +543,7 @@ Line 5: Final line"""
     async def test_weekly_summary_file_read_exception_corrupted(self, server):
         """Test weekly summary with corrupted conversation file (lines 348-349)"""
         from datetime import datetime, timezone
-        
+
         # Add a conversation first
         result = await server.add_conversation(
             "Test conversation for corruption test",
@@ -567,9 +570,9 @@ Line 5: Final line"""
     @pytest.mark.asyncio
     async def test_weekly_summary_index_entry_exception(self, server):
         """Test weekly summary with malformed index entry (lines 348-349)"""
-        from datetime import datetime, timezone
         import json
-        
+        from datetime import datetime, timezone
+
         # First add a normal conversation
         await server.add_conversation(
             "Test conversation",
@@ -615,8 +618,8 @@ class TestMCPToolWrapperFunctions:
             pytest.skip("MCP requires Python 3.11+")
         
         try:
-            import mcp.types
             import mcp
+            import mcp.types
             assert True
         except ImportError as e:
             pytest.fail(f"MCP import failed: {e}")
@@ -634,7 +637,7 @@ class TestMCPToolWrapperFunctions:
     async def test_mcp_search_tool_with_error_results(self, server):
         """Test MCP search tool handles search errors gracefully"""
         from server_fastmcp import search_conversations as mcp_search
-        
+
         # Test with search query that returns no results
         result = await mcp_search("nonexistent_query_12345", limit=5)
         
@@ -646,7 +649,7 @@ class TestMCPToolWrapperFunctions:
     async def test_mcp_search_tool_success_formatting(self, server):
         """Test MCP search tool result formatting"""
         from server_fastmcp import search_conversations as mcp_search
-        
+
         # Add test data
         await server.add_conversation(
             "Test conversation for MCP search formatting",
@@ -681,7 +684,7 @@ class TestMCPToolWrapperFunctions:
     async def test_mcp_weekly_summary_tool(self, server):
         """Test MCP weekly summary tool wrapper"""
         from server_fastmcp import generate_weekly_summary as mcp_summary
-        
+
         # Add some test data
         current_time = datetime.now().isoformat()
         await server.add_conversation(
@@ -698,8 +701,9 @@ class TestMCPToolWrapperFunctions:
     async def test_final_coverage_lines(self, server):
         """Test the final missing lines for 100% coverage"""
         from datetime import datetime, timezone
+
         from server_fastmcp import search_conversations as mcp_search
-        
+
         # Test line 343: topics_str += "..." when more than 3 topics
         now = datetime.now()
         current_week_date = now.strftime("%Y-%m-%dT%H:%M:%S")
@@ -747,7 +751,7 @@ class TestMCPToolWrapperFunctions:
         # Test lines 378-379: Error handling in MCP search tool
         # We need to test the mcp_search directly with error results
         from server_fastmcp import memory_server
-        
+
         # Backup original method
         original_search = memory_server.search_conversations
         
@@ -1078,6 +1082,7 @@ class TestServerExceptionCoverage:
     def test_init_exception_handling_lines_96_98(self, temp_storage):
         """Test __init__ exception handling for SQLite initialization"""
         from unittest.mock import patch
+
         # Mock SearchDatabase to raise an exception during initialization
         with patch('conversation_memory.SearchDatabase', 
                    side_effect=Exception("SQLite initialization failed")):
@@ -1092,9 +1097,9 @@ class TestServerExceptionCoverage:
     
     def test_init_index_files_exception_lines_109_110(self, temp_storage):
         """Test _init_index_files exception handling"""
-        from unittest.mock import patch
         import json
-        
+        from unittest.mock import patch
+
         # Mock json.dump to raise an exception during index file creation
         with patch('json.dump', side_effect=Exception("JSON write failed")):
             try:
@@ -1109,7 +1114,7 @@ class TestServerExceptionCoverage:
     def test_index_file_creation_permission_error_lines_115_116(self, temp_storage):
         """Test index file creation permission errors"""
         from unittest.mock import patch
-        
+
         # Mock Path.mkdir to raise PermissionError
         with patch('pathlib.Path.mkdir', side_effect=PermissionError("Permission denied")):
             try:
@@ -1123,7 +1128,7 @@ class TestServerExceptionCoverage:
     async def test_search_conversations_file_error_lines_212_215(self, server):
         """Test search_conversations file reading errors"""
         from unittest.mock import patch
-        
+
         # Mock file operations to trigger exception handling
         with patch('builtins.open', side_effect=OSError("File read error")):
             try:
@@ -1141,7 +1146,7 @@ class TestServerExceptionCoverage:
     async def test_add_conversation_file_error_lines_272_274(self, server):
         """Test add_conversation file writing errors"""
         from unittest.mock import patch
-        
+
         # Mock file operations to trigger exception handling  
         with patch('builtins.open', side_effect=OSError("File write error")):
             try:
@@ -1172,7 +1177,7 @@ class TestServerExceptionCoverage:
     def test_additional_error_handling_lines_507_510(self, server, temp_storage):
         """Test additional error handling scenarios"""
         from unittest.mock import patch
-        
+
         # Create a conversation file that exists but can't be read  
         conv_dir = Path(temp_storage) / "conversations" / "2025" / "06-june"
         conv_dir.mkdir(parents=True, exist_ok=True)

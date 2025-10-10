@@ -6,19 +6,20 @@ This module tests the SQLite Full-Text Search (FTS5) implementation
 for conversation memory, including performance, accuracy, and integration.
 """
 
-import pytest
-import tempfile
-import shutil
 import json
-from pathlib import Path
-from datetime import datetime
-
+import shutil
 import sys
+import tempfile
+from datetime import datetime
+from pathlib import Path
+
+import pytest
+
 sys.path.append(str(Path(__file__).parent.parent / "src"))
 
-from search_database import SearchDatabase
 from conversation_memory import ConversationMemoryServer
 from migrate_to_sqlite import ConversationMigrator
+from search_database import SearchDatabase
 
 
 class TestSearchDatabase:

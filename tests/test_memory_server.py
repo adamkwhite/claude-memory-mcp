@@ -4,15 +4,16 @@
 Pytest-compatible tests for Claude Memory MCP Server
 """
 
-import pytest
 import asyncio
 import json
-import tempfile
+import os
 import shutil
 import sys
-import os
-from pathlib import Path
+import tempfile
 from datetime import datetime
+from pathlib import Path
+
+import pytest
 
 # Add project root and src directory to path using dynamic resolution
 project_root = Path(__file__).parent.parent
@@ -393,9 +394,9 @@ class TestServerIntegration:
         """Test that all required imports are available"""
         # Test core imports
         try:
-            from src.conversation_memory import ConversationMemoryServer
-            from src.validators import validate_content, validate_title
-            from src.exceptions import ValidationError
+            from src.conversation_memory import ConversationMemoryServer  # noqa: F401
+            from src.exceptions import ValidationError  # noqa: F401
+            from src.validators import validate_content, validate_title  # noqa: F401
             assert True, "Core imports successful"
         except ImportError as e:
             pytest.fail(f"Import failed: {e}")

@@ -5,15 +5,15 @@ Test suite for BaseImporter abstract class.
 Tests the foundation functionality for all platform-specific importers.
 """
 
-import pytest
 import tempfile
 from datetime import datetime
 from pathlib import Path
+from typing import Any, Dict, List
 from unittest.mock import Mock, patch
-from typing import Dict, Any, List
+
+import pytest
 
 from src.importers.base_importer import BaseImporter, ImportResult
-from src.exceptions import ValidationError
 
 
 class TestImporter(BaseImporter):

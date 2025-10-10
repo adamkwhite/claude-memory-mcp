@@ -6,14 +6,15 @@ Tests end-to-end import workflows and cross-platform functionality.
 """
 
 import json
-import pytest
 import tempfile
 from pathlib import Path
 from unittest.mock import Mock, patch
 
-from src.importers.chatgpt_importer import ChatGPTImporter
-from src.importers.base_importer import ImportResult
+import pytest
+
 from src.format_detector import FormatDetector
+from src.importers.base_importer import ImportResult
+from src.importers.chatgpt_importer import ChatGPTImporter
 
 
 class TestImportIntegration:
