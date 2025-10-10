@@ -221,7 +221,10 @@ class ConversationMemoryServer:
         return found_topics[:10]  # Limit to top 10 topics
 
     async def add_conversation(
-        self, content: str, title: Optional[str] = None, conversation_date: Optional[str] = None
+        self,
+        content: str,
+        title: Optional[str] = None,
+        conversation_date: Optional[str] = None,
     ) -> Dict[str, Any]:
         """Add a new conversation to storage"""
         try:

@@ -129,7 +129,9 @@ class SearchBenchmark:
                 content=conv["content"], title=conv["title"]
             )
 
-    async def run_search_benchmark(self, query: str, iterations: int = 10) -> Dict[str, Any]:
+    async def run_search_benchmark(
+        self, query: str, iterations: int = 10
+    ) -> Dict[str, Any]:
         """Run search benchmark for a specific query."""
         linear_times = []
         sqlite_times = []
@@ -137,7 +139,9 @@ class SearchBenchmark:
         # Benchmark linear search
         for _ in range(iterations):
             start_time = time.perf_counter()
-            linear_results = await self.linear_server.search_conversations(query, limit=10)
+            linear_results = await self.linear_server.search_conversations(
+                query, limit=10
+            )
             end_time = time.perf_counter()
             linear_times.append(
                 (end_time - start_time) * 1000
@@ -146,7 +150,9 @@ class SearchBenchmark:
         # Benchmark SQLite search
         for _ in range(iterations):
             start_time = time.perf_counter()
-            sqlite_results = await self.sqlite_server.search_conversations(query, limit=10)
+            sqlite_results = await self.sqlite_server.search_conversations(
+                query, limit=10
+            )
             end_time = time.perf_counter()
             sqlite_times.append(
                 (end_time - start_time) * 1000
