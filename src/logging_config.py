@@ -6,14 +6,14 @@ import logging.handlers
 import os
 import sys
 from pathlib import Path
-from typing import Optional
+from typing import Callable, Optional, Union
 
 # Import path utilities for dynamic path resolution
 try:
     from path_utils import get_default_log_file
 except ImportError:
     # Fallback if path_utils is not available
-    get_default_log_file = None
+    get_default_log_file = None  # type: ignore[assignment]
 
 # Control character removal pattern for log injection prevention
 CONTROL_CHAR_PATTERN = r"[\x00-\x08\x0B\x0C\x0E-\x1F\x7F-\x9F]"
@@ -168,6 +168,9 @@ def setup_logging(
     log_format = _get_log_format()
 
     # Create formatters based on log format
+    file_formatter: logging.Formatter
+    console_formatter: logging.Formatter
+
     if log_format == "json":
         # Use JSON formatter for both console and file
         file_formatter = JSONFormatter(datefmt="%Y-%m-%dT%H:%M:%S")
@@ -378,7 +381,7 @@ def init_default_logging():
     # Get log file path from environment or use default
     log_file = os.getenv("CLAUDE_MCP_LOG_FILE")
     if not log_file:
-        if get_default_log_file:
+        if get_default_log_file is not None:
             # Use path_utils for dynamic path resolution
             log_file = str(get_default_log_file())
         elif os.getenv("HOME"):

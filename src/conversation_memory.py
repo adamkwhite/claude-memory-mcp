@@ -30,7 +30,7 @@ class ConversationMemoryServer:
     def __init__(
         self,
         storage_path: str = "~/claude-memory",
-        use_data_dir: bool = None,
+        use_data_dir: Optional[bool] = None,
         enable_sqlite: bool = True,
     ):
         self.storage_path = Path(storage_path).expanduser()
@@ -221,7 +221,7 @@ class ConversationMemoryServer:
         return found_topics[:10]  # Limit to top 10 topics
 
     async def add_conversation(
-        self, content: str, title: str = None, conversation_date: str = None
+        self, content: str, title: Optional[str] = None, conversation_date: Optional[str] = None
     ) -> Dict[str, Any]:
         """Add a new conversation to storage"""
         try:
@@ -577,7 +577,7 @@ class ConversationMemoryServer:
         for conv in week_conversations:
             all_topics.extend(conv.get("topics", []))
 
-        topic_counts = {}
+        topic_counts: Dict[str, int] = {}
         for topic in all_topics:
             topic_counts[topic] = topic_counts.get(topic, 0) + 1
 

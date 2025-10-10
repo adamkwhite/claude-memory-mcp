@@ -7,6 +7,7 @@ and provides detailed performance comparisons.
 """
 
 import argparse
+import asyncio
 import json
 import logging
 import random  # nosec B311 - Used for test data generation, not security purposes
@@ -113,22 +114,22 @@ class SearchBenchmark:
 
         return conversations
 
-    def populate_test_data(self, conversations: List[Dict[str, Any]]):
+    async def populate_test_data(self, conversations: List[Dict[str, Any]]):
         """Add test conversations to both storage systems."""
         self.logger.info("Populating test data in both storage systems...")
 
         for conv in conversations:
             # Add to linear search system
-            self.linear_server.add_conversation(
+            await self.linear_server.add_conversation(
                 content=conv["content"], title=conv["title"]
             )
 
             # Add to SQLite search system
-            self.sqlite_server.add_conversation(
+            await self.sqlite_server.add_conversation(
                 content=conv["content"], title=conv["title"]
             )
 
-    def run_search_benchmark(self, query: str, iterations: int = 10) -> Dict[str, Any]:
+    async def run_search_benchmark(self, query: str, iterations: int = 10) -> Dict[str, Any]:
         """Run search benchmark for a specific query."""
         linear_times = []
         sqlite_times = []
@@ -136,7 +137,7 @@ class SearchBenchmark:
         # Benchmark linear search
         for _ in range(iterations):
             start_time = time.perf_counter()
-            linear_results = self.linear_server.search_conversations(query, limit=10)
+            linear_results = await self.linear_server.search_conversations(query, limit=10)
             end_time = time.perf_counter()
             linear_times.append(
                 (end_time - start_time) * 1000
@@ -145,7 +146,7 @@ class SearchBenchmark:
         # Benchmark SQLite search
         for _ in range(iterations):
             start_time = time.perf_counter()
-            sqlite_results = self.sqlite_server.search_conversations(query, limit=10)
+            sqlite_results = await self.sqlite_server.search_conversations(query, limit=10)
             end_time = time.perf_counter()
             sqlite_times.append(
                 (end_time - start_time) * 1000
@@ -207,7 +208,7 @@ class SearchBenchmark:
             },
         }
 
-    def run_comprehensive_benchmark(
+    async def run_comprehensive_benchmark(
         self, num_conversations: int = 100
     ) -> Dict[str, Any]:
         """Run comprehensive benchmark with various queries."""
@@ -217,7 +218,7 @@ class SearchBenchmark:
 
         # Generate and populate test data
         conversations = self.generate_test_data(num_conversations)
-        self.populate_test_data(conversations)
+        await self.populate_test_data(conversations)
 
         # Test queries of varying complexity
         test_queries = [
@@ -228,7 +229,7 @@ class SearchBenchmark:
             "machine learning data science algorithms",
         ]
 
-        benchmark_results = {
+        benchmark_results: Dict[str, Any] = {
             "setup": {
                 "num_conversations": num_conversations,
                 "storage_path": str(self.storage_path),
@@ -239,12 +240,12 @@ class SearchBenchmark:
 
         for query in test_queries:
             self.logger.info(f"Benchmarking query: '{query}'")
-            result = self.run_search_benchmark(query, iterations=5)
+            result = await self.run_search_benchmark(query, iterations=5)
             benchmark_results["queries"].append(result)
 
         # Calculate overall statistics
-        all_linear_times = []
-        all_sqlite_times = []
+        all_linear_times: List[float] = []
+        all_sqlite_times: List[float] = []
 
         for query_result in benchmark_results["queries"]:
             all_linear_times.extend(query_result["linear_search"]["times_ms"])
@@ -333,7 +334,7 @@ class SearchBenchmark:
             shutil.rmtree(self.storage_path)
 
 
-def main():
+async def main():
     """Main benchmark execution."""
     parser = argparse.ArgumentParser(description="Benchmark search performance")
     parser.add_argument(
@@ -362,7 +363,7 @@ def main():
 
     try:
         # Run benchmark
-        results = benchmark.run_comprehensive_benchmark(args.conversations)
+        results = await benchmark.run_comprehensive_benchmark(args.conversations)
 
         # Print report
         benchmark.print_benchmark_report(results)
@@ -380,4 +381,4 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    asyncio.run(main())
