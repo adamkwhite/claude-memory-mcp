@@ -229,6 +229,84 @@ class TestStandaloneMemoryServer:
         assert len(results) == 0
 
     @pytest.mark.asyncio
+    async def test_search_by_topic_json_fallback(self, temp_storage):
+        """Test search_by_topic with JSON fallback (SQLite disabled)"""
+        # Create server with SQLite explicitly disabled
+        server = StandaloneServer(temp_storage, enable_sqlite=False)
+
+        # Add conversation with topics
+        result = await server.add_conversation(
+            content="Discussion about Python and machine learning algorithms",
+            title="ML Discussion",
+            conversation_date="2025-01-15T10:00:00"
+        )
+
+        assert result['status'] == 'success'
+
+        # Search by topic using JSON fallback
+        results = await server.search_by_topic("python", limit=5)
+
+        # Should return results from JSON-based search
+        assert isinstance(results, list)
+        if len(results) > 0:
+            assert 'id' in results[0] or 'error' in results[0]
+
+    @pytest.mark.asyncio
+    async def test_search_conversations_json_fallback(self, temp_storage):
+        """Test search_conversations with JSON fallback (SQLite disabled)"""
+        # Create server with SQLite explicitly disabled
+        server = StandaloneServer(temp_storage, enable_sqlite=False)
+
+        # Add conversations
+        await server.add_conversation(
+            content="Python programming with asyncio and aiofiles",
+            title="Async Python Guide",
+            conversation_date="2025-01-15T10:00:00"
+        )
+
+        await server.add_conversation(
+            content="Machine learning with scikit-learn",
+            title="ML Tutorial",
+            conversation_date="2025-01-15T11:00:00"
+        )
+
+        # Search using JSON fallback path
+        results = await server.search_conversations("python asyncio", limit=5)
+
+        # Should return results from linear JSON-based search
+        assert isinstance(results, list)
+        assert len(results) > 0
+
+        # Check that results have expected fields
+        first_result = results[0]
+        assert 'title' in first_result
+        assert 'score' in first_result
+        assert 'preview' in first_result or 'content' in first_result
+
+    @pytest.mark.asyncio
+    async def test_search_with_missing_file(self, temp_storage):
+        """Test search_conversations handles missing conversation files gracefully"""
+        # Create server with SQLite disabled
+        server = StandaloneServer(temp_storage, enable_sqlite=False)
+
+        # Add a conversation
+        result = await server.add_conversation(
+            content="Test content for missing file test",
+            title="Test Conversation",
+            conversation_date="2025-01-15T10:00:00"
+        )
+
+        # Delete the conversation file but keep index entry
+        file_path = Path(result['file_path'])
+        file_path.unlink()
+
+        # Search should handle missing file gracefully
+        results = await server.search_conversations("test", limit=5)
+
+        # Should return empty or handle gracefully without crashing
+        assert isinstance(results, list)
+
+    @pytest.mark.asyncio
     async def test_invalid_date_handling(self, standalone_server, sample_conversation_content):
         """Test that invalid dates are handled gracefully"""
         result = await standalone_server.add_conversation(

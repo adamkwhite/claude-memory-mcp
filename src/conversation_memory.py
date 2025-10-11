@@ -310,7 +310,7 @@ class ConversationMemoryServer:
                 score += 5
         return score
 
-    def _process_conversation_for_search(
+    async def _process_conversation_for_search(
         self, conv_info: dict, query_terms: List[str]
     ) -> Optional[dict]:
         """Process a single conversation for search results"""
@@ -319,8 +319,9 @@ class ConversationMemoryServer:
             if not file_path.exists():
                 return None
 
-            with open(file_path, "r", encoding="utf-8") as f:
-                conv_data = json.load(f)
+            async with aiofiles.open(file_path, "r", encoding="utf-8") as f:
+                content = await f.read()
+                conv_data = json.loads(content)
 
             content = conv_data.get("content", "").lower()
             title = conv_data.get("title", "").lower()
@@ -359,15 +360,18 @@ class ConversationMemoryServer:
         # Fallback to linear search through JSON files
         try:
             # Load index
-            with open(self.index_file, "r") as f:
-                index_data = json.load(f)
+            async with aiofiles.open(self.index_file, "r") as f:
+                content = await f.read()
+                index_data = json.loads(content)
 
             conversations = index_data.get("conversations", [])
             query_terms = query.lower().split()
 
             results = []
             for conv_info in conversations:
-                result = self._process_conversation_for_search(conv_info, query_terms)
+                result = await self._process_conversation_for_search(
+                    conv_info, query_terms
+                )
                 if result:
                     results.append(result)
 
@@ -661,13 +665,14 @@ class ConversationMemoryServer:
                 self.logger.warning(f"SQLite topic search failed: {e}")
 
         # Fallback to JSON-based topic search
-        return self._search_topic_json(topic, limit)
+        return await self._search_topic_json(topic, limit)
 
-    def _search_topic_json(self, topic: str, limit: int) -> List[Dict[str, Any]]:
+    async def _search_topic_json(self, topic: str, limit: int) -> List[Dict[str, Any]]:
         """Helper method for JSON-based topic search."""
         try:
-            with open(self.topics_file, "r") as f:
-                topics_data = json.load(f)
+            async with aiofiles.open(self.topics_file, "r") as f:
+                content = await f.read()
+                topics_data = json.loads(content)
 
             topics_index = topics_data.get("topics", {})
             if topic not in topics_index:
