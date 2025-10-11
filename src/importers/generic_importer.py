@@ -230,9 +230,7 @@ class GenericImporter(BaseImporter):
         else:
             raise ValueError("Generic conversation data must be string, dict, or list")
 
-    def _parse_json_array(
-        self, data: List[Any]
-    ) -> List[Dict[str, Any]]:
+    def _parse_json_array(self, data: List[Any]) -> List[Dict[str, Any]]:
         """Parse JSON array - could be conversations or messages."""
         conversations = []
 

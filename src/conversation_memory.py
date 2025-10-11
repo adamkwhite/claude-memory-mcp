@@ -270,7 +270,9 @@ class ConversationMemoryServer:
 
             # Save conversation file
             async with aiofiles.open(file_path, "w", encoding="utf-8") as f:
-                await f.write(json.dumps(conversation_data, indent=2, ensure_ascii=False))
+                await f.write(
+                    json.dumps(conversation_data, indent=2, ensure_ascii=False)
+                )
 
             # Update index
             self._update_index(conversation_data, file_path)
