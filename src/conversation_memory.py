@@ -310,7 +310,7 @@ class ConversationMemoryServer:
                 score += 5
         return score
 
-    def _process_conversation_for_search(
+    async def _process_conversation_for_search(
         self, conv_info: dict, query_terms: List[str]
     ) -> Optional[dict]:
         """Process a single conversation for search results"""
@@ -319,8 +319,9 @@ class ConversationMemoryServer:
             if not file_path.exists():
                 return None
 
-            with open(file_path, "r", encoding="utf-8") as f:
-                conv_data = json.load(f)
+            async with aiofiles.open(file_path, "r", encoding="utf-8") as f:
+                content = await f.read()
+                conv_data = json.loads(content)
 
             content = conv_data.get("content", "").lower()
             title = conv_data.get("title", "").lower()
@@ -359,15 +360,18 @@ class ConversationMemoryServer:
         # Fallback to linear search through JSON files
         try:
             # Load index
-            with open(self.index_file, "r") as f:
-                index_data = json.load(f)
+            async with aiofiles.open(self.index_file, "r") as f:
+                content = await f.read()
+                index_data = json.loads(content)
 
             conversations = index_data.get("conversations", [])
             query_terms = query.lower().split()
 
             results = []
             for conv_info in conversations:
-                result = self._process_conversation_for_search(conv_info, query_terms)
+                result = await self._process_conversation_for_search(
+                    conv_info, query_terms
+                )
                 if result:
                     results.append(result)
 
