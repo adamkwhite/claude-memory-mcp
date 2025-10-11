@@ -17,7 +17,7 @@
 
 **Security**
 
-[![Security Hotspots](https://sonarcloud.io/api/project_badges/measure?project=adamkwhite_claude-memory-mcp&metric=security_hotspots)](https://sonarcloud.io/component_measures?id=adamkwhite_claude-memory-mcp&metric=security_hotspots)
+[![Security Hotspots](https://sonarcloud.io/api/project_badges/measure?project=adamkwhite_claude-memory-mcp&metric=security_hotspots)](https://sonarcloud.io/project/security_hotspots?id=adamkwhite_claude-memory-mcp)
 [![Vulnerabilities](https://sonarcloud.io/api/project_badges/measure?project=adamkwhite_claude-memory-mcp&metric=vulnerabilities)](https://sonarcloud.io/component_measures?id=adamkwhite_claude-memory-mcp&metric=vulnerabilities)
 
 # Claude Conversation Memory System

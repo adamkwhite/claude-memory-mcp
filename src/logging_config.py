@@ -18,6 +18,9 @@ except ImportError:
 # Control character removal pattern for log injection prevention
 CONTROL_CHAR_PATTERN = r"[\x00-\x08\x0B\x0C\x0E-\x1F\x7F-\x9F]"
 
+# ISO 8601 datetime format for structured logging
+ISO_DATETIME_FORMAT = "%Y-%m-%dT%H:%M:%S"
+
 
 class JSONFormatter(logging.Formatter):
     """
@@ -50,7 +53,7 @@ class JSONFormatter(logging.Formatter):
         """
         # Build standard log data structure
         log_data = {
-            "timestamp": self.formatTime(record, self.datefmt or "%Y-%m-%dT%H:%M:%S"),
+            "timestamp": self.formatTime(record, self.datefmt or ISO_DATETIME_FORMAT),
             "level": record.levelname,
             "logger": record.name,
             "function": record.funcName,
@@ -77,7 +80,7 @@ class JSONFormatter(logging.Formatter):
                 return json.dumps(
                     {
                         "timestamp": self.formatTime(
-                            record, self.datefmt or "%Y-%m-%dT%H:%M:%S"
+                            record, self.datefmt or ISO_DATETIME_FORMAT
                         ),
                         "level": "ERROR",
                         "logger": "logging_config",
@@ -173,8 +176,8 @@ def setup_logging(
 
     if log_format == "json":
         # Use JSON formatter for both console and file
-        file_formatter = JSONFormatter(datefmt="%Y-%m-%dT%H:%M:%S")
-        console_formatter = JSONFormatter(datefmt="%Y-%m-%dT%H:%M:%S")
+        file_formatter = JSONFormatter(datefmt=ISO_DATETIME_FORMAT)
+        console_formatter = JSONFormatter(datefmt=ISO_DATETIME_FORMAT)
     else:
         # Use text formatters (default)
         file_formatter = logging.Formatter(

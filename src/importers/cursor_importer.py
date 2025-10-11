@@ -368,7 +368,7 @@ class CursorImporter(BaseImporter):
                     if "file" in change:
                         files.add(change["file"])
 
-        return sorted(list(files))
+        return sorted(files)
 
     def _save_conversation(self, conversation: Dict[str, Any]) -> Path:
         """Save a conversation to the storage directory."""

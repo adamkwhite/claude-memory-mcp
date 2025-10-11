@@ -84,7 +84,7 @@ class GenericImporter(BaseImporter):
 
             if isinstance(data, list):
                 # Array of conversations or messages
-                conversations = self._parse_json_array(data, file_path)
+                conversations = self._parse_json_array(data)
             elif isinstance(data, dict):
                 # Single conversation or structured object
                 conversations = self._parse_json_object(data)
@@ -230,9 +230,7 @@ class GenericImporter(BaseImporter):
         else:
             raise ValueError("Generic conversation data must be string, dict, or list")
 
-    def _parse_json_array(
-        self, data: List[Any], file_path: Path
-    ) -> List[Dict[str, Any]]:
+    def _parse_json_array(self, data: List[Any]) -> List[Dict[str, Any]]:
         """Parse JSON array - could be conversations or messages."""
         conversations = []
 
