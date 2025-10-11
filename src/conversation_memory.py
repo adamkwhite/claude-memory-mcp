@@ -13,6 +13,8 @@ from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
+import aiofiles
+
 try:
     from .search_database import SearchDatabase
 
@@ -267,8 +269,8 @@ class ConversationMemoryServer:
             }
 
             # Save conversation file
-            with open(file_path, "w", encoding="utf-8") as f:
-                json.dump(conversation_data, f, indent=2, ensure_ascii=False)
+            async with aiofiles.open(file_path, "w", encoding="utf-8") as f:
+                await f.write(json.dumps(conversation_data, indent=2, ensure_ascii=False))
 
             # Update index
             self._update_index(conversation_data, file_path)
@@ -515,8 +517,8 @@ class ConversationMemoryServer:
 
             summary_filename = f"week-{start_of_week.strftime('%Y-%m-%d')}.md"
             summary_file = self.summaries_path / "weekly" / summary_filename
-            with open(summary_file, "w", encoding="utf-8") as f:
-                f.write(summary_text)
+            async with aiofiles.open(summary_file, "w", encoding="utf-8") as f:
+                await f.write(summary_text)
 
             summary_text += f"\n---\n*Summary saved to {summary_file}*"
             return summary_text
