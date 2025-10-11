@@ -12,7 +12,7 @@ logger = logging.getLogger(__name__)
 
 # ChatGPT export schema based on real structure analysis
 CHATGPT_SCHEMA = {
-    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$schema": "https://json-schema.org/draft-07/schema#",
     "type": "array",
     "description": "ChatGPT export format - array of conversations",
     "items": {
