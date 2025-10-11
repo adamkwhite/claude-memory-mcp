@@ -665,13 +665,14 @@ class ConversationMemoryServer:
                 self.logger.warning(f"SQLite topic search failed: {e}")
 
         # Fallback to JSON-based topic search
-        return self._search_topic_json(topic, limit)
+        return await self._search_topic_json(topic, limit)
 
-    def _search_topic_json(self, topic: str, limit: int) -> List[Dict[str, Any]]:
+    async def _search_topic_json(self, topic: str, limit: int) -> List[Dict[str, Any]]:
         """Helper method for JSON-based topic search."""
         try:
-            with open(self.topics_file, "r") as f:
-                topics_data = json.load(f)
+            async with aiofiles.open(self.topics_file, "r") as f:
+                content = await f.read()
+                topics_data = json.loads(content)
 
             topics_index = topics_data.get("topics", {})
             if topic not in topics_index:
