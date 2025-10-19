@@ -227,27 +227,40 @@ async def get_search_stats() -> str:
     return response
 
 
-@mcp.tool()
-async def migrate_to_sqlite() -> str:
-    """Migrate existing JSON conversations to SQLite database for better search performance"""
-    result = await memory_server.migrate_to_sqlite()
-
-    if "error" in result:
-        return f"Migration failed: {result['error']}"
-
-    response = "Migration Results:\n\n"
-    response += f"• Total Found: {result.get('total_found', 0)}\n"
-    response += f"• Successfully Migrated: {result.get('successfully_migrated', 0)}\n"
-    response += f"• Failed Migrations: {result.get('failed_migrations', 0)}\n"
-    response += f"• Skipped: {result.get('skipped', 0)}\n"
-
-    if result.get("successfully_migrated", 0) > 0:
-        response += "\n✅ Migration completed successfully!"
-        response += "\nSearch performance should now be significantly improved."
-    else:
-        response += "\n⚠️ No conversations were migrated."
-
-    return response
+# DISABLED: migrate_to_sqlite tool (saves 573 tokens in context)
+# SQLite is enabled by default and auto-migrates on first use.
+# Uncomment if manual migration is needed:
+#
+# @mcp.tool()
+# async def migrate_to_sqlite() -> str:
+#     """Migrate JSON conversations to SQLite for better search
+#     performance"""
+#     result = await memory_server.migrate_to_sqlite()
+#
+#     if "error" in result:
+#         return f"Migration failed: {result['error']}"
+#
+#     response = "Migration Results:\n\n"
+#     response += f"• Total Found: {result.get('total_found', 0)}\n"
+#     response += (
+#         f"• Successfully Migrated: "
+#         f"{result.get('successfully_migrated', 0)}\n"
+#     )
+#     response += (
+#         f"• Failed Migrations: {result.get('failed_migrations', 0)}\n"
+#     )
+#     response += f"• Skipped: {result.get('skipped', 0)}\n"
+#
+#     if result.get("successfully_migrated", 0) > 0:
+#         response += "\n✅ Migration completed successfully!"
+#         response += (
+#             "\nSearch performance should now be significantly "
+#             "improved."
+#         )
+#     else:
+#         response += "\n⚠️ No conversations were migrated."
+#
+#     return response
 
 
 if __name__ == "__main__":
