@@ -4,13 +4,14 @@
 
 **Claude Memory MCP** is a universal conversation memory system that provides persistent storage and intelligent search across multiple AI platforms. Originally designed for Claude, it now supports ChatGPT, Cursor AI, and custom formats through an extensible architecture.
 
-## Current Status (October 10, 2025)
+## Current Status (October 19, 2025)
 
 **Branch**: `main`
-**Recent Work**: SonarCloud Async Issues Fixed (PR #69, #70)
+**Recent Work**: Context Optimization - Disabled `migrate_to_sqlite` MCP tool (saves 573 tokens)
 **Test Coverage**: 78% overall (435 tests passing)
 **Code Quality**: 0 code smells, 0 security hotspots, CI/CD fully functional
 **Async Compliance**: All async file I/O operations converted to aiofiles
+**Context Efficiency**: Removed unnecessary MCP tools from default context
 
 ### Recent Major Implementations
 - ✅ **Async File I/O Migration**: Converted all synchronous file operations to async using aiofiles
@@ -466,11 +467,12 @@ The system uses a pluggable importer architecture where each AI platform has a d
 ### **Search Optimization Implementation ✅ MAJOR PERFORMANCE IMPROVEMENT**
 - **Achievement**: Implemented SQLite FTS5 full-text search replacing linear search
 - **Performance**: 4.4x faster search with 77.5% performance improvement
-- **Features**: 
+- **Features**:
   - SQLite FTS5 database with full-text search and relevance scoring
   - Automatic migration from JSON to SQLite with verification
   - Backward compatibility with fallback to linear search
-  - New MCP tools: `get_search_stats`, `migrate_to_sqlite`, `search_by_topic`
+  - New MCP tools: `get_search_stats`, `search_by_topic`
+  - **Note**: `migrate_to_sqlite` tool disabled by default (saves 573 tokens context) - SQLite auto-migrates on first use
 - **Testing**: Comprehensive test suite covering all SQLite functionality
 - **Scalability**: Search now scales efficiently with conversation growth
 
