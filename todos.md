@@ -2,6 +2,22 @@
 
 This file maintains persistent todos across Claude Code sessions.
 
+## Recent Session (November 13, 2025) ✅ COMPLETED
+
+**PR #80: Fix README installation instructions and test linting errors**
+- [x] Fixed critical README documentation issues (Issues #74-79)
+  - Added `claude mcp add` installation option
+  - Fixed all file paths (tests/, src/, scripts/)
+  - Changed to `pip install -e .` for proper dependency installation
+  - Removed comprehensive testing section (files don't exist)
+  - Added practical Development and Testing section
+- [x] Cleaned up test file linting errors (Issue #64)
+  - Fixed E501 line-too-long violations using black
+  - Fixed F841 unused variable warnings
+  - All 435 tests passing
+- [x] Merged to main branch
+- [x] Closed 6 GitHub issues automatically
+
 ## High Priority - Critical Issues ✅ ALL COMPLETED
 
 - [x] **Fix MCP JSON parsing error** ✅ COMPLETED (June 11, 2025)
