@@ -4,14 +4,14 @@
 
 **Claude Memory MCP** is a universal conversation memory system that provides persistent storage and intelligent search across multiple AI platforms. Originally designed for Claude, it now supports ChatGPT, Cursor AI, and custom formats through an extensible architecture.
 
-## Current Status (October 19, 2025)
+## Current Status (November 13, 2025)
 
 **Branch**: `main`
-**Recent Work**: Context Optimization - Disabled `migrate_to_sqlite` MCP tool (saves 573 tokens)
+**Recent Work**: Documentation & Test Cleanup - Fixed critical README issues and test linting (PR #80)
 **Test Coverage**: 78% overall (435 tests passing)
 **Code Quality**: 0 code smells, 0 security hotspots, CI/CD fully functional
-**Async Compliance**: All async file I/O operations converted to aiofiles
-**Context Efficiency**: Removed unnecessary MCP tools from default context
+**User Experience**: Installation now works on first try for new users
+**Documentation**: Complete, accurate, and up-to-date with Claude Code integration
 
 ### Recent Major Implementations
 - ✅ **Async File I/O Migration**: Converted all synchronous file operations to async using aiofiles
@@ -375,6 +375,38 @@ The system uses a pluggable importer architecture where each AI platform has a d
 - Cross-platform conversation sync and merging
 
 ## Recent Changes
+
+### **November 13, 2025 - Documentation & Test Cleanup ✅**
+
+**PR Merged: #80**
+- **Achievement**: Fixed critical README installation issues preventing new user onboarding
+- **Impact**: Installation now works on first try, 6 GitHub issues resolved, improved code quality
+
+**README Documentation Fixes (Issues #74-79):**
+- ✅ Added Claude Code installation option (`claude mcp add`) as recommended method
+- ✅ Fixed all file paths to include correct directories (`tests/`, `src/`, `scripts/`)
+- ✅ Changed `pip install mcp[cli]` → `pip install -e .` for proper dependency installation
+- ✅ Added explicit dependency list with versions (mcp, jsonschema, aiofiles)
+- ✅ Removed comprehensive testing framework section (files didn't exist)
+- ✅ Added practical Development and Testing section with verified commands
+
+**Test Linting Cleanup (Issue #64):**
+- ✅ Fixed E501 line-too-long violations using `black --line-length=79`
+- ✅ Fixed F841 unused variable warnings across 11 test files
+- ✅ Maintained 100% test pass rate (435/435 tests passing)
+- ✅ No functional changes, only formatting improvements
+
+**User Experience Impact:**
+- New users can install and run the project successfully on first attempt
+- All referenced files and paths exist and are correct
+- Installation instructions are complete and accurate
+- Reduced friction for project adoption
+
+**Lessons Learned:**
+- Documentation accuracy is critical for new user onboarding
+- Regular validation of README instructions prevents user frustration
+- Automated linting helps maintain code quality standards
+- Test fixtures requiring specific variables need careful refactoring
 
 ### **October 10, 2025 - SonarCloud Async Compliance & Code Quality ✅**
 
