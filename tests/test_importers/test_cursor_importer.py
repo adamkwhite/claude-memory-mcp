@@ -302,7 +302,8 @@ class TestCursorImporterHelperMethods:
     def test_add_session_header(self):
         """Test _add_session_header method."""
         content_parts = []
-        self.importer._add_session_header(content_parts, "/my/project", "claude-3", "session-123")
+        self.importer._add_session_header(
+            content_parts, "/my/project", "claude-3", "session-123")
 
         assert "# Cursor AI Session" in content_parts
         assert "**Workspace**: /my/project" in content_parts
@@ -385,7 +386,8 @@ class TestCursorImporterHelperMethods:
         }
         content = "Original content"
 
-        enhanced = self.importer._enhance_interaction_content(interaction, content)
+        enhanced = self.importer._enhance_interaction_content(
+            interaction, content)
 
         assert "Original content" in enhanced
         assert "Files: main.py, utils.py" in enhanced
@@ -396,7 +398,8 @@ class TestCursorImporterHelperMethods:
         interaction = {}
         content = "Just content"
 
-        enhanced = self.importer._enhance_interaction_content(interaction, content)
+        enhanced = self.importer._enhance_interaction_content(
+            interaction, content)
 
         assert enhanced == "Just content"
 

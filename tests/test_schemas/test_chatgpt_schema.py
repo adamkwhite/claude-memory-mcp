@@ -28,7 +28,8 @@ class TestChatGPTSchema:
     def test_schema_required_fields(self):
         """Test schema requires essential fields."""
         required_fields = CHATGPT_SCHEMA["items"]["required"]
-        expected_fields = ["title", "create_time", "mapping", "conversation_id"]
+        expected_fields = ["title", "create_time",
+            "mapping", "conversation_id"]
 
         for field in expected_fields:
             assert field in required_fields
@@ -264,7 +265,8 @@ class TestConversationStats:
                 "msg-1": {
                     "message": {
                         "author": {"role": "user"},
-                        "content": {"content_type": "text", "parts": ["Hello"]}  # 5 chars
+                        # 5 chars
+                        "content": {"content_type": "text", "parts": ["Hello"]}
                     }
                 },
                 "msg-2": {

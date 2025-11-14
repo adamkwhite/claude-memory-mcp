@@ -197,7 +197,8 @@ class TestImportIntegration:
         # Should have partial success
         assert result.conversations_imported >= 1
         assert result.conversations_failed >= 0  # May vary based on validation
-        assert len(result.errors) == 0 or len(result.errors) >= 0  # Depends on validation
+        assert len(result.errors) == 0 or len(
+            result.errors) >= 0  # Depends on validation
 
     def test_conversation_format_consistency(self):
         """Test that imported conversations maintain consistent format."""

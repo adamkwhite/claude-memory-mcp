@@ -26,6 +26,7 @@ class MockFastMCP:
         def decorator(func):
             self.tools.append(func)
             return func
+
         return decorator
 
     def run(self):
@@ -33,13 +34,13 @@ class MockFastMCP:
 
 
 # Patch the import before importing the server
-sys.modules['mcp.server.fastmcp'] = type(sys)('mcp.server.fastmcp')
-sys.modules['mcp.server.fastmcp'].FastMCP = MockFastMCP
+sys.modules["mcp.server.fastmcp"] = type(sys)("mcp.server.fastmcp")
+sys.modules["mcp.server.fastmcp"].FastMCP = MockFastMCP
 
 # Add the project root and src directory to path using dynamic resolution
 project_root = Path(__file__).parent.parent
 sys.path.insert(0, str(project_root))
-sys.path.insert(0, str(project_root / 'src'))
+sys.path.insert(0, str(project_root / "src"))
 
 
 @pytest.fixture
@@ -67,10 +68,10 @@ class TestCompleteEdgeCaseCoverage:
         result = await server.add_conversation(
             "Test content for file read error",
             "File Read Test",
-            "2025-01-15T10:30:00"
+            "2025-01-15T10:30:00",
         )
 
-        file_path = Path(result['file_path'])
+        file_path = Path(result["file_path"])
 
         # Make file unreadable by changing permissions
         try:
@@ -88,7 +89,7 @@ class TestCompleteEdgeCaseCoverage:
     async def test_search_returns_error_in_results(self, server, temp_storage):
         """Test search error handling (lines 115-116)"""
         # Corrupt the index file to cause an error
-        with open(server.index_file, 'w') as f:
+        with open(server.index_file, "w") as f:
             f.write("invalid json")
 
         results = await server.search_conversations("test", limit=5)
@@ -114,7 +115,9 @@ class TestCompleteEdgeCaseCoverage:
             test_file.chmod(0o644)
 
     @pytest.mark.asyncio
-    async def test_add_conversation_exception_handling(self, server, temp_storage):
+    async def test_add_conversation_exception_handling(
+        self, server, temp_storage
+    ):
         """Test add conversation with various exception scenarios"""
         # Test with a read-only conversations directory
         server.conversations_path.chmod(0o444)
@@ -123,12 +126,12 @@ class TestCompleteEdgeCaseCoverage:
             result = await server.add_conversation(
                 "Test content that should fail",
                 "Error Test",
-                "2025-01-15T10:30:00"
+                "2025-01-15T10:30:00",
             )
 
-            assert result['status'] == 'error'
-            assert 'message' in result
-            assert "Failed to save conversation" in result['message']
+            assert result["status"] == "error"
+            assert "message" in result
+            assert "Failed to save conversation" in result["message"]
 
         finally:
             server.conversations_path.chmod(0o755)
@@ -148,14 +151,18 @@ class TestCompleteEdgeCaseCoverage:
             fake_path.touch()
 
             # This calls _update_index internally which should handle the exception
-            await server.add_conversation("Test content", test_title, test_date.isoformat())
+            await server.add_conversation(
+                "Test content", test_title, test_date.isoformat()
+            )
 
         finally:
             # Restore permissions
             server.index_file.chmod(0o644)
 
     @pytest.mark.asyncio
-    async def test_update_topics_index_exception_handling(self, server, temp_storage):
+    async def test_update_topics_index_exception_handling(
+        self, server, temp_storage
+    ):
         """Test topics index update exception handling (line 237)"""
         # Make topics file unwritable
         server.topics_file.chmod(0o444)
@@ -172,18 +179,21 @@ class TestCompleteEdgeCaseCoverage:
         """Test search when conversation file doesn't exist (line 88)"""
         # Manually add entry to index that points to non-existent file
         import json
+
         fake_index = {
-            "conversations": [{
-                "title": "Non-existent File",
-                "file_path": "conversations/nonexistent.md",
-                "date": "2025-06-01T10:00:00Z",
-                "topics": ["test"],
-                "added": "2025-06-01T10:00:00Z"
-            }],
-            "last_updated": "2025-06-01T10:00:00Z"
+            "conversations": [
+                {
+                    "title": "Non-existent File",
+                    "file_path": "conversations/nonexistent.md",
+                    "date": "2025-06-01T10:00:00Z",
+                    "topics": ["test"],
+                    "added": "2025-06-01T10:00:00Z",
+                }
+            ],
+            "last_updated": "2025-06-01T10:00:00Z",
         }
 
-        with open(server.index_file, 'w') as f:
+        with open(server.index_file, "w") as f:
             json.dump(fake_index, f)
 
         # Search should skip the non-existent file
@@ -196,11 +206,11 @@ class TestCompleteEdgeCaseCoverage:
         result = await server.add_conversation(
             "Test content without date",
             "No Date Test",
-            None  # This should trigger the datetime.now() path
+            None,  # This should trigger the datetime.now() path
         )
 
-        assert result['status'] == 'success'
-        assert 'file_path' in result
+        assert result["status"] == "success"
+        assert "file_path" in result
 
     @pytest.mark.asyncio
     async def test_weekly_summary_detailed_analysis(self, server):
@@ -211,19 +221,19 @@ class TestCompleteEdgeCaseCoverage:
         await server.add_conversation(
             "Writing code for a new function with class definitions and import statements",
             "Coding with Code Keywords",
-            current_time.isoformat()
+            current_time.isoformat(),
         )
 
         await server.add_conversation(
             "We decided on this approach and I recommend using this solution",
             "Decision with Recommendation",
-            current_time.isoformat()
+            current_time.isoformat(),
         )
 
         await server.add_conversation(
             "Learning how to understand and explain complex tutorial concepts",
             "Learning How To",
-            current_time.isoformat()
+            current_time.isoformat(),
         )
 
         summary = await server.generate_weekly_summary(0)
@@ -234,7 +244,9 @@ class TestCompleteEdgeCaseCoverage:
         assert "Learning How To" in summary
 
     @pytest.mark.asyncio
-    async def test_weekly_summary_content_read_exception(self, server, temp_storage):
+    async def test_weekly_summary_content_read_exception(
+        self, server, temp_storage
+    ):
         """Test weekly summary when conversation file read fails (lines 298-299)"""
         current_time = datetime.now()
 
@@ -242,11 +254,11 @@ class TestCompleteEdgeCaseCoverage:
         result = await server.add_conversation(
             "Test content for read exception",
             "Read Exception Test",
-            current_time.isoformat()
+            current_time.isoformat(),
         )
 
         # Make the conversation file unreadable
-        file_path = Path(result['file_path'])
+        file_path = Path(result["file_path"])
         file_path.chmod(0o000)
 
         try:
@@ -267,24 +279,19 @@ class TestCompleteEdgeCaseCoverage:
         # Use local time to match generate_weekly_summary behavior
         current_week_date = datetime.now().strftime("%Y-%m-%dT%H:%M:%S")
         await server.add_conversation(
-            "Python programming discussion",
-            "Python Talk",
-            current_week_date
+            "Python programming discussion", "Python Talk", current_week_date
         )
 
         # Manually update topics index with test data
         topics_content = {
-            "topics": {
-                "python": 5,
-                "javascript": 3,
-                "testing": 2
-            },
-            "last_updated": "2025-06-01T10:00:00Z"
+            "topics": {"python": 5, "javascript": 3, "testing": 2},
+            "last_updated": "2025-06-01T10:00:00Z",
         }
 
         # Write topics index directly to test counting logic
         import json
-        with open(server.topics_file, 'w') as f:
+
+        with open(server.topics_file, "w") as f:
             json.dump(topics_content, f)
 
         summary = await server.generate_weekly_summary(0)
@@ -306,24 +313,30 @@ class TestCompleteEdgeCaseCoverage:
         await server.add_conversation(
             "Technical discussion about API design",
             "API Design",
-            current_week_date
+            current_week_date,
         )
 
         summary = await server.generate_weekly_summary(0)
 
         # Verify summary structure and content
         assert len(summary) > 100
-        assert "Weekly Summary" in summary or "## " in summary or "API Design" in summary
+        assert (
+            "Weekly Summary" in summary
+            or "## " in summary
+            or "API Design" in summary
+        )
 
     @pytest.mark.asyncio
-    async def test_weekly_summary_file_saving_and_path(self, server, temp_storage):
+    async def test_weekly_summary_file_saving_and_path(
+        self, server, temp_storage
+    ):
         """Test weekly summary file saving functionality"""
         current_time = datetime.now()
 
         await server.add_conversation(
             "Test conversation for file saving verification",
             "File Save Test",
-            current_time.isoformat()
+            current_time.isoformat(),
         )
 
         summary = await server.generate_weekly_summary(0)
@@ -338,7 +351,7 @@ class TestCompleteEdgeCaseCoverage:
 
         # Verify file contains the summary content
         latest_file = max(summary_files, key=lambda x: x.stat().st_mtime)
-        with open(latest_file, 'r') as f:
+        with open(latest_file, "r") as f:
             file_content = f.read()
 
         assert "File Save Test" in file_content
@@ -347,15 +360,16 @@ class TestCompleteEdgeCaseCoverage:
     async def test_get_preview_success(self, server):
         """Test get_preview method with valid conversation (lines 232-248)"""
         # Add a test conversation
-        result = await server.add_conversation(
+        await server.add_conversation(
             "This is a test conversation content for preview testing",
             "Preview Test",
-            "2025-06-02T10:00:00Z"
+            "2025-06-02T10:00:00Z",
         )
 
         # Get the conversation ID from the index
         import json
-        with open(server.index_file, 'r') as f:
+
+        with open(server.index_file, "r") as f:
             index_data = json.load(f)
 
         conversation_id = index_data["conversations"][-1]["id"]
@@ -370,15 +384,14 @@ class TestCompleteEdgeCaseCoverage:
         """Test get_preview truncation for long content (line 248)"""
         # Create long content (>500 chars)
         long_content = "A" * 600
-        result = await server.add_conversation(
-            long_content,
-            "Long Content Test",
-            "2025-06-02T10:00:00Z"
+        await server.add_conversation(
+            long_content, "Long Content Test", "2025-06-02T10:00:00Z"
         )
 
         # Get conversation ID
         import json
-        with open(server.index_file, 'r') as f:
+
+        with open(server.index_file, "r") as f:
             index_data = json.load(f)
 
         conversation_id = index_data["conversations"][-1]["id"]
@@ -393,19 +406,22 @@ class TestCompleteEdgeCaseCoverage:
         """Test get_preview when conversation file doesn't exist (lines 249-250)"""
         # Manually add entry to index that points to non-existent file
         import json
+
         fake_index = {
-            "conversations": [{
-                "id": "fake_conv_id",
-                "title": "Non-existent File",
-                "file_path": "conversations/nonexistent.json",
-                "date": "2025-06-01T10:00:00Z",
-                "topics": ["test"],
-                "added": "2025-06-01T10:00:00Z"
-            }],
-            "last_updated": "2025-06-01T10:00:00Z"
+            "conversations": [
+                {
+                    "id": "fake_conv_id",
+                    "title": "Non-existent File",
+                    "file_path": "conversations/nonexistent.json",
+                    "date": "2025-06-01T10:00:00Z",
+                    "topics": ["test"],
+                    "added": "2025-06-01T10:00:00Z",
+                }
+            ],
+            "last_updated": "2025-06-01T10:00:00Z",
         }
 
-        with open(server.index_file, 'w') as f:
+        with open(server.index_file, "w") as f:
             json.dump(fake_index, f)
 
         # Test get_preview with non-existent file
@@ -436,13 +452,20 @@ class TestCompleteEdgeCaseCoverage:
     @pytest.mark.asyncio
     async def test_extract_topics_quoted_terms(self, server):
         """Test topic extraction with quoted terms (lines 80-81)"""
-        # Test with quoted terms that are NOT in common_tech_terms to trigger line 81
-        content = 'We discussed "unique concept" and "special methodology" and "custom framework" in our project'
-        result = await server.add_conversation(content, "Quoted Terms Test", "2025-06-02T10:00:00Z")
+        # Test with quoted terms that are NOT in common_tech_terms to
+        # trigger line 81
+        content = (
+            'We discussed "unique concept" and "special methodology" '
+            'and "custom framework" in our project'
+        )
+        await server.add_conversation(
+            content, "Quoted Terms Test", "2025-06-02T10:00:00Z"
+        )
 
         # Check that quoted terms were extracted properly
         import json
-        with open(server.index_file, 'r') as f:
+
+        with open(server.index_file, "r") as f:
             index_data = json.load(f)
 
         topics = index_data["conversations"][-1]["topics"]
@@ -451,7 +474,11 @@ class TestCompleteEdgeCaseCoverage:
         assert len(topics) > 0
         # Check for the quoted terms that should be added via line 81
         topic_str = " ".join(topics).lower()
-        assert "unique concept" in topic_str or "special methodology" in topic_str or "custom framework" in topic_str
+        assert (
+            "unique concept" in topic_str
+            or "special methodology" in topic_str
+            or "custom framework" in topic_str
+        )
 
     @pytest.mark.asyncio
     async def test_add_conversation_invalid_date_format(self, server):
@@ -460,26 +487,25 @@ class TestCompleteEdgeCaseCoverage:
         result = await server.add_conversation(
             "Test content with invalid date",
             "Invalid Date Test",
-            "invalid-date-format"  # This should trigger ValueError and fallback to datetime.now()
+            "invalid-date-format",  # This should trigger ValueError and fallback to datetime.now()
         )
 
-        assert result['status'] == 'success'
-        assert 'file_path' in result
+        assert result["status"] == "success"
+        assert "file_path" in result
 
     @pytest.mark.asyncio
     async def test_add_conversation_auto_title_generation(self, server):
         """Test automatic title generation (lines 107-109)"""
         # Test with no title provided to trigger auto-generation
         long_content = "This is a very long first line that should be truncated when used as a title because it exceeds fifty characters in length"
-        result = await server.add_conversation(
-            long_content,
-            None,  # No title provided
-            "2025-06-02T10:00:00Z"
+        await server.add_conversation(
+            long_content, None, "2025-06-02T10:00:00Z"  # No title provided
         )
 
         # Check that title was auto-generated and truncated
         import json
-        with open(server.index_file, 'r') as f:
+
+        with open(server.index_file, "r") as f:
             index_data = json.load(f)
 
         title = index_data["conversations"][-1]["title"]
@@ -496,8 +522,10 @@ Line 3: More context
 Line 4: Additional info
 Line 5: Final line"""
 
-        result = await server.add_conversation(test_content, "Preview Test", "2025-06-02T10:00:00Z")
-        file_path = Path(result['file_path'])
+        result = await server.add_conversation(
+            test_content, "Preview Test", "2025-06-02T10:00:00Z"
+        )
+        file_path = Path(result["file_path"])
 
         # Test _get_preview method directly
         preview = server._get_preview(file_path, ["search", "terms"])
@@ -524,11 +552,11 @@ Line 5: Final line"""
         result = await server.add_conversation(
             "Test conversation for read exception",
             "Read Exception Test",
-            datetime.now(timezone.utc).isoformat()
+            datetime.now(timezone.utc).isoformat(),
         )
 
         # Make the conversation file unreadable to trigger exception during reading
-        file_path = Path(result['file_path'])
+        file_path = Path(result["file_path"])
         file_path.chmod(0o000)
 
         try:
@@ -548,12 +576,12 @@ Line 5: Final line"""
         result = await server.add_conversation(
             "Test conversation for corruption test",
             "Corruption Test",
-            datetime.now(timezone.utc).isoformat()
+            datetime.now(timezone.utc).isoformat(),
         )
 
         # Corrupt the conversation file to trigger exception during JSON parsing
-        file_path = Path(result['file_path'])
-        with open(file_path, 'w') as f:
+        file_path = Path(result["file_path"])
+        with open(file_path, "w") as f:
             f.write("invalid json content that will cause parsing to fail")
 
         try:
@@ -564,7 +592,8 @@ Line 5: Final line"""
         finally:
             # Restore a valid JSON file
             import json
-            with open(file_path, 'w') as f:
+
+            with open(file_path, "w") as f:
                 json.dump({"content": "restored content", "topics": []}, f)
 
     @pytest.mark.asyncio
@@ -575,9 +604,7 @@ Line 5: Final line"""
 
         # First add a normal conversation
         await server.add_conversation(
-            "Test conversation",
-            "Test",
-            datetime.now(timezone.utc).isoformat()
+            "Test conversation", "Test", datetime.now(timezone.utc).isoformat()
         )
 
         # Manually corrupt the index with malformed entry to trigger exception on lines 348-349
@@ -588,10 +615,10 @@ Line 5: Final line"""
                 # Another problematic entry
                 {"file_path": None, "date": "bad_date"},
             ],
-            "last_updated": "2025-06-01T10:00:00Z"
+            "last_updated": "2025-06-01T10:00:00Z",
         }
 
-        with open(server.index_file, 'w') as f:
+        with open(server.index_file, "w") as f:
             json.dump(fake_index, f)
 
         # This should trigger exception handling on lines 348-349 and continue processing
@@ -614,6 +641,7 @@ class TestMCPToolWrapperFunctions:
     def test_mcp_imports(self):
         """Test that MCP imports are available (skipped if not in Python 3.11+)"""
         import sys
+
         if sys.version_info < (3, 11):
             pytest.skip("MCP requires Python 3.11+")
 
@@ -641,7 +669,10 @@ class TestMCPToolWrapperFunctions:
 
         # Should return formatted message for no results
         assert isinstance(result, str)
-        assert "Found 0 conversations" in result or "No conversations found" in result
+        assert (
+            "Found 0 conversations" in result
+            or "No conversations found" in result
+        )
 
     @pytest.mark.asyncio
     async def test_mcp_search_tool_success_formatting(self, server):
@@ -652,7 +683,7 @@ class TestMCPToolWrapperFunctions:
         await server.add_conversation(
             "Test conversation for MCP search formatting",
             "Test Formatting",
-            "2025-06-02T10:00:00Z"
+            "2025-06-02T10:00:00Z",
         )
 
         result = await mcp_search("Test", limit=1)
@@ -660,7 +691,9 @@ class TestMCPToolWrapperFunctions:
         # Verify proper formatting - check for the actual structure
         assert isinstance(result, str)
         # Accept both success and no results cases
-        assert ("Found" in result and "conversations" in result) or "No conversations found" in result
+        assert (
+            "Found" in result and "conversations" in result
+        ) or "No conversations found" in result
         if "Found" in result:
             assert "**" in result  # Should have bold formatting for titles
 
@@ -672,7 +705,7 @@ class TestMCPToolWrapperFunctions:
         result = await mcp_add(
             "Test content for MCP add tool",
             "MCP Add Test",
-            "2025-06-02T12:00:00Z"
+            "2025-06-02T12:00:00Z",
         )
 
         assert "Status: success" in result
@@ -686,9 +719,7 @@ class TestMCPToolWrapperFunctions:
         # Add some test data
         current_time = datetime.now().isoformat()
         await server.add_conversation(
-            "Weekly summary test conversation",
-            "Weekly Test",
-            current_time
+            "Weekly summary test conversation", "Weekly Test", current_time
         )
 
         result = await mcp_summary(0)
@@ -709,12 +740,13 @@ class TestMCPToolWrapperFunctions:
         await server.add_conversation(
             "Test with many topics for truncation",
             "Many Topics Test",
-            current_week_date
+            current_week_date,
         )
 
         # Manually add many topics to trigger line 343
         import json
-        with open(server.index_file, 'r') as f:
+
+        with open(server.index_file, "r") as f:
             index_data = json.load(f)
 
         # Update both the conversation file and index to have more than 3 topics
@@ -723,16 +755,27 @@ class TestMCPToolWrapperFunctions:
             conv_file_path = server.storage_path / conv_info["file_path"]
 
             # Update the actual conversation file
-            with open(conv_file_path, 'r') as f:
+            with open(conv_file_path, "r") as f:
                 conv_data = json.load(f)
-            conv_data["topics"] = ["topic1", "topic2", "topic3", "topic4", "topic5"]
-            with open(conv_file_path, 'w') as f:
+            conv_data["topics"] = [
+                "topic1",
+                "topic2",
+                "topic3",
+                "topic4",
+                "topic5",
+            ]
+            with open(conv_file_path, "w") as f:
                 json.dump(conv_data, f)
 
             # Update the index as well
-            index_data["conversations"][-1]["topics"] = ["topic1",
-                                                         "topic2", "topic3", "topic4", "topic5"]
-            with open(server.index_file, 'w') as f:
+            index_data["conversations"][-1]["topics"] = [
+                "topic1",
+                "topic2",
+                "topic3",
+                "topic4",
+                "topic5",
+            ]
+            with open(server.index_file, "w") as f:
                 json.dump(index_data, f)
 
         # Generate summary to trigger line 343 (topics truncation)
@@ -743,7 +786,11 @@ class TestMCPToolWrapperFunctions:
         # Mock the _get_week_conversations method to raise an exception
         import unittest.mock
 
-        with unittest.mock.patch.object(server, '_get_week_conversations', side_effect=OSError("Test error")):
+        with unittest.mock.patch.object(
+            server,
+            "_get_week_conversations",
+            side_effect=OSError("Test error"),
+        ):
             summary_with_error = await server.generate_weekly_summary(0)
             assert "Failed to generate weekly summary" in summary_with_error
 
@@ -783,12 +830,12 @@ class TestConversationMemoryServerDirect:
     def test_init_index_files(self, server):
         """Test index file initialization"""
         # Index files should already exist from initialization
-        with open(server.index_file, 'r') as f:
+        with open(server.index_file, "r") as f:
             index_data = json.load(f)
         assert "conversations" in index_data
         assert "last_updated" in index_data
 
-        with open(server.topics_file, 'r') as f:
+        with open(server.topics_file, "r") as f:
             topics_data = json.load(f)
         assert "topics" in topics_data
         assert "last_updated" in topics_data
@@ -833,14 +880,14 @@ class TestConversationMemoryServerDirect:
 
         result = await server.add_conversation(content, title, date)
 
-        assert result['status'] == 'success'
-        assert 'file_path' in result
-        assert 'topics' in result
-        assert Path(result['file_path']).exists()
+        assert result["status"] == "success"
+        assert "file_path" in result
+        assert "topics" in result
+        assert Path(result["file_path"]).exists()
 
         # Check topics were extracted
-        assert 'python' in result['topics']
-        assert 'mcp' in result['topics']
+        assert "python" in result["topics"]
+        assert "mcp" in result["topics"]
 
     @pytest.mark.asyncio
     async def test_add_conversation_no_title(self, server):
@@ -849,8 +896,8 @@ class TestConversationMemoryServerDirect:
 
         result = await server.add_conversation(content)
 
-        assert result['status'] == 'success'
-        assert Path(result['file_path']).exists()
+        assert result["status"] == "success"
+        assert Path(result["file_path"]).exists()
 
     @pytest.mark.asyncio
     async def test_search_conversations_basic(self, server):
@@ -859,20 +906,18 @@ class TestConversationMemoryServerDirect:
         await server.add_conversation(
             "Python programming discussion",
             "Python Talk",
-            "2025-01-15T10:30:00"
+            "2025-01-15T10:30:00",
         )
 
         await server.add_conversation(
-            "JavaScript development tips",
-            "JS Tips",
-            "2025-01-15T11:00:00"
+            "JavaScript development tips", "JS Tips", "2025-01-15T11:00:00"
         )
 
         # Search for Python
         results = await server.search_conversations("Python", limit=5)
 
         assert len(results) > 0
-        python_found = any("Python" in r.get('title', '') for r in results)
+        python_found = any("Python" in r.get("title", "") for r in results)
         assert python_found
 
     @pytest.mark.asyncio
@@ -882,43 +927,45 @@ class TestConversationMemoryServerDirect:
         await server.add_conversation(
             "Python programming with python libraries and python tools",
             "High Score Python Discussion",
-            "2025-01-15T10:30:00"
+            "2025-01-15T10:30:00",
         )
 
         await server.add_conversation(
             "General programming discussion",
             "Low Score Discussion",
-            "2025-01-15T11:00:00"
+            "2025-01-15T11:00:00",
         )
 
         results = await server.search_conversations("python", limit=2)
 
         assert len(results) > 0
         # First result should have a score (could be 0 for no matches)
-        assert 'score' in results[0]
+        assert "score" in results[0]
         # If there are results with matching content, score should be reasonable
         if len(results) >= 2:
             # The high score conversation should be ranked higher or equal
-            assert results[0]['score'] >= results[1]['score']
+            assert results[0]["score"] >= results[1]["score"]
 
     @pytest.mark.asyncio
     async def test_search_conversations_empty(self, server):
         """Test search with no results"""
-        results = await server.search_conversations("nonexistentterm12345", limit=5)
+        results = await server.search_conversations(
+            "nonexistentterm12345", limit=5
+        )
         assert len(results) == 0
 
     @pytest.mark.asyncio
-    async def test_search_conversations_missing_file(self, server, temp_storage):
+    async def test_search_conversations_missing_file(
+        self, server, temp_storage
+    ):
         """Test search when conversation file is missing"""
         # Add conversation
         result = await server.add_conversation(
-            "Test content",
-            "Test Title",
-            "2025-01-15T10:30:00"
+            "Test content", "Test Title", "2025-01-15T10:30:00"
         )
 
         # Remove the file but keep index entry
-        file_path = Path(result['file_path'])
+        file_path = Path(result["file_path"])
         if file_path.exists():
             file_path.unlink()
 
@@ -935,7 +982,7 @@ Line 2: This contains the search term
 Line 3: Context after match
 Line 4: More content"""
 
-        with open(test_file, 'w') as f:
+        with open(test_file, "w") as f:
             f.write(content)
 
         preview = server._get_preview(test_file, ["search", "term"])
@@ -956,7 +1003,9 @@ Line 4: More content"""
         test_title = "Index Test"
 
         # Create a fake file path
-        fake_path = server.conversations_path / "2025" / "01-january" / "test.md"
+        fake_path = (
+            server.conversations_path / "2025" / "01-january" / "test.md"
+        )
         fake_path.parent.mkdir(parents=True, exist_ok=True)
         fake_path.touch()
 
@@ -966,18 +1015,18 @@ Line 4: More content"""
             "content": "Test content",
             "date": test_date.isoformat(),
             "topics": test_topics,
-            "created_at": test_date.isoformat()
+            "created_at": test_date.isoformat(),
         }
         server._update_index(conversation_data, fake_path)
 
         # Check index was updated
-        with open(server.index_file, 'r') as f:
+        with open(server.index_file, "r") as f:
             index_data = json.load(f)
 
-        assert len(index_data['conversations']) > 0
-        last_conv = index_data['conversations'][-1]
-        assert last_conv['title'] == test_title
-        assert last_conv['topics'] == test_topics
+        assert len(index_data["conversations"]) > 0
+        last_conv = index_data["conversations"][-1]
+        assert last_conv["title"] == test_title
+        assert last_conv["topics"] == test_topics
 
     @pytest.mark.asyncio
     async def test_update_topics_index(self, server):
@@ -986,15 +1035,15 @@ Line 4: More content"""
 
         server._update_topics_index(test_topics, "test_conv_123")
 
-        with open(server.topics_file, 'r') as f:
+        with open(server.topics_file, "r") as f:
             topics_data = json.load(f)
 
-        assert "python" in topics_data['topics']
-        assert "mcp" in topics_data['topics']
+        assert "python" in topics_data["topics"]
+        assert "mcp" in topics_data["topics"]
         # Should have 2 entries for python (one for each occurrence)
-        assert len(topics_data['topics']['python']) == 2
+        assert len(topics_data["topics"]["python"]) == 2
         # Should have 1 entry for mcp
-        assert len(topics_data['topics']['mcp']) == 1
+        assert len(topics_data["topics"]["mcp"]) == 1
 
     @pytest.mark.asyncio
     async def test_generate_weekly_summary_no_conversations(self, server):
@@ -1008,24 +1057,25 @@ Line 4: More content"""
         """Test weekly summary with conversation data"""
         # Add conversations for current week (use UTC to match _calculate_week_range)
         from datetime import timezone
+
         current_time = datetime.now(timezone.utc)
 
         await server.add_conversation(
             "Python code development with git repository",
             "Coding Discussion",
-            current_time.isoformat()
+            current_time.isoformat(),
         )
 
         await server.add_conversation(
             "We decided to use the recommended approach",
             "Decision Made",
-            current_time.isoformat()
+            current_time.isoformat(),
         )
 
         await server.add_conversation(
             "Learning tutorial about new concepts",
             "Learning Session",
-            current_time.isoformat()
+            current_time.isoformat(),
         )
 
         summary = await server.generate_weekly_summary(0)
@@ -1053,7 +1103,9 @@ Line 4: More content"""
 
         try:
             # Add a conversation so it tries to write a summary file
-            await server.add_conversation("Test", "Test", "2025-06-12T10:00:00")
+            await server.add_conversation(
+                "Test", "Test", "2025-06-12T10:00:00"
+            )
             summary = await server.generate_weekly_summary(0)
             # Should either succeed with read-only directory or fail gracefully
             assert isinstance(summary, str)
@@ -1066,13 +1118,11 @@ Line 4: More content"""
         """Test add conversation error handling"""
         # Test with invalid date
         result = await server.add_conversation(
-            "Test content",
-            "Error Test",
-            "invalid-date-format"
+            "Test content", "Error Test", "invalid-date-format"
         )
 
         # Should handle gracefully
-        assert 'status' in result
+        assert "status" in result
 
 
 class TestServerExceptionCoverage:
@@ -1083,12 +1133,16 @@ class TestServerExceptionCoverage:
         from unittest.mock import patch
 
         # Mock SearchDatabase to raise an exception during initialization
-        with patch('conversation_memory.SearchDatabase',
-                   side_effect=Exception("SQLite initialization failed")):
+        with patch(
+            "conversation_memory.SearchDatabase",
+            side_effect=Exception("SQLite initialization failed"),
+        ):
 
             try:
                 # This should catch the SQLite exception and continue
-                server = ConversationMemoryServer(temp_storage, enable_sqlite=True)
+                server = ConversationMemoryServer(
+                    temp_storage, enable_sqlite=True
+                )
                 # Server should still be created but with SQLite disabled
                 assert not server.use_sqlite_search
             finally:
@@ -1099,7 +1153,7 @@ class TestServerExceptionCoverage:
         from unittest.mock import patch
 
         # Mock json.dump to raise an exception during index file creation
-        with patch('json.dump', side_effect=Exception("JSON write failed")):
+        with patch("json.dump", side_effect=Exception("JSON write failed")):
             try:
                 # This should trigger the exception in _init_index_files
                 ConversationMemoryServer(temp_storage)
@@ -1109,12 +1163,17 @@ class TestServerExceptionCoverage:
                 # Exception handling should log and possibly continue
                 assert "JSON write failed" in str(e)
 
-    def test_index_file_creation_permission_error_lines_115_116(self, temp_storage):
+    def test_index_file_creation_permission_error_lines_115_116(
+        self, temp_storage
+    ):
         """Test index file creation permission errors"""
         from unittest.mock import patch
 
         # Mock Path.mkdir to raise PermissionError
-        with patch('pathlib.Path.mkdir', side_effect=PermissionError("Permission denied")):
+        with patch(
+            "pathlib.Path.mkdir",
+            side_effect=PermissionError("Permission denied"),
+        ):
             try:
                 ConversationMemoryServer(temp_storage)
                 # Test that server handles permission errors gracefully
@@ -1128,7 +1187,7 @@ class TestServerExceptionCoverage:
         from unittest.mock import patch
 
         # Mock file operations to trigger exception handling
-        with patch('builtins.open', side_effect=OSError("File read error")):
+        with patch("builtins.open", side_effect=OSError("File read error")):
             try:
                 # This should trigger exception handling in search_conversations
                 result = await server.search_conversations("test query")
@@ -1146,10 +1205,12 @@ class TestServerExceptionCoverage:
         from unittest.mock import patch
 
         # Mock file operations to trigger exception handling
-        with patch('builtins.open', side_effect=OSError("File write error")):
+        with patch("builtins.open", side_effect=OSError("File write error")):
             try:
                 # This should trigger exception handling in add_conversation
-                result = await server.add_conversation("test content", "test title", "2025-06-10T12:00:00Z")
+                result = await server.add_conversation(
+                    "test content", "test title", "2025-06-10T12:00:00Z"
+                )
                 # Should return error status or raise exception
                 if isinstance(result, str):
                     assert "error" in result.lower()
@@ -1162,7 +1223,7 @@ class TestServerExceptionCoverage:
         # Create a mock conversation entry that points to non-existent file
         mock_conv_info = {
             "file_path": "2025/06-june/non-existent-file.md",
-            "title": "Test Conversation"
+            "title": "Test Conversation",
         }
 
         # This should trigger lines 493-494 in _analyze_conversations method
@@ -1172,7 +1233,9 @@ class TestServerExceptionCoverage:
         # The method should handle missing files gracefully
         assert isinstance(result, list)
 
-    def test_additional_error_handling_lines_507_510(self, server, temp_storage):
+    def test_additional_error_handling_lines_507_510(
+        self, server, temp_storage
+    ):
         """Test additional error handling scenarios"""
         from unittest.mock import patch
 
@@ -1184,11 +1247,11 @@ class TestServerExceptionCoverage:
 
         mock_conv_info = {
             "file_path": "2025/06-june/test-conversation.md",
-            "title": "Test Conversation"
+            "title": "Test Conversation",
         }
 
         # Mock file reading to raise an exception (triggers lines 507-510)
-        with patch('builtins.open', side_effect=OSError("File read error")):
+        with patch("builtins.open", side_effect=OSError("File read error")):
             # This should trigger lines 507-510 exception handling
             result = server._analyze_conversations([mock_conv_info])
 
@@ -1198,7 +1261,8 @@ class TestServerExceptionCoverage:
     def test_initialization_with_invalid_permissions(self):
         """Test server initialization with permission issues"""
         # Try to create server in a restricted directory (triggers security validation)
-        restricted_path = "/root/restricted_test"  # Should fail due to security validation
+        # Should fail due to security validation
+        restricted_path = "/root/restricted_test"
 
         with pytest.raises(PermissionError):
             ConversationMemoryServer(restricted_path)
@@ -1222,4 +1286,12 @@ class TestServerExceptionCoverage:
 
 if __name__ == "__main__":
     # Run tests with coverage
-    pytest.main([__file__, "-v", "--cov=server_fastmcp", "--cov-report=html", "--cov-report=term"])
+    pytest.main(
+        [
+            __file__,
+            "-v",
+            "--cov=server_fastmcp",
+            "--cov-report=html",
+            "--cov-report=term",
+        ]
+    )

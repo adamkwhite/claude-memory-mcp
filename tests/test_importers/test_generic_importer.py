@@ -519,7 +519,8 @@ class TestGenericImporterParsingMethods:
         assert self.importer._extract_field(data, ["name", "title"]) == "Test"
 
         # No match
-        assert self.importer._extract_field(data, ["missing", "absent"]) is None
+        assert self.importer._extract_field(
+            data, ["missing", "absent"]) is None
 
     def test_find_column(self):
         """Test column name matching."""
@@ -557,7 +558,8 @@ class TestGenericImporterHelperMethods:
             "**Human**: Thanks!"
         ]
 
-        messages, content_parts = self.importer._extract_dialogue_messages(lines)
+        messages, content_parts = self.importer._extract_dialogue_messages(
+            lines)
 
         assert len(messages) == 3
         assert messages[0]["role"] == "user"
@@ -582,7 +584,8 @@ class TestGenericImporterHelperMethods:
     def test_start_new_message(self):
         """Test starting new message from regex match."""
         import re
-        match = re.match(r'(\*\*)?(\w+)(\*\*)?\s*:\s*(.*)', "**Human**: Hello there")
+        match = re.match(r'(\*\*)?(\w+)(\*\*)?\s*:\s*(.*)',
+                         "**Human**: Hello there")
 
         speaker, message = self.importer._start_new_message(match)
 
@@ -592,7 +595,8 @@ class TestGenericImporterHelperMethods:
     def test_continue_current_message(self):
         """Test continuing current message."""
         current_message = ["Hello"]
-        result = self.importer._continue_current_message("Human", current_message, "there")
+        result = self.importer._continue_current_message(
+            "Human", current_message, "there")
 
         assert result == ["Hello", "there"]
 
@@ -605,8 +609,10 @@ class TestGenericImporterHelperMethods:
 
         random_elem = ET.Element("data")
 
-        assert self.importer._xml_element_looks_like_conversation(conv_elem) is True
-        assert self.importer._xml_element_looks_like_conversation(random_elem) is False
+        assert self.importer._xml_element_looks_like_conversation(
+            conv_elem) is True
+        assert self.importer._xml_element_looks_like_conversation(
+            random_elem) is False
 
 
 class TestGenericImporterSaveConversation:
@@ -669,7 +675,8 @@ class TestGenericImporterSaveConversation:
         ]
 
         file_path = self.storage_path / "test.json"
-        result = self.importer._save_conversations(conversations, file_path, "test_format")
+        result = self.importer._save_conversations(
+            conversations, file_path, "test_format")
 
         assert result.success is True
         assert result.conversations_imported == 2
@@ -696,7 +703,8 @@ class TestGenericImporterSaveConversation:
         ]
 
         file_path = self.storage_path / "test.json"
-        result = self.importer._save_conversations(conversations, file_path, "test_format")
+        result = self.importer._save_conversations(
+            conversations, file_path, "test_format")
 
         assert result.success is True  # At least one succeeded
         assert result.conversations_imported == 1
@@ -724,7 +732,8 @@ class TestGenericImporterIntegration:
                         {"role": "user", "content": "Import this conversation"},
                         {"role": "assistant", "content": "I'll import this for you"},
                         {"role": "user", "content": "Make sure it works properly"},
-                        {"role": "assistant", "content": "The import is working correctly"}
+                        {"role": "assistant",
+                            "content": "The import is working correctly"}
                     ],
                     "metadata": {"test": "e2e_integration"}
                 }

@@ -27,7 +27,7 @@ class TestSearchDatabase:
     @pytest.fixture
     def temp_db_path(self):
         """Create temporary database for testing."""
-        with tempfile.NamedTemporaryFile(suffix='.db', delete=False) as tmp:
+        with tempfile.NamedTemporaryFile(suffix=".db", delete=False) as tmp:
             db_path = tmp.name
         yield db_path
         Path(db_path).unlink(missing_ok=True)
@@ -46,10 +46,8 @@ class TestSearchDatabase:
             "content": "Discussion about Python asyncio, async/await syntax, and concurrent programming patterns",
             "date": "2025-06-12T10:00:00",
             "created_at": "2025-06-12T10:00:00",
-            "topics": [
-                "python",
-                "asyncio",
-                "concurrency"]}
+            "topics": ["python", "asyncio", "concurrency"],
+        }
 
     def test_database_initialization(self, search_db):
         """Test database tables are created correctly."""
@@ -57,8 +55,11 @@ class TestSearchDatabase:
 
         # Test database structure
         import sqlite3
+
         with sqlite3.connect(search_db.db_path) as conn:
-            cursor = conn.execute("SELECT name FROM sqlite_master WHERE type='table'")
+            cursor = conn.execute(
+                "SELECT name FROM sqlite_master WHERE type='table'"
+            )
             tables = [row[0] for row in cursor]
 
             assert "conversations" in tables
@@ -67,14 +68,18 @@ class TestSearchDatabase:
 
     def test_add_conversation(self, search_db, sample_conversation):
         """Test adding a conversation to the database."""
-        success = search_db.add_conversation(sample_conversation, "test/path.json")
+        success = search_db.add_conversation(
+            sample_conversation, "test/path.json"
+        )
         assert success is True
 
         # Verify conversation was added
         assert search_db.get_conversation_count() == 1
 
         # Test duplicate handling
-        success = search_db.add_conversation(sample_conversation, "test/path.json")
+        success = search_db.add_conversation(
+            sample_conversation, "test/path.json"
+        )
         assert success is True
         assert search_db.get_conversation_count() == 1  # Should still be 1
 
@@ -145,15 +150,15 @@ class TestSearchDatabase:
         # Test that problematic queries don't crash
         queries = [
             '"unclosed quote',
-            'query with (parentheses)',
-            'query with [brackets]',
-            'query with {braces}',
-            'query with *asterisk*',
-            'query:with:colons',
-            'query-with-dashes',
+            "query with (parentheses)",
+            "query with [brackets]",
+            "query with {braces}",
+            "query with *asterisk*",
+            "query:with:colons",
+            "query-with-dashes",
             '""',
-            '()',
-            '[]'
+            "()",
+            "[]",
         ]
 
         for query in queries:
@@ -175,18 +180,14 @@ class TestConversationMemoryServerSQLite:
     def memory_server_sqlite(self, temp_storage):
         """Create ConversationMemoryServer with SQLite enabled."""
         return ConversationMemoryServer(
-            storage_path=temp_storage,
-            use_data_dir=True,
-            enable_sqlite=True
+            storage_path=temp_storage, use_data_dir=True, enable_sqlite=True
         )
 
     @pytest.fixture
     def memory_server_linear(self, temp_storage):
         """Create ConversationMemoryServer with SQLite disabled."""
         return ConversationMemoryServer(
-            storage_path=temp_storage,
-            use_data_dir=True,
-            enable_sqlite=False
+            storage_path=temp_storage, use_data_dir=True, enable_sqlite=False
         )
 
     @pytest.mark.asyncio
@@ -220,12 +221,16 @@ class TestConversationMemoryServerSQLite:
         assert result["status"] == "success"
 
         # Verify conversation is in SQLite
-        search_results = await memory_server_sqlite.search_conversations("SQLite")
+        search_results = await memory_server_sqlite.search_conversations(
+            "SQLite"
+        )
         assert len(search_results) == 1
         assert search_results[0]["title"] == title
 
     @pytest.mark.asyncio
-    async def test_search_consistency(self, memory_server_sqlite, memory_server_linear):
+    async def test_search_consistency(
+        self, memory_server_sqlite, memory_server_linear
+    ):
         """Test that SQLite and linear search return consistent results."""
         content = "Python programming with async/await patterns and FastAPI framework"
         title = "Python Async Programming"
@@ -235,19 +240,31 @@ class TestConversationMemoryServerSQLite:
         await memory_server_linear.add_conversation(content, title)
 
         # Search both with a more specific term to avoid conflicts with other tests
-        sqlite_results = await memory_server_sqlite.search_conversations("FastAPI")
-        linear_results = await memory_server_linear.search_conversations("FastAPI")
+        sqlite_results = await memory_server_sqlite.search_conversations(
+            "FastAPI"
+        )
+        linear_results = await memory_server_linear.search_conversations(
+            "FastAPI"
+        )
 
         # Should find the conversation in both
         assert len(sqlite_results) >= 1
         assert len(linear_results) >= 1
 
         # Find matching conversations (both should have the specific title)
-        sqlite_conv = next((r for r in sqlite_results if r["title"] == title), None)
-        linear_conv = next((r for r in linear_results if r["title"] == title), None)
+        sqlite_conv = next(
+            (r for r in sqlite_results if r["title"] == title), None
+        )
+        linear_conv = next(
+            (r for r in linear_results if r["title"] == title), None
+        )
 
-        assert sqlite_conv is not None, "SQLite should find the added conversation"
-        assert linear_conv is not None, "Linear search should find the added conversation"
+        assert (
+            sqlite_conv is not None
+        ), "SQLite should find the added conversation"
+        assert (
+            linear_conv is not None
+        ), "Linear search should find the added conversation"
 
         # IDs should match (both use same generation logic)
         assert sqlite_conv["id"] == linear_conv["id"]
@@ -256,13 +273,17 @@ class TestConversationMemoryServerSQLite:
     @pytest.mark.asyncio
     async def test_topic_search(self, memory_server_sqlite):
         """Test topic-based search functionality."""
-        content = "Discussion about machine learning algorithms and data science"
+        content = (
+            "Discussion about machine learning algorithms and data science"
+        )
         title = "ML Discussion"
 
         await memory_server_sqlite.add_conversation(content, title)
 
         # Test topic search
-        results = await memory_server_sqlite.search_by_topic("machine learning")
+        results = await memory_server_sqlite.search_by_topic(
+            "machine learning"
+        )
         assert len(results) >= 0  # Topic extraction might vary
 
     @pytest.mark.asyncio
@@ -275,7 +296,9 @@ class TestConversationMemoryServerSQLite:
             assert key in stats
 
         # Add conversation and check stats update
-        await memory_server_sqlite.add_conversation("Test content", "Test title")
+        await memory_server_sqlite.add_conversation(
+            "Test content", "Test title"
+        )
 
         updated_stats = await memory_server_sqlite.get_search_stats()
         if "total_conversations" in updated_stats:
@@ -302,14 +325,14 @@ class TestConversationMigration:
                 "content": f"This is test conversation {i + 1} about Python programming",
                 "date": f"2025-06-{i + 10:02d}T10:00:00",
                 "created_at": f"2025-06-{i + 10:02d}T10:00:00",
-                "topics": ["python", "testing"]
+                "topics": ["python", "testing"],
             }
 
             year_month_dir = conversations_dir / "2025" / "06-june"
             year_month_dir.mkdir(parents=True, exist_ok=True)
 
             conv_file = year_month_dir / f"{conv_data['id']}.json"
-            with open(conv_file, 'w') as f:
+            with open(conv_file, "w") as f:
                 json.dump(conv_data, f)
 
         # Create index file
@@ -321,14 +344,14 @@ class TestConversationMigration:
                     "date": f"2025-06-{i + 10:02d}T10:00:00",
                     "topics": ["python", "testing"],
                     "file_path": f"data/conversations/2025/06-june/test_conv_{i:03d}.json",
-                    "added_at": f"2025-06-{i + 10:02d}T10:00:00"
+                    "added_at": f"2025-06-{i + 10:02d}T10:00:00",
                 }
                 for i in range(3)
             ],
-            "last_updated": "2025-06-12T10:00:00"
+            "last_updated": "2025-06-12T10:00:00",
         }
 
-        with open(conversations_dir / "index.json", 'w') as f:
+        with open(conversations_dir / "index.json", "w") as f:
             json.dump(index_data, f)
 
         yield temp_dir
@@ -371,7 +394,9 @@ class TestConversationMigration:
     def test_migration_without_index(self, temp_storage):
         """Test migration by directory scanning when index is missing."""
         # Remove index file
-        index_file = Path(temp_storage) / "data" / "conversations" / "index.json"
+        index_file = (
+            Path(temp_storage) / "data" / "conversations" / "index.json"
+        )
         index_file.unlink()
 
         migrator = ConversationMigrator(temp_storage, use_data_dir=True)
@@ -400,7 +425,10 @@ class TestPerformanceComparison:
                 "content": f"Content about {topics[i % len(topics)]} programming and development",
                 "date": f"2025-06-{(i % 28) + 1:02d}T10:00:00",
                 "created_at": f"2025-06-{(i % 28) + 1:02d}T10:00:00",
-                "topics": [topics[i % len(topics)], topics[(i + 1) % len(topics)]]
+                "topics": [
+                    topics[i % len(topics)],
+                    topics[(i + 1) % len(topics)],
+                ],
             }
             conversations.append(conv)
 
@@ -416,20 +444,24 @@ class TestPerformanceComparison:
             sqlite_server = ConversationMemoryServer(
                 storage_path=temp_dir + "/sqlite",
                 use_data_dir=True,
-                enable_sqlite=True
+                enable_sqlite=True,
             )
 
             # Setup linear server
             linear_server = ConversationMemoryServer(
                 storage_path=temp_dir + "/linear",
                 use_data_dir=True,
-                enable_sqlite=False
+                enable_sqlite=False,
             )
 
             # Add test data
             for conv in performance_test_data:
-                await sqlite_server.add_conversation(conv["content"], conv["title"])
-                await linear_server.add_conversation(conv["content"], conv["title"])
+                await sqlite_server.add_conversation(
+                    conv["content"], conv["title"]
+                )
+                await linear_server.add_conversation(
+                    conv["content"], conv["title"]
+                )
 
             # Test search performance
             test_queries = ["python", "javascript", "database"]
@@ -437,12 +469,16 @@ class TestPerformanceComparison:
             for query in test_queries:
                 # SQLite search
                 start_time = time.perf_counter()
-                sqlite_results = await sqlite_server.search_conversations(query, limit=10)
+                sqlite_results = await sqlite_server.search_conversations(
+                    query, limit=10
+                )
                 sqlite_time = time.perf_counter() - start_time
 
                 # Linear search
                 start_time = time.perf_counter()
-                linear_results = await linear_server.search_conversations(query, limit=10)
+                linear_results = await linear_server.search_conversations(
+                    query, limit=10
+                )
                 linear_time = time.perf_counter() - start_time
 
                 # Both should return results
@@ -451,9 +487,12 @@ class TestPerformanceComparison:
 
                 # SQLite should not be significantly slower (allowing for overhead in
                 # small datasets)
-                assert sqlite_time < linear_time * 5  # Allow 5x overhead for small test datasets
+                # Allow 5x overhead for small test datasets
+                assert sqlite_time < linear_time * 5
 
-                print(f"Query '{query}': SQLite {sqlite_time:.4f}s, Linear {linear_time:.4f}s")
+                print(
+                    f"Query '{query}': SQLite {sqlite_time:.4f}s, Linear {linear_time:.4f}s"
+                )
 
 
 if __name__ == "__main__":
