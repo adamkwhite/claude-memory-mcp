@@ -35,7 +35,7 @@ def json_logger():
     # Create string buffer to capture log output
     log_buffer = StringIO()
     handler = logging.StreamHandler(log_buffer)
-    handler.setFormatter(JSONFormatter(datefmt='%Y-%m-%dT%H:%M:%S'))
+    handler.setFormatter(JSONFormatter(datefmt="%Y-%m-%dT%H:%M:%S"))
     logger.addHandler(handler)
 
     # Return both logger and buffer for assertions
@@ -54,8 +54,8 @@ def text_logger():
     handler = logging.StreamHandler(log_buffer)
     handler.setFormatter(
         logging.Formatter(
-            '%(asctime)s | %(levelname)-8s | %(name)s:%(lineno)d | %(funcName)s() | %(message)s',
-            datefmt='%Y-%m-%d %H:%M:%S'
+            "%(asctime)s | %(levelname)-8s | %(name)s:%(lineno)d | %(funcName)s() | %(message)s",
+            datefmt="%Y-%m-%d %H:%M:%S",
         )
     )
     logger.addHandler(handler)
@@ -67,7 +67,9 @@ def text_logger():
 @pytest.fixture
 def temp_log_file():
     """Create a temporary log file for testing"""
-    with tempfile.NamedTemporaryFile(mode='w+', delete=False, suffix='.log') as f:
+    with tempfile.NamedTemporaryFile(
+        mode="w+", delete=False, suffix=".log"
+    ) as f:
         temp_path = f.name
 
     yield temp_path
@@ -182,7 +184,7 @@ class TestJSONFormatterBasic:
             "type": "test",
             "user_id": 123,
             "tags": ["python", "logging"],
-            "metadata": {"key": "value"}
+            "metadata": {"key": "value"},
         }
 
         logger.info("Test with context", extra={"context": test_context})
@@ -211,10 +213,13 @@ class TestJSONFormatterBasic:
         # Log with non-serializable context
         non_serializable_context = {
             "type": "test",
-            "custom_obj": CustomObject()
+            "custom_obj": CustomObject(),
         }
 
-        logger.info("Test with non-serializable", extra={"context": non_serializable_context})
+        logger.info(
+            "Test with non-serializable",
+            extra={"context": non_serializable_context},
+        )
 
         # Parse output
         log_output = log_buffer.getvalue().strip()
@@ -224,7 +229,10 @@ class TestJSONFormatterBasic:
         assert "context" in log_data
         assert isinstance(log_data["context"], str)
         # The string representation should contain info about the object
-        assert "CustomObject" in log_data["context"] or "type" in log_data["context"]
+        assert (
+            "CustomObject" in log_data["context"]
+            or "type" in log_data["context"]
+        )
 
 
 class TestEnvironmentVariableHandling:
@@ -272,9 +280,7 @@ class TestEnvironmentVariableHandling:
         os.environ["CLAUDE_MCP_LOG_FORMAT"] = "json"
 
         logger = setup_logging(
-            log_level="INFO",
-            log_file=temp_log_file,
-            console_output=False
+            log_level="INFO", log_file=temp_log_file, console_output=False
         )
 
         # Check that file handler uses JSONFormatter
@@ -287,9 +293,7 @@ class TestEnvironmentVariableHandling:
         os.environ["CLAUDE_MCP_LOG_FORMAT"] = "text"
 
         logger = setup_logging(
-            log_level="INFO",
-            log_file=temp_log_file,
-            console_output=False
+            log_level="INFO", log_file=temp_log_file, console_output=False
         )
 
         # Check that file handler uses standard formatter
@@ -306,17 +310,15 @@ class TestSpecializedLoggingFunctions:
         """Test log_performance() produces correct JSON with structured context"""
         os.environ["CLAUDE_MCP_LOG_FORMAT"] = "json"
 
-        logger = setup_logging(
-            log_level="INFO",
-            log_file=temp_log_file,
-            console_output=False
+        setup_logging(
+            log_level="INFO", log_file=temp_log_file, console_output=False
         )
 
         # Log performance metric
         log_performance("test_function", 0.123, query_count=5, cache_hits=3)
 
         # Read log file
-        with open(temp_log_file, 'r') as f:
+        with open(temp_log_file, "r") as f:
             log_output = f.read().strip()
 
         # Parse JSON
@@ -330,25 +332,25 @@ class TestSpecializedLoggingFunctions:
         assert log_data["context"]["query_count"] == 5
         assert log_data["context"]["cache_hits"] == 3
 
-    def test_log_security_event_with_json_format_and_redaction(self, temp_log_file):
+    def test_log_security_event_with_json_format_and_redaction(
+        self, temp_log_file
+    ):
         """Test log_security_event() with JSON format and path redaction"""
         os.environ["CLAUDE_MCP_LOG_FORMAT"] = "json"
 
-        logger = setup_logging(
-            log_level="WARNING",
-            log_file=temp_log_file,
-            console_output=False
+        setup_logging(
+            log_level="WARNING", log_file=temp_log_file, console_output=False
         )
 
         # Log security event with path
         log_security_event(
             "path_traversal_attempt",
             "Blocked suspicious path: /etc/passwd",
-            severity="WARNING"
+            severity="WARNING",
         )
 
         # Read log file
-        with open(temp_log_file, 'r') as f:
+        with open(temp_log_file, "r") as f:
             log_output = f.read().strip()
 
         # Parse JSON
@@ -361,27 +363,30 @@ class TestSpecializedLoggingFunctions:
         assert log_data["context"]["event_type"] == "path_traversal_attempt"
         assert log_data["context"]["severity"] == "WARNING"
         # Path should be redacted
-        assert "<redacted_path>" in log_data["context"]["details"] or "passwd" not in log_data["context"]["details"]
+        assert (
+            "<redacted_path>" in log_data["context"]["details"]
+            or "passwd" not in log_data["context"]["details"]
+        )
 
-    def test_log_validation_failure_with_json_format_and_sanitization(self, temp_log_file):
+    def test_log_validation_failure_with_json_format_and_sanitization(
+        self, temp_log_file
+    ):
         """Test log_validation_failure() with JSON format and sanitization"""
         os.environ["CLAUDE_MCP_LOG_FORMAT"] = "json"
 
-        logger = setup_logging(
-            log_level="WARNING",
-            log_file=temp_log_file,
-            console_output=False
+        setup_logging(
+            log_level="WARNING", log_file=temp_log_file, console_output=False
         )
 
         # Log validation failure with potentially dangerous input
         log_validation_failure(
             "username",
             "test\nuser\x00malicious",
-            "Contains control characters"
+            "Contains control characters",
         )
 
         # Read log file
-        with open(temp_log_file, 'r') as f:
+        with open(temp_log_file, "r") as f:
             log_output = f.read().strip()
 
         # Parse JSON
@@ -400,10 +405,8 @@ class TestSpecializedLoggingFunctions:
         """Test log_file_operation() with JSON format"""
         os.environ["CLAUDE_MCP_LOG_FORMAT"] = "json"
 
-        logger = setup_logging(
-            log_level="INFO",
-            log_file=temp_log_file,
-            console_output=False
+        setup_logging(
+            log_level="INFO", log_file=temp_log_file, console_output=False
         )
 
         # Log file operation
@@ -412,11 +415,11 @@ class TestSpecializedLoggingFunctions:
             "/tmp/test.txt",
             success=True,
             size_bytes=1024,
-            duration_ms=15
+            duration_ms=15,
         )
 
         # Read log file
-        with open(temp_log_file, 'r') as f:
+        with open(temp_log_file, "r") as f:
             log_output = f.read().strip()
 
         # Parse JSON
@@ -435,17 +438,15 @@ class TestSpecializedLoggingFunctions:
         """Test log_function_call() with JSON format"""
         os.environ["CLAUDE_MCP_LOG_FORMAT"] = "json"
 
-        logger = setup_logging(
-            log_level="DEBUG",
-            log_file=temp_log_file,
-            console_output=False
+        setup_logging(
+            log_level="DEBUG", log_file=temp_log_file, console_output=False
         )
 
         # Log function call
         log_function_call("test_function", param1="value1", param2=42)
 
         # Read log file
-        with open(temp_log_file, 'r') as f:
+        with open(temp_log_file, "r") as f:
             log_output = f.read().strip()
 
         # Parse JSON

@@ -26,7 +26,9 @@ class TestLoggingSetup:
 
     def test_setup_logging_console_only(self):
         """Test setting up console-only logging"""
-        logger = setup_logging(log_level="DEBUG", console_output=True, log_file=None)
+        logger = setup_logging(
+            log_level="DEBUG", console_output=True, log_file=None
+        )
 
         assert logger.level == logging.DEBUG
         assert len(logger.handlers) == 1
@@ -39,12 +41,12 @@ class TestLoggingSetup:
                 logger = setup_logging(
                     log_level="INFO",
                     console_output=False,
-                    log_file=temp_file.name
+                    log_file=temp_file.name,
                 )
 
                 assert logger.level == logging.INFO
                 assert len(logger.handlers) == 1
-                assert hasattr(logger.handlers[0], 'baseFilename')
+                assert hasattr(logger.handlers[0], "baseFilename")
 
             finally:
                 os.unlink(temp_file.name)
@@ -56,7 +58,7 @@ class TestLoggingSetup:
                 logger = setup_logging(
                     log_level="WARNING",
                     console_output=True,
-                    log_file=temp_file.name
+                    log_file=temp_file.name,
                 )
 
                 assert logger.level == logging.WARNING
@@ -70,12 +72,12 @@ class TestLoggingSetup:
         with tempfile.NamedTemporaryFile(delete=False) as temp_file:
             try:
                 logger = setup_logging(
-                    log_file=temp_file.name,
-                    max_bytes=1024,
-                    backup_count=3
+                    log_file=temp_file.name, max_bytes=1024, backup_count=3
                 )
 
-                file_handler = next(h for h in logger.handlers if hasattr(h, 'maxBytes'))
+                file_handler = next(
+                    h for h in logger.handlers if hasattr(h, "maxBytes")
+                )
                 assert file_handler.maxBytes == 1024
                 assert file_handler.backupCount == 3
 
@@ -88,17 +90,17 @@ class TestColoredFormatter:
 
     def test_colored_formatter_adds_colors(self):
         """Test that colored formatter adds color codes"""
-        formatter = ColoredFormatter('%(levelname)s - %(message)s')
+        formatter = ColoredFormatter("%(levelname)s - %(message)s")
 
         # Create log records for different levels
         debug_record = logging.LogRecord(
-            'test', logging.DEBUG, 'test.py', 1, 'debug message', (), None
+            "test", logging.DEBUG, "test.py", 1, "debug message", (), None
         )
         info_record = logging.LogRecord(
-            'test', logging.INFO, 'test.py', 1, 'info message', (), None
+            "test", logging.INFO, "test.py", 1, "info message", (), None
         )
         error_record = logging.LogRecord(
-            'test', logging.ERROR, 'test.py', 1, 'error message', (), None
+            "test", logging.ERROR, "test.py", 1, "error message", (), None
         )
 
         # Format messages
@@ -107,10 +109,10 @@ class TestColoredFormatter:
         error_msg = formatter.format(error_record)
 
         # Check that color codes are present
-        assert '\033[36m' in debug_msg  # Cyan for DEBUG
-        assert '\033[32m' in info_msg   # Green for INFO
-        assert '\033[31m' in error_msg  # Red for ERROR
-        assert '\033[0m' in debug_msg   # Reset code
+        assert "\033[36m" in debug_msg  # Cyan for DEBUG
+        assert "\033[32m" in info_msg  # Green for INFO
+        assert "\033[31m" in error_msg  # Red for ERROR
+        assert "\033[0m" in debug_msg  # Reset code
 
 
 class TestLoggerHelpers:
@@ -127,20 +129,22 @@ class TestLoggerHelpers:
         logger = get_logger()
         assert logger.name == "claude_memory_mcp"
 
-    @patch('src.logging_config.get_logger')
+    @patch("src.logging_config.get_logger")
     def test_log_function_call(self, mock_get_logger):
         """Test function call logging"""
         mock_logger = MagicMock()
         mock_get_logger.return_value = mock_logger
 
-        log_function_call("test_function", param1="value1", param2=42, param3=None)
+        log_function_call(
+            "test_function", param1="value1", param2=42, param3=None
+        )
 
         mock_logger.debug.assert_called_once()
         call_args = mock_logger.debug.call_args[0][0]
         assert "test_function(param1=value1, param2=42)" in call_args
         assert "param3" not in call_args  # None values should be filtered
 
-    @patch('src.logging_config.get_logger')
+    @patch("src.logging_config.get_logger")
     def test_log_performance(self, mock_get_logger):
         """Test performance logging"""
         mock_logger = MagicMock()
@@ -154,7 +158,7 @@ class TestLoggerHelpers:
         assert "results=10" in call_args
         assert "query_length=25" in call_args
 
-    @patch('src.logging_config.get_logger')
+    @patch("src.logging_config.get_logger")
     def test_log_security_event_default_warning(self, mock_get_logger):
         """Test security event logging with default WARNING level"""
         mock_logger = MagicMock()
@@ -166,9 +170,12 @@ class TestLoggerHelpers:
         mock_logger.log.assert_called_once()
         call_args = mock_logger.log.call_args
         assert call_args[0][0] == logging.WARNING
-        assert "Security Event: PATH_TRAVERSAL | Attempted ../../../etc/passwd" in call_args[0][1]
+        assert (
+            "Security Event: PATH_TRAVERSAL | Attempted ../../../etc/passwd"
+            in call_args[0][1]
+        )
 
-    @patch('src.logging_config.get_logger')
+    @patch("src.logging_config.get_logger")
     def test_log_security_event_custom_severity(self, mock_get_logger):
         """Test security event logging with custom severity"""
         mock_logger = MagicMock()
@@ -180,9 +187,12 @@ class TestLoggerHelpers:
         mock_logger.log.assert_called_once()
         call_args = mock_logger.log.call_args
         assert call_args[0][0] == logging.CRITICAL
-        assert "Security Event: CRITICAL_BREACH | System compromised" in call_args[0][1]
+        assert (
+            "Security Event: CRITICAL_BREACH | System compromised"
+            in call_args[0][1]
+        )
 
-    @patch('src.logging_config.get_logger')
+    @patch("src.logging_config.get_logger")
     def test_log_validation_failure(self, mock_get_logger):
         """Test validation failure logging"""
         mock_logger = MagicMock()
@@ -192,10 +202,15 @@ class TestLoggerHelpers:
         log_validation_failure("title", "normal title", "too long")
         # Verify the message is correct (ignore extra parameter)
         call_args = mock_logger.warning.call_args[0][0]
-        assert "Validation failed: title='normal title' | Reason: too long" in call_args
+        assert (
+            "Validation failed: title='normal title' | Reason: too long"
+            in call_args
+        )
 
         # Test with value containing newlines (should be escaped)
-        log_validation_failure("content", "line1\nline2\rline3", "invalid format")
+        log_validation_failure(
+            "content", "line1\nline2\rline3", "invalid format"
+        )
         call_args = mock_logger.warning.call_args[0][0]
         assert "line1\\nline2\\rline3" in call_args
 
@@ -205,36 +220,46 @@ class TestLoggerHelpers:
         call_args = mock_logger.warning.call_args[0][0]
         assert len(call_args.split("'")[1]) <= 100  # Value should be truncated
 
-    @patch('src.logging_config.get_logger')
+    @patch("src.logging_config.get_logger")
     def test_log_file_operation_success(self, mock_get_logger):
         """Test successful file operation logging"""
         mock_logger = MagicMock()
         mock_get_logger.return_value = mock_logger
 
-        log_file_operation("create", "/path/to/file.txt", True, size=1024, topics=5)
+        log_file_operation(
+            "create", "/path/to/file.txt", True, size=1024, topics=5
+        )
 
         mock_logger.info.assert_called_once()
         call_args = mock_logger.info.call_args[0][0]
-        assert "File create: /path/to/file.txt | SUCCESS | size=1024, topics=5" in call_args
+        assert (
+            "File create: /path/to/file.txt | SUCCESS | size=1024, topics=5"
+            in call_args
+        )
 
-    @patch('src.logging_config.get_logger')
+    @patch("src.logging_config.get_logger")
     def test_log_file_operation_failure(self, mock_get_logger):
         """Test failed file operation logging"""
         mock_logger = MagicMock()
         mock_get_logger.return_value = mock_logger
 
-        log_file_operation("read", "/missing/file.txt", False, error="File not found")
+        log_file_operation(
+            "read", "/missing/file.txt", False, error="File not found"
+        )
 
         mock_logger.info.assert_called_once()
         call_args = mock_logger.info.call_args[0][0]
-        assert "File read: /missing/file.txt | FAILED | error=File not found" in call_args
+        assert (
+            "File read: /missing/file.txt | FAILED | error=File not found"
+            in call_args
+        )
 
 
 class TestInitDefaultLogging:
     """Test default logging initialization"""
 
     @patch.dict(os.environ, {}, clear=True)
-    @patch('src.logging_config.setup_logging')
+    @patch("src.logging_config.setup_logging")
     def test_init_default_logging_no_env(self, mock_setup):
         """Test default logging with no environment variables"""
         init_default_logging()
@@ -243,39 +268,45 @@ class TestInitDefaultLogging:
         mock_setup.assert_called_once()
         call_args = mock_setup.call_args
 
-        assert call_args.kwargs['log_level'] == "INFO"
-        assert call_args.kwargs['log_file'] is not None  # Now provides default path
-        assert call_args.kwargs['log_file'].endswith('.claude-memory/logs/claude-mcp.log')
-        assert call_args.kwargs['console_output'] is False
+        assert call_args.kwargs["log_level"] == "INFO"
+        # Now provides default path
+        assert call_args.kwargs["log_file"] is not None
+        assert call_args.kwargs["log_file"].endswith(
+            ".claude-memory/logs/claude-mcp.log"
+        )
+        assert call_args.kwargs["console_output"] is False
 
-    @patch.dict(os.environ, {'CLAUDE_MCP_LOG_LEVEL': 'DEBUG',
-                'CLAUDE_MCP_LOG_FILE': '/tmp/test.log'})
-    @patch('src.logging_config.setup_logging')
+    @patch.dict(
+        os.environ,
+        {
+            "CLAUDE_MCP_LOG_LEVEL": "DEBUG",
+            "CLAUDE_MCP_LOG_FILE": "/tmp/test.log",
+        },
+    )
+    @patch("src.logging_config.setup_logging")
     def test_init_default_logging_with_env(self, mock_setup):
         """Test default logging with environment variables"""
         init_default_logging()
 
         mock_setup.assert_called_once_with(
-            log_level="DEBUG",
-            log_file="/tmp/test.log",
-            console_output=False
+            log_level="DEBUG", log_file="/tmp/test.log", console_output=False
         )
 
-    @patch.dict(os.environ, {'HOME': '/home/user'}, clear=True)
-    @patch('src.logging_config.setup_logging')
+    @patch.dict(os.environ, {"HOME": "/home/user"}, clear=True)
+    @patch("src.logging_config.setup_logging")
     def test_init_default_logging_home_fallback(self, mock_setup):
         """Test default logging falls back to home directory for log file"""
         init_default_logging()
 
         expected_log_file = "/home/user/.claude-memory/logs/claude-mcp.log"
         mock_setup.assert_called_once_with(
-            log_level="INFO",
-            log_file=expected_log_file,
-            console_output=False
+            log_level="INFO", log_file=expected_log_file, console_output=False
         )
 
-    @patch.dict(os.environ, {'CLAUDE_MCP_CONSOLE_OUTPUT': 'true', 'HOME': '/home/test'})
-    @patch('src.logging_config.setup_logging')
+    @patch.dict(
+        os.environ, {"CLAUDE_MCP_CONSOLE_OUTPUT": "true", "HOME": "/home/test"}
+    )
+    @patch("src.logging_config.setup_logging")
     def test_init_default_logging_console_enabled(self, mock_setup):
         """Test default logging with console output explicitly enabled"""
         init_default_logging()
@@ -283,7 +314,7 @@ class TestInitDefaultLogging:
         mock_setup.assert_called_once_with(
             log_level="INFO",
             log_file="/home/test/.claude-memory/logs/claude-mcp.log",
-            console_output=True
+            console_output=True,
         )
 
 
@@ -295,7 +326,9 @@ class TestLoggingIntegration:
         with tempfile.TemporaryDirectory() as temp_dir:
             log_file = Path(temp_dir) / "nested" / "dirs" / "test.log"
 
-            logger = setup_logging(log_file=str(log_file), console_output=False)
+            logger = setup_logging(
+                log_file=str(log_file), console_output=False
+            )
             logger.info("Test message")
 
             assert log_file.exists()
@@ -308,25 +341,29 @@ class TestLoggingIntegration:
                 logger = setup_logging(
                     log_file=temp_file.name,
                     max_bytes=100,  # Small size to trigger rotation
-                    backup_count=2
+                    backup_count=2,
                 )
 
                 # Write enough data to trigger rotation
                 for i in range(50):
-                    logger.info(f"This is a test message number {i} with some padding")
+                    logger.info(
+                        f"This is a test message number {i} with some padding"
+                    )
 
                 # Check that backup files are created
                 base_name = temp_file.name
                 f"{base_name}.1"
 
                 # May or may not create backup depending on exact size, but config should be set
-                file_handler = next(h for h in logger.handlers if hasattr(h, 'maxBytes'))
+                file_handler = next(
+                    h for h in logger.handlers if hasattr(h, "maxBytes")
+                )
                 assert file_handler.maxBytes == 100
                 assert file_handler.backupCount == 2
 
             finally:
                 # Clean up potential backup files
-                for suffix in ['', '.1', '.2']:
+                for suffix in ["", ".1", ".2"]:
                     try:
                         os.unlink(f"{temp_file.name}{suffix}")
                     except FileNotFoundError:
@@ -339,84 +376,112 @@ class TestLoggingExceptionHandling:
     def test_log_function_call_exception_handling(self):
         """Test log_function_call exception handling (silent failure)"""
         # Mock get_logger to raise an exception
-        with patch('src.logging_config.get_logger', side_effect=Exception("Logger error")):
+        with patch(
+            "src.logging_config.get_logger",
+            side_effect=Exception("Logger error"),
+        ):
             # This should trigger the exception handling in log_function_call
             # The function should fail silently and not crash
             try:
-                log_function_call("test_function", param1="value1", param2="value2")
+                log_function_call(
+                    "test_function", param1="value1", param2="value2"
+                )
                 # Should not raise an exception due to silent failure
             except Exception as e:
-                pytest.fail(f"log_function_call should fail silently, but raised: {e}")
+                pytest.fail(
+                    f"log_function_call should fail silently, but raised: {e}"
+                )
 
     def test_log_performance_exception_handling(self):
         """Test log_performance exception handling (silent failure)"""
         # Mock get_logger to raise an exception
-        with patch('src.logging_config.get_logger', side_effect=Exception("Logger error")):
+        with patch(
+            "src.logging_config.get_logger",
+            side_effect=Exception("Logger error"),
+        ):
             # This should trigger the exception handling in log_performance
             try:
                 log_performance("test_function", 1.234, results=10)
                 # Should not raise an exception due to silent failure
             except Exception as e:
-                pytest.fail(f"log_performance should fail silently, but raised: {e}")
+                pytest.fail(
+                    f"log_performance should fail silently, but raised: {e}"
+                )
 
     def test_log_security_event_exception_handling(self):
         """Test log_security_event exception handling (silent failure)"""
         # Mock get_logger to raise an exception
-        with patch('src.logging_config.get_logger', side_effect=Exception("Logger error")):
+        with patch(
+            "src.logging_config.get_logger",
+            side_effect=Exception("Logger error"),
+        ):
             # This should trigger the exception handling in log_security_event
             try:
                 log_security_event("TEST_EVENT", "Test message", "ERROR")
                 # Should not raise an exception due to silent failure
             except Exception as e:
-                pytest.fail(f"log_security_event should fail silently, but raised: {e}")
+                pytest.fail(
+                    f"log_security_event should fail silently, but raised: {e}"
+                )
 
     def test_security_event_path_redaction_failure(self):
         """Test log_security_event path redaction failure handling"""
         # Mock Path operations to raise ValueError during path redaction
-        with patch('pathlib.Path.is_absolute', side_effect=ValueError("Path operation failed")):
+        with patch(
+            "pathlib.Path.is_absolute",
+            side_effect=ValueError("Path operation failed"),
+        ):
             # This should trigger the ValueError/OSError handling
             try:
                 log_security_event(
                     "PATH_TEST",
                     "Testing path /sensitive/path/that/should/be/redacted",
-                    "ERROR"
+                    "ERROR",
                 )
                 # Should not raise an exception - should use fallback path redaction
             except Exception as e:
                 pytest.fail(
-                    f"log_security_event should handle path operation errors, but raised: {e}")
+                    f"log_security_event should handle path operation errors, but raised: {e}"
+                )
 
     def test_security_event_path_redaction_os_error(self):
         """Test log_security_event path redaction OSError handling"""
         # Mock Path operations to raise OSError during path redaction
-        with patch('pathlib.Path.is_relative_to', side_effect=OSError("File system error")):
+        with patch(
+            "pathlib.Path.is_relative_to",
+            side_effect=OSError("File system error"),
+        ):
             # This should trigger the OSError handling
             try:
                 log_security_event(
                     "PATH_ERROR_TEST",
                     "Path error with /home/user/sensitive/file.txt",
-                    "WARNING"
+                    "WARNING",
                 )
                 # Should not raise an exception - should use fallback
             except Exception as e:
-                pytest.fail(f"log_security_event should handle OSError, but raised: {e}")
+                pytest.fail(
+                    f"log_security_event should handle OSError, but raised: {e}"
+                )
 
     def test_file_operation_path_redaction_failure(self):
         """Test log_file_operation path redaction failure handling"""
         # Mock Path operations to raise ValueError
-        with patch('pathlib.Path', side_effect=ValueError("Path error")):
+        with patch("pathlib.Path", side_effect=ValueError("Path error")):
             # This should trigger the exception handling in path redaction
             try:
                 log_file_operation("read", "/some/file/path.txt", True)
                 # Should not raise an exception
             except Exception as e:
-                pytest.fail(f"log_file_operation should handle path errors, but raised: {e}")
+                pytest.fail(
+                    f"log_file_operation should handle path errors, but raised: {e}"
+                )
 
 
 class TestLoggingSecurity:
     """Test security enhancements in logging functions"""
 
-    @patch('src.logging_config.get_logger')
+    @patch("src.logging_config.get_logger")
     def test_log_injection_prevention_validation(self, mock_get_logger):
         """Test that log injection is prevented in validation logging"""
         mock_logger = MagicMock()
@@ -437,7 +502,7 @@ class TestLoggingSecurity:
         # Normal text should remain
         assert "normaltext" in call_args
 
-    @patch('src.logging_config.get_logger')
+    @patch("src.logging_config.get_logger")
     def test_log_injection_prevention_security(self, mock_get_logger):
         """Test that log injection is prevented in security event logging"""
         mock_logger = MagicMock()
@@ -458,7 +523,7 @@ class TestLoggingSecurity:
         # Normal text should remain
         assert "normaltext" in call_args
 
-    @patch('src.logging_config.get_logger')
+    @patch("src.logging_config.get_logger")
     def test_log_injection_newline_escape(self, mock_get_logger):
         """Test that newlines are properly escaped in validation logging"""
         mock_logger = MagicMock()
@@ -472,9 +537,11 @@ class TestLoggingSecurity:
         call_args = mock_logger.warning.call_args[0][0]
         assert "\\n" in call_args
         assert "\\r" in call_args
-        assert "\n" not in call_args.split("'")[1]  # Not in the actual value part
+        assert (
+            "\n" not in call_args.split("'")[1]
+        )  # Not in the actual value part
 
-    @patch('src.logging_config.get_logger')
+    @patch("src.logging_config.get_logger")
     def test_value_truncation(self, mock_get_logger):
         """Test that long values are truncated in logging"""
         mock_logger = MagicMock()
@@ -491,7 +558,7 @@ class TestLoggingSecurity:
         # But should contain some x's (truncated portion)
         assert "x" * 50 in call_args
 
-    @patch('src.logging_config.get_logger')
+    @patch("src.logging_config.get_logger")
     def test_path_redaction_in_security_logging(self, mock_get_logger):
         """Test that paths are processed in security event logging"""
         mock_logger = MagicMock()
@@ -506,7 +573,7 @@ class TestLoggingSecurity:
         assert "Error accessing" in call_args
         # Path redaction behavior may vary based on the actual home directory and path resolution
 
-    @patch('src.logging_config.get_logger')
+    @patch("src.logging_config.get_logger")
     def test_file_operation_path_redaction(self, mock_get_logger):
         """Test that file paths are processed in file operation logging"""
         mock_logger = MagicMock()
@@ -523,7 +590,7 @@ class TestLoggingSecurity:
         assert "size=1024" in call_args
         # Path processing behavior may vary based on actual path resolution logic
 
-    @patch('src.logging_config.get_logger')
+    @patch("src.logging_config.get_logger")
     def test_error_resilience(self, mock_get_logger):
         """Test that logging functions don't crash on errors"""
         # Simulate logger that raises exception

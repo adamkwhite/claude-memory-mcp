@@ -47,15 +47,15 @@ class TestFormatDetector:
                             "id": "msg-1",
                             "role": "user",
                             "content": "Hello ChatGPT",
-                            "create_time": "2025-01-15T10:00:00Z"
+                            "create_time": "2025-01-15T10:00:00Z",
                         },
                         {
                             "id": "msg-2",
                             "role": "assistant",
                             "content": "Hello! How can I help you?",
-                            "create_time": "2025-01-15T10:01:00Z"
-                        }
-                    ]
+                            "create_time": "2025-01-15T10:01:00Z",
+                        },
+                    ],
                 }
             ]
         }
@@ -79,9 +79,9 @@ class TestFormatDetector:
                     "type": "user_input",
                     "content": "Help me with this code",
                     "timestamp": "2025-01-15T10:00:00Z",
-                    "files": ["main.py"]
+                    "files": ["main.py"],
                 }
-            ]
+            ],
         }
 
         test_file = self.temp_path / "cursor_export.json"
@@ -102,7 +102,7 @@ class TestFormatDetector:
             "messages": [],
             "date": "2025-01-15T12:00:00",
             "topics": ["test"],
-            "created_at": "2025-01-15T12:00:00"
+            "created_at": "2025-01-15T12:00:00",
         }
 
         test_file = self.temp_path / "memory_format.json"
@@ -123,10 +123,12 @@ class TestFormatDetector:
             "message_list": [
                 {
                     "uuid": "msg-desktop-1",
-                    "content": [{"type": "text", "text": "Hello Desktop Claude"}],
-                    "sender": "human"
+                    "content": [
+                        {"type": "text", "text": "Hello Desktop Claude"}
+                    ],
+                    "sender": "human",
                 }
-            ]
+            ],
         }
 
         test_file = self.temp_path / "claude_desktop_export.json"
@@ -141,10 +143,8 @@ class TestFormatDetector:
         """Test detection of generic JSON conversation format."""
         generic_data = {
             "title": "Generic Conversation",
-            "messages": [
-                {"user": "Hello", "assistant": "Hi there!"}
-            ],
-            "timestamp": "2025-01-15"
+            "messages": [{"user": "Hello", "assistant": "Hi there!"}],
+            "timestamp": "2025-01-15",
         }
 
         test_file = self.temp_path / "generic_export.json"
@@ -153,7 +153,10 @@ class TestFormatDetector:
         result = self.detector.detect_format(test_file)
 
         # Should detect as generic JSON if it has conversation structure
-        assert result["platform"] in [PlatformType.GENERIC_JSON.value, PlatformType.UNKNOWN.value]
+        assert result["platform"] in [
+            PlatformType.GENERIC_JSON.value,
+            PlatformType.UNKNOWN.value,
+        ]
 
     def test_detect_format_markdown_file(self):
         """Test detection of markdown conversation format."""
@@ -177,7 +180,8 @@ class TestFormatDetector:
         assert result["platform"] in [
             PlatformType.GENERIC_MARKDOWN.value,
             PlatformType.CLAUDE_WEB.value,
-            PlatformType.UNKNOWN.value]
+            PlatformType.UNKNOWN.value,
+        ]
 
     def test_detect_format_invalid_json(self):
         """Test detection with invalid JSON file."""
@@ -192,7 +196,7 @@ class TestFormatDetector:
     def test_detect_format_empty_file(self):
         """Test detection with empty file."""
         test_file = self.temp_path / "empty.json"
-        test_file.write_text('')
+        test_file.write_text("")
 
         result = self.detector.detect_format(test_file)
 
@@ -202,7 +206,9 @@ class TestFormatDetector:
     def test_detect_format_unsupported_extension(self):
         """Test detection with unsupported file extension."""
         test_file = self.temp_path / "conversation.xml"
-        test_file.write_text('<conversation><message>Hello</message></conversation>')
+        test_file.write_text(
+            "<conversation><message>Hello</message></conversation>"
+        )
 
         result = self.detector.detect_format(test_file)
 
@@ -225,8 +231,8 @@ class TestFormatDetectorValidationMethods:
                     "id": "test",
                     "messages": [
                         {"role": "user", "content": "Hello"},
-                        {"role": "assistant", "content": "Hi"}
-                    ]
+                        {"role": "assistant", "content": "Hi"},
+                    ],
                 }
             ]
         }
@@ -246,9 +252,7 @@ class TestFormatDetectorValidationMethods:
         data = {
             "session_id": "test",
             "workspace": "/path",
-            "interactions": [
-                {"type": "user_input", "content": "Hello"}
-            ]
+            "interactions": [{"type": "user_input", "content": "Hello"}],
         }
 
         result = self.detector._is_cursor_format(data)
@@ -269,7 +273,7 @@ class TestFormatDetectorValidationMethods:
             "content": "test",
             "messages": [],
             "topics": [],
-            "created_at": "2025-01-15T12:00:00"
+            "created_at": "2025-01-15T12:00:00",
         }
 
         result = self.detector._is_claude_memory_format(data)
@@ -281,7 +285,7 @@ class TestFormatDetectorValidationMethods:
             "id": "test-id",
             "message_list": [
                 {"content": [{"type": "text"}], "sender": "human"}
-            ]
+            ],
         }
 
         result = self.detector._is_claude_desktop_format(data)
@@ -292,7 +296,7 @@ class TestFormatDetectorValidationMethods:
         """Test _has_role_based_messages with valid messages."""
         messages = [
             {"role": "user", "content": "Hello"},
-            {"role": "assistant", "content": "Hi"}
+            {"role": "assistant", "content": "Hi"},
         ]
 
         result = self.detector._has_role_based_messages(messages)
@@ -300,10 +304,7 @@ class TestFormatDetectorValidationMethods:
 
     def test_has_role_based_messages_invalid(self):
         """Test _has_role_based_messages with invalid messages."""
-        messages = [
-            {"user": "Hello"},  # No 'role' field
-            {"text": "Hi"}
-        ]
+        messages = [{"user": "Hello"}, {"text": "Hi"}]  # No 'role' field
 
         result = self.detector._has_role_based_messages(messages)
         assert result is False
@@ -312,9 +313,7 @@ class TestFormatDetectorValidationMethods:
         """Test _has_conversation_structure with valid data."""
         data = {
             "title": "Test Conversation",
-            "messages": [
-                {"role": "user", "content": "Hello"}
-            ]
+            "messages": [{"role": "user", "content": "Hello"}],
         }
 
         result = self.detector._has_conversation_structure(data)
@@ -322,10 +321,7 @@ class TestFormatDetectorValidationMethods:
 
     def test_has_conversation_structure_invalid(self):
         """Test _has_conversation_structure with invalid data."""
-        data = {
-            "random": "data",
-            "no_conversation": "structure"
-        }
+        data = {"random": "data", "no_conversation": "structure"}
 
         result = self.detector._has_conversation_structure(data)
         assert result is False
@@ -366,7 +362,7 @@ class TestFormatDetectorErrorHandling:
                     "messages": [
                         {"role": "user", "content": f"Message {j}"}
                         for j in range(5)
-                    ]
+                    ],
                 }
                 for i in range(20)
             ]
@@ -394,12 +390,15 @@ class TestFormatDetectorErrorHandling:
                             "id": "msg-1",
                             "author": {"role": "user"},
                             "create_time": 1705312800.0,
-                            "content": {"content_type": "text", "parts": ["Hello 你好 🌟 émoji tëst"]}
+                            "content": {
+                                "content_type": "text",
+                                "parts": ["Hello 你好 🌟 émoji tëst"],
+                            },
                         },
                         "parent": None,
-                        "children": []
+                        "children": [],
                     }
-                }
+                },
             }
         ]
 
@@ -449,7 +448,8 @@ What would you like to work on?
         assert result["platform"] in [
             PlatformType.CLAUDE_WEB.value,
             PlatformType.GENERIC_MARKDOWN.value,
-            PlatformType.UNKNOWN.value]
+            PlatformType.UNKNOWN.value,
+        ]
         assert result["confidence"] >= 0.0
 
     def test_detect_plain_text_file(self):
@@ -477,30 +477,51 @@ class TestFormatDetectorIntegration:
     def test_batch_format_detection(self):
         """Test detection across multiple files."""
         # Create test files of different formats
-        files_data = [("chatgpt.json",
-                       [{"title": "Test Chat",
-                         "create_time": 1705312800.0,
-                         "conversation_id": "test-123",
-                         "mapping": {"msg-1": {"message": {"author": {"role": "user"},
-                                                           "content": {"parts": ["hi"]}}}}}]),
-                      ("cursor.json",
-                       {"session_id": "test",
-                        "workspace": "/path",
-                        "interactions": []}),
-                      ("memory.json",
-                       {"id": "conv_20250115_120000_abcd",
-                        "platform": "claude",
-                        "content": "test",
-                        "messages": [],
-                        "topics": [],
-                        "created_at": "2025-01-15"}),
-                      ("dialogue.md",
-                       "**Human**: Hello\n**Assistant**: Hi!")]
+        files_data = [
+            (
+                "chatgpt.json",
+                [
+                    {
+                        "title": "Test Chat",
+                        "create_time": 1705312800.0,
+                        "conversation_id": "test-123",
+                        "mapping": {
+                            "msg-1": {
+                                "message": {
+                                    "author": {"role": "user"},
+                                    "content": {"parts": ["hi"]},
+                                }
+                            }
+                        },
+                    }
+                ],
+            ),
+            (
+                "cursor.json",
+                {
+                    "session_id": "test",
+                    "workspace": "/path",
+                    "interactions": [],
+                },
+            ),
+            (
+                "memory.json",
+                {
+                    "id": "conv_20250115_120000_abcd",
+                    "platform": "claude",
+                    "content": "test",
+                    "messages": [],
+                    "topics": [],
+                    "created_at": "2025-01-15",
+                },
+            ),
+            ("dialogue.md", "**Human**: Hello\n**Assistant**: Hi!"),
+        ]
 
         results = []
         for filename, data in files_data:
             test_file = self.temp_path / filename
-            if filename.endswith('.json'):
+            if filename.endswith(".json"):
                 test_file.write_text(json.dumps(data))
             else:
                 test_file.write_text(data)
@@ -523,7 +544,7 @@ class TestFormatDetectorIntegration:
             "content": "test",
             "messages": [],
             "topics": [],
-            "created_at": "2025-01-15"
+            "created_at": "2025-01-15",
         }
 
         test_file = self.temp_path / "high_confidence.json"

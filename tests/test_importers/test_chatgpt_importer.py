@@ -44,7 +44,8 @@ class TestChatGPTImporter:
 
     def test_validate_chatgpt_format_valid(self):
         """Test ChatGPT format validation with valid data."""
-        assert self.importer._validate_chatgpt_format(self.valid_export) is True
+        assert self.importer._validate_chatgpt_format(
+            self.valid_export) is True
 
     def test_validate_chatgpt_format_invalid_structure(self):
         """Test ChatGPT format validation with invalid structure."""
@@ -182,7 +183,8 @@ class TestChatGPTImporter:
 
         # Mock save method to avoid file I/O
         with patch.object(self.importer, '_save_conversation') as mock_save:
-            result = self.importer._process_conversations(conversations, test_file)
+            result = self.importer._process_conversations(
+                conversations, test_file)
 
         assert result.success is True
         assert result.conversations_imported == 2
@@ -198,9 +200,11 @@ class TestChatGPTImporter:
 
         # Mock validation to fail for second conversation
         with patch.object(self.importer, '_validate_conversation') as mock_validate:
-            mock_validate.side_effect = [True, False]  # First succeeds, second fails
+            # First succeeds, second fails
+            mock_validate.side_effect = [True, False]
             with patch.object(self.importer, '_save_conversation'):
-                result = self.importer._process_conversations(conversations, test_file)
+                result = self.importer._process_conversations(
+                    conversations, test_file)
 
         assert result.conversations_imported == 1
         assert result.conversations_failed == 1
@@ -214,7 +218,8 @@ class TestChatGPTImporter:
         # Mock parse_conversation to raise exception
         with patch.object(self.importer, 'parse_conversation') as mock_parse:
             mock_parse.side_effect = Exception("Parse error")
-            result = self.importer._process_conversations(conversations, test_file)
+            result = self.importer._process_conversations(
+                conversations, test_file)
 
         assert result.conversations_imported == 0
         assert result.conversations_failed == 1
@@ -260,7 +265,7 @@ class TestChatGPTImporter:
         valid_file.write_text(json.dumps(self.valid_export))
 
         # Mock save method to avoid file I/O
-        with patch.object(self.importer, '_save_conversation') as mock_save:
+        with patch.object(self.importer, "_save_conversation"):
             result = self.importer.import_file(valid_file)
 
         assert result.success is True
