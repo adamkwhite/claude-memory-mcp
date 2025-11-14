@@ -59,7 +59,7 @@ class TestImportIntegration:
         importer = ChatGPTImporter(self.storage_path)
 
         # Mock save to avoid file I/O complexity in test
-        with patch.object(importer, '_save_conversation') :
+        with patch.object(importer, '_save_conversation') as mock_save:
             mock_save.return_value = self.storage_path / "test_conv.json"
 
             # Import file
@@ -105,7 +105,7 @@ class TestImportIntegration:
             pytest.fail("Expected ChatGPT format detection")
 
         # Import with detected importer
-        with patch.object(importer, '_save_conversation') :
+        with patch.object(importer, '_save_conversation') as mock_save:
             result = importer.import_file(test_file)
 
         assert result.success is True
@@ -148,7 +148,7 @@ class TestImportIntegration:
         importer = ChatGPTImporter(self.storage_path)
         total_imported = 0
 
-        with patch.object(importer, '_save_conversation') :
+        with patch.object(importer, '_save_conversation') as mock_save:
             for test_file in test_files:
                 result = importer.import_file(test_file)
                 total_imported += result.conversations_imported
@@ -191,7 +191,7 @@ class TestImportIntegration:
             return original_validate(conv)
 
         with patch.object(importer, '_validate_conversation', side_effect=mock_validate):
-            with patch.object(importer, '_save_conversation') :
+            with patch.object(importer, '_save_conversation') as mock_save:
                 result = importer.import_file(test_file)
 
         # Should have partial success
@@ -273,7 +273,7 @@ class TestImportIntegration:
         import time
         importer = ChatGPTImporter(self.storage_path)
 
-        with patch.object(importer, '_save_conversation') :
+        with patch.object(importer, '_save_conversation') as mock_save:
             start_time = time.time()
             result = importer.import_file(test_file)
             end_time = time.time()
@@ -302,7 +302,7 @@ class TestImportIntegration:
 
         importer = ChatGPTImporter(self.storage_path)
 
-        with patch.object(importer, '_save_conversation') :
+        with patch.object(importer, '_save_conversation') as mock_save:
             result = importer.import_file(test_file)
 
         # Should handle validation gracefully
