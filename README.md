@@ -49,7 +49,20 @@ A Model Context Protocol (MCP) server that provides searchable local storage for
 claude mcp add
 ```
 
-Follow the prompts to add claude-memory-mcp to your Claude Desktop configuration.
+When prompted, provide the following information:
+
+1. **Server Name**: `claude-memory` (or your preferred name)
+2. **Command**: `python3`
+3. **Arguments**: `$HOME/Code/claude-memory-mcp/src/server_fastmcp.py`
+4. **Working Directory**: `$HOME/Code/claude-memory-mcp`
+
+**Important**: Adjust the path after `$HOME/` to match where you cloned this repository. The `$HOME` variable will automatically expand to your home directory (e.g., `/home/<user>`).
+
+**Example**: If you cloned to `~/projects/claude-memory-mcp`:
+- Arguments: `$HOME/projects/claude-memory-mcp/src/server_fastmcp.py`
+- Working Directory: `$HOME/projects/claude-memory-mcp`
+
+This adds the MCP server to your Claude Desktop configuration automatically.
 
 Documentation: https://code.claude.com/docs/en/mcp
 
@@ -245,6 +258,8 @@ Performance validated through automated benchmarks:
 
 *Last benchmarked: June 2025 | [Detailed Report](docs/PERFORMANCE_BENCHMARKS.md)*
 
+**Note for Developers**: The development team uses performance benchmarks that create a `~/claude-memory-test` directory for isolated testing. **Normal MCP usage does NOT create this directory** - it only uses `~/claude-memory/`. If you see `~/claude-memory-test`, it was created by running development scripts and can be safely deleted.
+
 ## Search Examples
 
 ```python
@@ -286,6 +301,20 @@ python3 -m pytest tests/ --ignore=tests/standalone_test.py --cov=src --cov-repor
 
 # Import test data
 python3 scripts/bulk_import_enhanced.py test_data.json --dry-run
+```
+
+**Test Data Storage (Developers Only)**: If you run performance benchmarks or test data generators, they create a `~/claude-memory-test` directory to isolate test data from your production `~/claude-memory` directory. **This is only for development/testing** - normal MCP usage does not create this directory.
+
+To clean up test data after running benchmarks:
+
+```bash
+rm -rf ~/claude-memory-test
+```
+
+Or using the Makefile cleanup target:
+
+```bash
+make clean-test-data
 ```
 
 ## Troubleshooting
