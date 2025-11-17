@@ -47,8 +47,8 @@ A Model Context Protocol (MCP) server that provides searchable local storage for
 
 **Quick Install** - Copy and paste this into Claude Code:
 
-```
-claude mcp add claude-memory python3 $HOME/Code/claude-memory-mcp/src/server_fastmcp.py --working-dir $HOME/Code/claude-memory-mcp
+```bash
+claude mcp add --transport stdio claude-memory -- sh -c "cd $HOME/Code/claude-memory-mcp && python3 src/server_fastmcp.py"
 ```
 
 **Important**: Replace `$HOME/Code/claude-memory-mcp` with the actual path where you cloned this repository.
@@ -57,14 +57,20 @@ claude mcp add claude-memory python3 $HOME/Code/claude-memory-mcp/src/server_fas
 
 ```bash
 # If cloned to ~/Code/claude-memory-mcp (default)
-claude mcp add claude-memory python3 $HOME/Code/claude-memory-mcp/src/server_fastmcp.py --working-dir $HOME/Code/claude-memory-mcp
+claude mcp add --transport stdio claude-memory -- sh -c "cd $HOME/Code/claude-memory-mcp && python3 src/server_fastmcp.py"
 
 # If cloned to ~/projects/claude-memory-mcp
-claude mcp add claude-memory python3 $HOME/projects/claude-memory-mcp/src/server_fastmcp.py --working-dir $HOME/projects/claude-memory-mcp
+claude mcp add --transport stdio claude-memory -- sh -c "cd $HOME/projects/claude-memory-mcp && python3 src/server_fastmcp.py"
 
 # If cloned to ~/dev/claude-memory-mcp
-claude mcp add claude-memory python3 $HOME/dev/claude-memory-mcp/src/server_fastmcp.py --working-dir $HOME/dev/claude-memory-mcp
+claude mcp add --transport stdio claude-memory -- sh -c "cd $HOME/dev/claude-memory-mcp && python3 src/server_fastmcp.py"
 ```
+
+**What this does:**
+- `--transport stdio`: Uses standard input/output for local processes
+- `claude-memory`: Server identifier name
+- `--`: Separates Claude CLI flags from the server command
+- `sh -c "cd ... && python3 ..."`: Changes to project directory before running server
 
 This adds the MCP server to your Claude Desktop configuration automatically.
 
