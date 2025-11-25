@@ -4,10 +4,10 @@
 
 **Claude Memory MCP** is a universal conversation memory system that provides persistent storage and intelligent search across multiple AI platforms. Originally designed for Claude, it now supports ChatGPT, Cursor AI, and custom formats through an extensible architecture.
 
-## Current Status (November 13, 2025)
+## Current Status (November 24, 2025)
 
 **Branch**: `main`
-**Recent Work**: Documentation & Test Cleanup - Fixed critical README issues and test linting (PR #80)
+**Recent Work**: Gitignore maintenance - Added .claude/ directory to .gitignore (PR #87)
 **Test Coverage**: 78% overall (435 tests passing)
 **Code Quality**: 0 code smells, 0 security hotspots, CI/CD fully functional
 **User Experience**: Installation now works on first try for new users
@@ -375,6 +375,27 @@ The system uses a pluggable importer architecture where each AI platform has a d
 - Cross-platform conversation sync and merging
 
 ## Recent Changes
+
+### **November 24, 2025 - Repository Maintenance ✅**
+
+**PR Merged: #87**
+- **Achievement**: Added `.claude/` directory to gitignore for cleaner repository management
+- **Impact**: Prevents 17+ auto-generated Claude Code plugin files from appearing as untracked changes
+
+**Changes:**
+- ✅ Updated `.gitignore` to ignore entire `.claude/` directory
+- ✅ Replaced specific `settings.local.json` exclusion with comprehensive directory exclusion
+- ✅ Maintains clean git status focusing on actual project changes
+
+**Workflow Excellence:**
+- ✅ Full branch workflow compliance (feature branch → PR → quality gates → merge)
+- ✅ All quality gates passed (Quick Validation: 12s, SonarCloud: 26s, Tests: 57s)
+- ✅ Demonstrates proper git workflow even for minor maintenance tasks
+
+**Key Learnings:**
+- Even simple changes benefit from full workflow process
+- Auto-generated IDE/tool files should be ignored at directory level
+- Clean git status improves developer experience and reduces noise
 
 ### **November 13, 2025 - Documentation & Test Cleanup ✅**
 
