@@ -109,3 +109,4 @@ benchmark_data/
 test_*.db
 test_*.db-journal
 **/test_*.json
+.claude/settings.local.json
