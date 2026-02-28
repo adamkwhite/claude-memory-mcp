@@ -1,24 +1,9 @@
-## Code Quality
-**Overall Scorecard**
-
-[![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=adamkwhite_claude-memory-mcp&metric=alert_status)](https://sonarcloud.io/summary/overall?id=adamkwhite_claude-memory-mcp)
-[![Bugs](https://sonarcloud.io/api/project_badges/measure?project=adamkwhite_claude-memory-mcp&metric=bugs)](https://sonarcloud.io/component_measures?id=adamkwhite_claude-memory-mcp&metric=bugs)
-[![Coverage](https://sonarcloud.io/api/project_badges/measure?project=adamkwhite_claude-memory-mcp&metric=coverage)](https://sonarcloud.io/component_measures?id=adamkwhite_claude-memory-mcp&metric=coverage)
-[![Reliability Rating](https://sonarcloud.io/api/project_badges/measure?project=adamkwhite_claude-memory-mcp&metric=reliability_rating)](https://sonarcloud.io/component_measures?id=adamkwhite_claude-memory-mcp&metric=reliability_rating)
-[![Security Rating](https://sonarcloud.io/api/project_badges/measure?project=adamkwhite_claude-memory-mcp&metric=security_rating)](https://sonarcloud.io/component_measures?id=adamkwhite_claude-memory-mcp&metric=security_rating)
-[![Maintainability Rating](https://sonarcloud.io/api/project_badges/measure?project=adamkwhite_claude-memory-mcp&metric=sqale_rating)](https://sonarcloud.io/component_measures?id=adamkwhite_claude-memory-mcp&metric=sqale_rating)
-
-**Code Quality**
-
-[![Lines of Code](https://sonarcloud.io/api/project_badges/measure?project=adamkwhite_claude-memory-mcp&metric=ncloc)](https://sonarcloud.io/component_measures?id=adamkwhite_claude-memory-mcp&metric=ncloc)
-[![Duplicated Lines (%)](https://sonarcloud.io/api/project_badges/measure?project=adamkwhite_claude-memory-mcp&metric=duplicated_lines_density)](https://sonarcloud.io/component_measures?id=adamkwhite_claude-memory-mcp&metric=duplicated_lines_density)
-[![Code Smells](https://sonarcloud.io/api/project_badges/measure?project=adamkwhite_claude-memory-mcp&metric=code_smells)](https://sonarcloud.io/component_measures?id=adamkwhite_claude-memory-mcp&metric=code_smells)
-[![Technical Debt](https://sonarcloud.io/api/project_badges/measure?project=adamkwhite_claude-memory-mcp&metric=sqale_index)](https://sonarcloud.io/component_measures?id=adamkwhite_claude-memory-mcp&metric=sqale_index)
-
-**Security**
-
-[![Security Hotspots](https://sonarcloud.io/api/project_badges/measure?project=adamkwhite_claude-memory-mcp&metric=security_hotspots)](https://sonarcloud.io/project/security_hotspots?id=adamkwhite_claude-memory-mcp)
-[![Vulnerabilities](https://sonarcloud.io/api/project_badges/measure?project=adamkwhite_claude-memory-mcp&metric=vulnerabilities)](https://sonarcloud.io/component_measures?id=adamkwhite_claude-memory-mcp&metric=vulnerabilities)
+[![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=adamkwhite_claude-memory-mcp&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=adamkwhite_claude-memory-mcp)
+[![Bugs](https://sonarcloud.io/api/project_badges/measure?project=adamkwhite_claude-memory-mcp&metric=bugs)](https://sonarcloud.io/summary/new_code?id=adamkwhite_claude-memory-mcp)
+[![Vulnerabilities](https://sonarcloud.io/api/project_badges/measure?project=adamkwhite_claude-memory-mcp&metric=vulnerabilities)](https://sonarcloud.io/summary/new_code?id=adamkwhite_claude-memory-mcp)
+[![Code Smells](https://sonarcloud.io/api/project_badges/measure?project=adamkwhite_claude-memory-mcp&metric=code_smells)](https://sonarcloud.io/summary/new_code?id=adamkwhite_claude-memory-mcp)
+[![Coverage](https://sonarcloud.io/api/project_badges/measure?project=adamkwhite_claude-memory-mcp&metric=coverage)](https://sonarcloud.io/summary/new_code?id=adamkwhite_claude-memory-mcp)
+[![Duplicated Lines (%)](https://sonarcloud.io/api/project_badges/measure?project=adamkwhite_claude-memory-mcp&metric=duplicated_lines_density)](https://sonarcloud.io/summary/new_code?id=adamkwhite_claude-memory-mcp)
 
 # Claude Conversation Memory System
 
