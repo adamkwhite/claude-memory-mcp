@@ -19,12 +19,12 @@ jobs:
     
     steps:
     - uses: actions/checkout@v4
-    
-    - name: Set up Python 3.11
-      uses: actions/setup-python@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v6
       with:
-        python-version: '3.11'
-    
+        python-version: '3.14'
+
     - name: Cache dependencies
       uses: actions/cache@v3
       with:
@@ -143,10 +143,10 @@ jobs:
       with:
         fetch-depth: 0  # Fetch full history for comparison
         
-    - name: Set up Python 3.11
-      uses: actions/setup-python@v4
+    - name: Set up Python
+      uses: actions/setup-python@v6
       with:
-        python-version: '3.11'
+        python-version: '3.14'
         
     - name: Install dependencies
       run: |
