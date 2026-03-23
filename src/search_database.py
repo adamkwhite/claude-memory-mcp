@@ -32,8 +32,7 @@ class SearchDatabase:
                 conn.execute("PRAGMA foreign_keys = ON")
 
                 # Create main conversations table
-                conn.execute(
-                    """
+                conn.execute("""
                     CREATE TABLE IF NOT EXISTS conversations (
                         id TEXT PRIMARY KEY,
                         title TEXT NOT NULL,
@@ -44,12 +43,10 @@ class SearchDatabase:
                         topics_json TEXT,
                         topics_text TEXT
                     )
-                """
-                )
+                """)
 
                 # Create FTS5 virtual table for full-text search
-                conn.execute(
-                    """
+                conn.execute("""
                     CREATE VIRTUAL TABLE IF NOT EXISTS conversations_fts USING fts5(
                         id,
                         title,
@@ -58,20 +55,17 @@ class SearchDatabase:
                         content='conversations',
                         content_rowid='rowid'
                     )
-                """
-                )
+                """)
 
                 # Create topics table for topic-based searches
-                conn.execute(
-                    """
+                conn.execute("""
                     CREATE TABLE IF NOT EXISTS conversation_topics (
                         conversation_id TEXT,
                         topic TEXT,
                         FOREIGN KEY (conversation_id) REFERENCES conversations(id),
                         PRIMARY KEY (conversation_id, topic)
                     )
-                """
-                )
+                """)
 
                 # Create indexes for performance
                 conn.execute(
@@ -82,27 +76,22 @@ class SearchDatabase:
                 )
 
                 # Create triggers to maintain FTS5 table
-                conn.execute(
-                    """
+                conn.execute("""
                     CREATE TRIGGER IF NOT EXISTS conversations_ai
                     AFTER INSERT ON conversations BEGIN
                         INSERT INTO conversations_fts(id, title, content, topics_text)
                         VALUES (new.id, new.title, new.content, new.topics_text);
                     END
-                """
-                )
+                """)
 
-                conn.execute(
-                    """
+                conn.execute("""
                     CREATE TRIGGER IF NOT EXISTS conversations_ad
                     AFTER DELETE ON conversations BEGIN
                         DELETE FROM conversations_fts WHERE id = old.id;
                     END
-                """
-                )
+                """)
 
-                conn.execute(
-                    """
+                conn.execute("""
                     CREATE TRIGGER IF NOT EXISTS conversations_au
                     AFTER UPDATE ON conversations BEGIN
                         UPDATE conversations_fts SET
@@ -111,8 +100,7 @@ class SearchDatabase:
                             topics_text = new.topics_text
                         WHERE id = new.id;
                     END
-                """
-                )
+                """)
 
                 conn.commit()
 
@@ -167,9 +155,7 @@ class SearchDatabase:
                 return True
 
         except sqlite3.Error as e:
-            self.logger.error(
-                f"Failed to add conversation {conversation_data.get('id', 'unknown')}: {e}"
-            )
+            self.logger.error("Failed to add conversation: %s", e)
             return False
 
     def search_conversations(self, query: str, limit: int = 10) -> List[Dict[str, Any]]:
@@ -266,15 +252,13 @@ class SearchDatabase:
                 )
                 unique_topics = cursor.fetchone()[0]
 
-                cursor = conn.execute(
-                    """
+                cursor = conn.execute("""
                     SELECT topic, COUNT(*) as count
                     FROM conversation_topics
                     GROUP BY topic
                     ORDER BY count DESC
                     LIMIT 10
-                """
-                )
+                """)
                 popular_topics = [{"topic": row[0], "count": row[1]} for row in cursor]
 
                 return {
