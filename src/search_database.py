@@ -155,9 +155,7 @@ class SearchDatabase:
                 return True
 
         except sqlite3.Error as e:
-            self.logger.error(
-                f"Failed to add conversation {conversation_data.get('id', 'unknown')}: {e}"
-            )
+            self.logger.error("Failed to add conversation: %s", e)
             return False
 
     def search_conversations(self, query: str, limit: int = 10) -> List[Dict[str, Any]]:
