@@ -5,18 +5,18 @@
 [![Coverage](https://sonarcloud.io/api/project_badges/measure?project=adamkwhite_claude-memory-mcp&metric=coverage)](https://sonarcloud.io/summary/new_code?id=adamkwhite_claude-memory-mcp)
 [![Duplicated Lines (%)](https://sonarcloud.io/api/project_badges/measure?project=adamkwhite_claude-memory-mcp&metric=duplicated_lines_density)](https://sonarcloud.io/summary/new_code?id=adamkwhite_claude-memory-mcp)
 
-# Claude Conversation Memory System
+# Claude Memory MCP — Universal AI Conversation Memory
 
-A Model Context Protocol (MCP) server that provides searchable local storage for Claude conversation history, enabling context retrieval during current sessions.
+A Model Context Protocol (MCP) server that provides persistent, searchable conversation memory across multiple AI platforms. Store, search, and retrieve conversation history with sub-millisecond full-text search powered by SQLite FTS5.
 
 ## Features
 
-- 🔍 **Full-text search** across conversation history
-- 🏷️ **Automatic topic extraction** and categorization  
+- 🔍 **Sub-millisecond full-text search** via SQLite FTS5 with relevance ranking
+- 🏷️ **Automatic topic extraction** — 574+ unique topics across 2,000+ associations
 - 📊 **Weekly summaries** with insights and patterns
 - 🗃️ **Organized file storage** by date and topic
-- ⚡ **Fast retrieval** with relevance scoring
-- 🔌 **MCP integration** for seamless Claude Desktop access
+- 🤖 **Multi-platform support** — Claude, ChatGPT, Cursor AI, and custom formats
+- 🔌 **MCP integration** for Claude Desktop and Claude Code
 
 ## Quick Start
 
@@ -115,37 +115,20 @@ python3 scripts/bulk_import_enhanced.py your_conversations.json
 
 ## MCP Tools
 
-The system provides three main tools:
-
 ### `search_conversations(query, limit=5)`
-Search through stored conversations by topic or content.
+Full-text search across all stored conversations with relevance ranking.
 
-**Example:**
-```python
-search_conversations("terraform azure deployment")
-search_conversations("python debugging", limit=10)
-```
+### `search_by_topic(topic, limit=10)`
+Find conversations tagged with a specific topic.
 
 ### `add_conversation(content, title, date)`
-Add a new conversation to the memory system.
-
-**Example:**
-```python
-add_conversation(
-    content="Discussion about MCP server setup...",
-    title="MCP Server Configuration", 
-    date="2025-06-01T14:30:00Z"
-)
-```
+Store a new conversation with automatic topic extraction and FTS indexing.
 
 ### `generate_weekly_summary(week_offset=0)`
-Generate insights and patterns from conversations.
+Generate insights and patterns from recent conversations.
 
-**Example:**
-```python
-generate_weekly_summary()  # Current week
-generate_weekly_summary(1)  # Last week
-```
+### `get_search_stats()`
+View search engine statistics — index size, topic counts, and engine status.
 
 ## Architecture
 
@@ -231,29 +214,37 @@ See `docs/json-logging.md` for detailed JSON logging documentation.
 
 ```
 claude-memory-mcp/
-├── server_fastmcp.py           # Main MCP server
-├── bulk_import_enhanced.py     # Conversation import tool
-├── validate_system.py          # System validation
-├── standalone_test.py          # Core functionality test
-├── import_workflow.sh          # Automated import process
-├── requirements.txt            # Python dependencies
-├── IMPORT_GUIDE.md            # Detailed import instructions
-└── README.md                  # This file
+├── src/
+│   ├── server_fastmcp.py       # Main MCP server
+│   ├── conversation_memory.py  # Core memory engine + SQLite FTS5
+│   ├── format_detector.py      # Auto-detect AI platform format
+│   ├── validators.py           # Input validation
+│   ├── logging_config.py       # Structured logging (text/JSON)
+│   ├── importers/              # Platform-specific importers
+│   │   ├── chatgpt_importer.py
+│   │   ├── claude_importer.py
+│   │   ├── cursor_importer.py
+│   │   └── generic_importer.py
+│   └── schemas/                # JSON schema validation
+├── tests/                      # 435 tests, 98.68% coverage
+├── data/                       # Consolidated app data
+├── scripts/                    # Import and utility scripts
+└── docs/                       # Documentation
 ```
 
 ## Performance
 
-Performance validated through automated benchmarks:
+SQLite FTS5 full-text search, benchmarked against 347 indexed conversations:
 
-- **Search Speed**: 0.05s average (159 conversations)
-- **Capacity**: Tested with 159 conversations (7.8MB)
-- **Memory Usage**: 40MB peak during operations
-- **Accuracy**: 80%+ search relevance
-- **Write Performance**: 1-12MB/s throughput
+- **Search Speed**: 0.2–0.5ms per query (4.4x faster than linear JSON scanning)
+- **Topic Search**: 0.3–0.4ms across 574 unique topics
+- **Write Speed**: ~33ms per conversation (includes indexing)
+- **Capacity**: 371 conversations in production use over 10 months
+- **Test Coverage**: 98.68% (435 tests) — 0 code smells, 0 security hotspots (SonarCloud verified)
 
-*Last benchmarked: June 2025 | [Detailed Report](docs/PERFORMANCE_BENCHMARKS.md)*
+*Last benchmarked: April 2026 | [Detailed Report](docs/PERFORMANCE_BENCHMARKS.md)*
 
-**Note for Developers**: The development team uses performance benchmarks that create a `~/claude-memory-test` directory for isolated testing. **Normal MCP usage does NOT create this directory** - it only uses `~/claude-memory/`. If you see `~/claude-memory-test`, it was created by running development scripts and can be safely deleted.
+**Note for Developers**: Performance benchmarks create a `~/claude-memory-test` directory for isolated testing. Normal MCP usage only uses `~/claude-memory/`. If you see `~/claude-memory-test`, it can be safely deleted.
 
 ## Search Examples
 
@@ -358,5 +349,5 @@ MIT License - see LICENSE file for details
 ---
 
 **Status**: Production ready ✅  
-**Last Updated**: June 2025  
-**Version**: 1.0.0
+**Last Updated**: April 2026  
+**Version**: 2.0.0
