@@ -79,6 +79,9 @@ class ConversationMemoryServer:
         # Initialize index files if they don't exist
         self._init_index_files()
 
+        # Sync index.json with conversation files on disk
+        self._sync_index_from_files()
+
     def _detect_data_directory_structure(self) -> bool:
         """
         Auto-detect whether to use new data/ structure or legacy structure.
@@ -106,12 +109,71 @@ class ConversationMemoryServer:
         if not self.index_file.exists():
             with open(self.index_file, "w") as f:
                 json.dump(
-                    {"conversations": [], "last_updated": datetime.now().isoformat()}, f
+                    {
+                        "conversations": [],
+                        "last_updated": datetime.now().isoformat(),
+                    },
+                    f,
                 )
 
         if not self.topics_file.exists():
             with open(self.topics_file, "w") as f:
-                json.dump({"topics": {}, "last_updated": datetime.now().isoformat()}, f)
+                json.dump(
+                    {"topics": {}, "last_updated": datetime.now().isoformat()},
+                    f,
+                )
+
+    def _sync_index_from_files(self):
+        """Rebuild index.json from conversation files on disk if out of sync."""
+        try:
+            with open(self.index_file, "r") as f:
+                index_data = json.load(f)
+            indexed_ids = {c["id"] for c in index_data.get("conversations", [])}
+        except (OSError, ValueError, KeyError, TypeError):
+            indexed_ids = set()
+            index_data = {
+                "conversations": [],
+                "last_updated": datetime.now().isoformat(),
+            }
+
+        # Scan all conversation JSON files on disk
+        conv_files = list(self.conversations_path.rglob("conv_*.json"))
+        if len(conv_files) <= len(indexed_ids):
+            return  # Already in sync or no files to add
+
+        added = 0
+        for conv_file in conv_files:
+            try:
+                with open(conv_file, "r", encoding="utf-8") as f:
+                    conv_data = json.load(f)
+                conv_id = conv_data.get("id", "")
+                if conv_id and conv_id not in indexed_ids:
+                    relative_path = conv_file.relative_to(self.storage_path)
+                    index_data["conversations"].append(
+                        {
+                            "id": conv_id,
+                            "title": conv_data.get("title", "Untitled"),
+                            "date": conv_data.get("date", ""),
+                            "topics": conv_data.get("topics", []),
+                            "file_path": str(relative_path),
+                            "added_at": conv_data.get(
+                                "created_at", datetime.now().isoformat()
+                            ),
+                        }
+                    )
+                    indexed_ids.add(conv_id)
+                    added += 1
+            except (OSError, ValueError, KeyError, TypeError):
+                continue
+
+        if added > 0:
+            index_data["last_updated"] = datetime.now().isoformat()
+            with open(self.index_file, "w") as f:
+                json.dump(index_data, f, indent=2)
+            self.logger.info(
+                f"Synced index.json: added {added} conversations "
+                f"({len(indexed_ids)} total)"
+            )
 
     def _get_date_folder(self, date: datetime) -> Path:
         """Get the folder path for a given date"""
@@ -216,7 +278,16 @@ class ConversationMemoryServer:
                 len(word) > 2
                 and word.lower() not in found_topics
                 and word
-                not in ["The", "This", "That", "When", "Where", "How", "What", "Why"]
+                not in [
+                    "The",
+                    "This",
+                    "That",
+                    "When",
+                    "Where",
+                    "How",
+                    "What",
+                    "Why",
+                ]
             ):
                 found_topics.append(word.lower())
 
@@ -299,7 +370,11 @@ class ConversationMemoryServer:
             }
 
     def _calculate_search_score(
-        self, query_terms: List[str], content: str, title: str, topics: List[str]
+        self,
+        query_terms: List[str],
+        content: str,
+        title: str,
+        topics: List[str],
     ) -> int:
         """Calculate relevance score for a conversation based on query terms"""
         score = 0
@@ -336,7 +411,9 @@ class ConversationMemoryServer:
                     "date": conv_data["date"],
                     "topics": conv_data["topics"],
                     "score": score,
-                    "preview": content[:200] + "..." if len(content) > 200 else content,
+                    "preview": (
+                        content[:200] + "..." if len(content) > 200 else content
+                    ),
                 }
             return None
 
@@ -618,7 +695,9 @@ class ConversationMemoryServer:
         stats = {
             "sqlite_available": SQLITE_AVAILABLE,
             "sqlite_enabled": self.use_sqlite_search,
-            "search_engine": "sqlite_fts" if self.use_sqlite_search else "linear_json",
+            "search_engine": (
+                "sqlite_fts" if self.use_sqlite_search else "linear_json"
+            ),
         }
 
         if self.use_sqlite_search and self.search_db:
