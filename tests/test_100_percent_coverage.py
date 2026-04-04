@@ -115,9 +115,7 @@ class TestCompleteEdgeCaseCoverage:
             test_file.chmod(0o644)
 
     @pytest.mark.asyncio
-    async def test_add_conversation_exception_handling(
-        self, server, temp_storage
-    ):
+    async def test_add_conversation_exception_handling(self, server, temp_storage):
         """Test add conversation with various exception scenarios"""
         # Test with a read-only conversations directory
         server.conversations_path.chmod(0o444)
@@ -160,9 +158,7 @@ class TestCompleteEdgeCaseCoverage:
             server.index_file.chmod(0o644)
 
     @pytest.mark.asyncio
-    async def test_update_topics_index_exception_handling(
-        self, server, temp_storage
-    ):
+    async def test_update_topics_index_exception_handling(self, server, temp_storage):
         """Test topics index update exception handling (line 237)"""
         # Make topics file unwritable
         server.topics_file.chmod(0o444)
@@ -244,9 +240,7 @@ class TestCompleteEdgeCaseCoverage:
         assert "Learning How To" in summary
 
     @pytest.mark.asyncio
-    async def test_weekly_summary_content_read_exception(
-        self, server, temp_storage
-    ):
+    async def test_weekly_summary_content_read_exception(self, server, temp_storage):
         """Test weekly summary when conversation file read fails (lines 298-299)"""
         current_time = datetime.now()
 
@@ -321,15 +315,11 @@ class TestCompleteEdgeCaseCoverage:
         # Verify summary structure and content
         assert len(summary) > 100
         assert (
-            "Weekly Summary" in summary
-            or "## " in summary
-            or "API Design" in summary
+            "Weekly Summary" in summary or "## " in summary or "API Design" in summary
         )
 
     @pytest.mark.asyncio
-    async def test_weekly_summary_file_saving_and_path(
-        self, server, temp_storage
-    ):
+    async def test_weekly_summary_file_saving_and_path(self, server, temp_storage):
         """Test weekly summary file saving functionality"""
         current_time = datetime.now()
 
@@ -669,10 +659,7 @@ class TestMCPToolWrapperFunctions:
 
         # Should return formatted message for no results
         assert isinstance(result, str)
-        assert (
-            "Found 0 conversations" in result
-            or "No conversations found" in result
-        )
+        assert "Found 0 conversations" in result or "No conversations found" in result
 
     @pytest.mark.asyncio
     async def test_mcp_search_tool_success_formatting(self, server):
@@ -840,6 +827,115 @@ class TestConversationMemoryServerDirect:
         assert "topics" in topics_data
         assert "last_updated" in topics_data
 
+    def test_sync_index_from_files_backfills_missing(self, server):
+        """Test that _sync_index_from_files adds files missing from index"""
+        # Create a conversation file on disk without going through add_conversation
+        date_folder = server.conversations_path / "2025" / "01-january"
+        date_folder.mkdir(parents=True, exist_ok=True)
+        conv_file = date_folder / "conv_20250115_100000_1234.json"
+        conv_data = {
+            "id": "conv_20250115_100000_1234",
+            "title": "Test backfill",
+            "content": "Some content",
+            "date": "2025-01-15T10:00:00",
+            "topics": ["test"],
+            "created_at": "2025-01-15T10:00:00",
+        }
+        with open(conv_file, "w") as f:
+            json.dump(conv_data, f)
+
+        # Index should be empty before sync
+        with open(server.index_file, "r") as f:
+            before = json.load(f)
+        assert len(before["conversations"]) == 0
+
+        # Run sync
+        server._sync_index_from_files()
+
+        # Index should now have the conversation
+        with open(server.index_file, "r") as f:
+            after = json.load(f)
+        assert len(after["conversations"]) == 1
+        assert after["conversations"][0]["id"] == "conv_20250115_100000_1234"
+
+    def test_sync_index_from_files_skips_already_indexed(self, server):
+        """Test that _sync_index_from_files skips conversations already in index"""
+        # Create a file and sync it
+        date_folder = server.conversations_path / "2025" / "02-february"
+        date_folder.mkdir(parents=True, exist_ok=True)
+        conv_file = date_folder / "conv_20250201_120000_5678.json"
+        conv_data = {
+            "id": "conv_20250201_120000_5678",
+            "title": "Already indexed",
+            "content": "Content",
+            "date": "2025-02-01T12:00:00",
+            "topics": ["test"],
+            "created_at": "2025-02-01T12:00:00",
+        }
+        with open(conv_file, "w") as f:
+            json.dump(conv_data, f)
+
+        server._sync_index_from_files()
+
+        with open(server.index_file, "r") as f:
+            first_sync = json.load(f)
+        count_after_first = len(first_sync["conversations"])
+
+        # Run sync again — should not duplicate
+        server._sync_index_from_files()
+
+        with open(server.index_file, "r") as f:
+            second_sync = json.load(f)
+        assert len(second_sync["conversations"]) == count_after_first
+
+    def test_sync_index_from_files_handles_corrupt_file(self, server):
+        """Test that _sync_index_from_files skips corrupt JSON files"""
+        date_folder = server.conversations_path / "2025" / "03-march"
+        date_folder.mkdir(parents=True, exist_ok=True)
+        corrupt_file = date_folder / "conv_20250301_000000_0000.json"
+        with open(corrupt_file, "w") as f:
+            f.write("not valid json{{{")
+
+        # Should not raise
+        server._sync_index_from_files()
+
+        with open(server.index_file, "r") as f:
+            index_data = json.load(f)
+        # Corrupt file should be skipped
+        ids = [c["id"] for c in index_data["conversations"]]
+        assert "conv_20250301_000000_0000" not in ids
+
+    def test_sync_index_from_files_handles_corrupt_index(self, temp_storage):
+        """Test sync when index.json itself is corrupt"""
+        server = ConversationMemoryServer(temp_storage, enable_sqlite=False)
+        # Corrupt index.json
+        with open(server.index_file, "w") as f:
+            f.write("broken")
+
+        # Create a valid conversation file
+        date_folder = server.conversations_path / "2025" / "04-april"
+        date_folder.mkdir(parents=True, exist_ok=True)
+        conv_file = date_folder / "conv_20250401_000000_9999.json"
+        with open(conv_file, "w") as f:
+            json.dump(
+                {
+                    "id": "conv_20250401_000000_9999",
+                    "title": "After corrupt index",
+                    "content": "Content",
+                    "date": "2025-04-01T00:00:00",
+                    "topics": [],
+                    "created_at": "2025-04-01T00:00:00",
+                },
+                f,
+            )
+
+        # Sync should recover and rebuild
+        server._sync_index_from_files()
+
+        with open(server.index_file, "r") as f:
+            index_data = json.load(f)
+        assert len(index_data["conversations"]) == 1
+
     def test_get_date_folder(self, server):
         """Test date folder creation"""
         test_date = datetime(2025, 3, 15, 10, 30, 45)
@@ -949,15 +1045,11 @@ class TestConversationMemoryServerDirect:
     @pytest.mark.asyncio
     async def test_search_conversations_empty(self, server):
         """Test search with no results"""
-        results = await server.search_conversations(
-            "nonexistentterm12345", limit=5
-        )
+        results = await server.search_conversations("nonexistentterm12345", limit=5)
         assert len(results) == 0
 
     @pytest.mark.asyncio
-    async def test_search_conversations_missing_file(
-        self, server, temp_storage
-    ):
+    async def test_search_conversations_missing_file(self, server, temp_storage):
         """Test search when conversation file is missing"""
         # Add conversation
         result = await server.add_conversation(
@@ -1003,9 +1095,7 @@ Line 4: More content"""
         test_title = "Index Test"
 
         # Create a fake file path
-        fake_path = (
-            server.conversations_path / "2025" / "01-january" / "test.md"
-        )
+        fake_path = server.conversations_path / "2025" / "01-january" / "test.md"
         fake_path.parent.mkdir(parents=True, exist_ok=True)
         fake_path.touch()
 
@@ -1103,9 +1193,7 @@ Line 4: More content"""
 
         try:
             # Add a conversation so it tries to write a summary file
-            await server.add_conversation(
-                "Test", "Test", "2025-06-12T10:00:00"
-            )
+            await server.add_conversation("Test", "Test", "2025-06-12T10:00:00")
             summary = await server.generate_weekly_summary(0)
             # Should either succeed with read-only directory or fail gracefully
             assert isinstance(summary, str)
@@ -1140,9 +1228,7 @@ class TestServerExceptionCoverage:
 
             try:
                 # This should catch the SQLite exception and continue
-                server = ConversationMemoryServer(
-                    temp_storage, enable_sqlite=True
-                )
+                server = ConversationMemoryServer(temp_storage, enable_sqlite=True)
                 # Server should still be created but with SQLite disabled
                 assert not server.use_sqlite_search
             finally:
@@ -1163,9 +1249,7 @@ class TestServerExceptionCoverage:
                 # Exception handling should log and possibly continue
                 assert "JSON write failed" in str(e)
 
-    def test_index_file_creation_permission_error_lines_115_116(
-        self, temp_storage
-    ):
+    def test_index_file_creation_permission_error_lines_115_116(self, temp_storage):
         """Test index file creation permission errors"""
         from unittest.mock import patch
 
@@ -1233,9 +1317,7 @@ class TestServerExceptionCoverage:
         # The method should handle missing files gracefully
         assert isinstance(result, list)
 
-    def test_additional_error_handling_lines_507_510(
-        self, server, temp_storage
-    ):
+    def test_additional_error_handling_lines_507_510(self, server, temp_storage):
         """Test additional error handling scenarios"""
         from unittest.mock import patch
 
