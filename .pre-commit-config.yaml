@@ -1,0 +1,90 @@
+# Pre-commit hooks configuration
+# Automatically runs code quality checks before each commit
+# Install: pip install pre-commit && pre-commit install
+# Run manually: pre-commit run --all-files
+
+repos:
+  # Python linting and formatting with Ruff (replaces black, flake8, isort)
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.15.0
+    hooks:
+      - id: ruff
+        name: Lint Python code with Ruff
+        # No --fix flag: Match CI behavior (fail on issues, no auto-fix)
+      - id: ruff-format
+        name: Format Python code with Ruff
+        args: [--check]  # Match CI: fail if not formatted
+
+  # Static type checking
+  - repo: https://github.com/pre-commit/mirrors-mypy
+    rev: v1.16.0
+    hooks:
+      - id: mypy
+        name: Type check with mypy
+        additional_dependencies: [pydantic>=2.0.0]
+        args: [--config-file=pyproject.toml]  # Match CI: use project config
+
+  # General file checks
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.5.0
+    hooks:
+      - id: trailing-whitespace
+        name: Remove trailing whitespace
+      - id: end-of-file-fixer
+        name: Ensure files end with newline
+      - id: check-yaml
+        name: Validate YAML files
+      - id: check-json
+        name: Validate JSON files
+      - id: check-added-large-files
+        name: Prevent large files (>500KB)
+        args: ['--maxkb=500']
+      - id: check-merge-conflict
+        name: Check for merge conflict markers
+      - id: debug-statements
+        name: Check for debugger imports
+
+  # Security scanning (high-severity only for speed)
+  # Comprehensive scan runs in CI/CD
+  - repo: https://github.com/PyCQA/bandit
+    rev: 1.7.6
+    hooks:
+      - id: bandit
+        name: Security scan with Bandit (high severity)
+        args: [--severity-level, high, -c, pyproject.toml]
+        additional_dependencies: ["bandit[toml]"]
+
+  # Dependency security
+  - repo: https://github.com/Lucas-C/pre-commit-hooks-safety
+    rev: v1.3.3
+    hooks:
+      - id: python-safety-dependencies-check
+        name: Check dependencies for vulnerabilities
+        files: requirements.*\.txt$
+
+  # Commit message validation (conventional commits)
+  - repo: https://github.com/compilerla/conventional-pre-commit
+    rev: v3.0.0
+    hooks:
+      - id: conventional-pre-commit
+        name: Validate commit message format
+        stages: [commit-msg]
+        args: [--strict]
+
+# Configuration options
+default_language_version:
+  python: python3.12
+
+# Skip hooks for specific commits
+# Usage: SKIP=mypy git commit -m "..."
+ci:
+  autofix_commit_msg: |
+    [pre-commit.ci] auto fixes from pre-commit hooks
+
+    for more information, see https://pre-commit.ci
+  autofix_prs: true
+  autoupdate_branch: ''
+  autoupdate_commit_msg: '[pre-commit.ci] pre-commit autoupdate'
+  autoupdate_schedule: weekly
+  skip: []
+  submodules: false
