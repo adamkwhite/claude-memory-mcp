@@ -283,6 +283,11 @@ class EnhancedBulkImporter:
             title=title,
             date=date_str,
             platform_label=platform_label,
+            session_id=data.get("session_id"),
+            user_id=data.get("user_id"),
+            tags=data.get("tags"),
+            conversation_type=data.get("conversation_type"),
+            custom_fields=data.get("custom_fields"),
         )
 
     # ------------------------------------------------------------------
@@ -451,8 +456,19 @@ class EnhancedBulkImporter:
         title: str,
         date: str,
         platform_label: str,
+        *,
+        session_id: Optional[str] = None,
+        user_id: Optional[str] = None,
+        tags: Optional[List[str]] = None,
+        conversation_type: Optional[str] = None,
+        custom_fields: Optional[Dict[str, Any]] = None,
     ) -> None:
-        """Persist via the memory server, or simulate when ``dry_run``."""
+        """Persist via the memory server, or simulate when ``dry_run``.
+
+        Universal metadata fields (``session_id``/``user_id``/``tags``/
+        ``conversation_type``/``custom_fields``) are forwarded so the memory
+        server can persist and FTS-index them.
+        """
         if self.dry_run:
             self.imported_count += 1
             self.platform_counts[platform_label] = (
@@ -466,7 +482,16 @@ class EnhancedBulkImporter:
 
         try:
             assert self.memory_server is not None  # for mypy/readers
-            result = await self.memory_server.add_conversation(content, title, date)
+            result = await self.memory_server.add_conversation(
+                content,
+                title,
+                date,
+                session_id=session_id,
+                user_id=user_id,
+                tags=tags,
+                conversation_type=conversation_type,
+                custom_fields=custom_fields,
+            )
         except Exception as exc:  # pragma: no cover - defensive
             self.failed_count += 1
             self.errors.append(f"Exception importing '{title}': {exc}")

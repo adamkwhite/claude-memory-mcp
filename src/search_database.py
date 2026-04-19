@@ -25,13 +25,25 @@ class SearchDatabase:
         # Initialize database
         self._init_database()
 
+    # Metadata columns added by PR adding FTS indexing of D2 universal fields.
+    # Column name -> SQL type. All default to NULL (nullable) for backwards
+    # compat with conversations imported before the metadata fields existed.
+    _METADATA_COLUMNS = {
+        "session_id": "TEXT",
+        "user_id": "TEXT",
+        "conversation_type": "TEXT",
+        "custom_fields_json": "TEXT",
+    }
+
     def _init_database(self):
         """Initialize SQLite database with FTS5 tables."""
         try:
             with sqlite3.connect(self.db_path) as conn:
                 conn.execute("PRAGMA foreign_keys = ON")
 
-                # Create main conversations table
+                # Create main conversations table. New installs get the full
+                # schema up front; existing installs are migrated next so
+                # later ``CREATE INDEX`` on metadata columns doesn't fail.
                 conn.execute("""
                     CREATE TABLE IF NOT EXISTS conversations (
                         id TEXT PRIMARY KEY,
@@ -41,11 +53,22 @@ class SearchDatabase:
                         created_at TEXT NOT NULL,
                         file_path TEXT NOT NULL,
                         topics_json TEXT,
-                        topics_text TEXT
+                        topics_text TEXT,
+                        session_id TEXT,
+                        user_id TEXT,
+                        conversation_type TEXT,
+                        custom_fields_json TEXT
                     )
                 """)
 
-                # Create FTS5 virtual table for full-text search
+                # Migrate existing pre-metadata databases before creating
+                # any indexes that reference the new columns.
+                self._migrate_metadata_columns(conn)
+
+                # Create FTS5 virtual table for full-text search. Tags are
+                # folded into ``topics_text`` when rows are written, so the
+                # FTS schema itself does not need new columns — keeping the
+                # virtual-table schema stable across migrations.
                 conn.execute("""
                     CREATE VIRTUAL TABLE IF NOT EXISTS conversations_fts USING fts5(
                         id,
@@ -67,12 +90,34 @@ class SearchDatabase:
                     )
                 """)
 
+                # Create tags table for precise tag-based searches (analogous
+                # to conversation_topics, but for the D2 ``tags`` field).
+                conn.execute("""
+                    CREATE TABLE IF NOT EXISTS conversation_tags (
+                        conversation_id TEXT,
+                        tag TEXT,
+                        FOREIGN KEY (conversation_id) REFERENCES conversations(id),
+                        PRIMARY KEY (conversation_id, tag)
+                    )
+                """)
+
                 # Create indexes for performance
                 conn.execute(
                     "CREATE INDEX IF NOT EXISTS idx_conversations_date ON conversations(date)"
                 )
                 conn.execute(
                     "CREATE INDEX IF NOT EXISTS idx_topics_topic ON conversation_topics(topic)"
+                )
+                conn.execute(
+                    "CREATE INDEX IF NOT EXISTS idx_tags_tag ON conversation_tags(tag)"
+                )
+                conn.execute(
+                    "CREATE INDEX IF NOT EXISTS idx_conversations_session_id "
+                    "ON conversations(session_id)"
+                )
+                conn.execute(
+                    "CREATE INDEX IF NOT EXISTS idx_conversations_type "
+                    "ON conversations(conversation_type)"
                 )
 
                 # Create triggers to maintain FTS5 table
@@ -108,21 +153,56 @@ class SearchDatabase:
             self.logger.error(f"Database initialization failed: {e}")
             raise
 
+    def _migrate_metadata_columns(self, conn: sqlite3.Connection) -> None:
+        """Add metadata columns to pre-existing ``conversations`` tables.
+
+        Pre-metadata databases (created before the FTS-metadata indexing PR)
+        are missing ``session_id``/``user_id``/``conversation_type``/
+        ``custom_fields_json``. ``ALTER TABLE ADD COLUMN`` is used rather
+        than rebuilding because the FTS5 virtual table would need a full
+        rebuild too, and these scalar columns are not in the FTS schema.
+        """
+        cursor = conn.execute("PRAGMA table_info(conversations)")
+        existing = {row[1] for row in cursor.fetchall()}
+
+        for column_name, column_type in self._METADATA_COLUMNS.items():
+            if column_name in existing:
+                continue
+            conn.execute(
+                f"ALTER TABLE conversations ADD COLUMN {column_name} {column_type}"
+            )
+            self.logger.info(
+                "Migrated conversations table: added column %s %s",
+                column_name,
+                column_type,
+            )
+
     def add_conversation(
         self, conversation_data: Dict[str, Any], file_path: str
     ) -> bool:
         """Add a conversation to the search database."""
         try:
-            topics_json = json.dumps(conversation_data.get("topics", []))
-            topics_text = " ".join(conversation_data.get("topics", []))
+            topics = conversation_data.get("topics", []) or []
+            tags = conversation_data.get("tags", []) or []
+            topics_json = json.dumps(topics)
+
+            # Fold tags into topics_text so the existing FTS5 schema picks
+            # them up without needing a virtual-table rebuild. Precise
+            # tag-only lookups use the conversation_tags table below.
+            topics_text = " ".join(topics + tags)
+
+            custom_fields = conversation_data.get("custom_fields") or {}
+            custom_fields_json = json.dumps(custom_fields) if custom_fields else None
 
             with sqlite3.connect(self.db_path) as conn:
                 # Insert into main table
                 conn.execute(
                     """
                     INSERT OR REPLACE INTO conversations
-                    (id, title, content, date, created_at, file_path, topics_json, topics_text)
-                    VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                    (id, title, content, date, created_at, file_path,
+                     topics_json, topics_text, session_id, user_id,
+                     conversation_type, custom_fields_json)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 """,
                     (
                         conversation_data["id"],
@@ -133,6 +213,10 @@ class SearchDatabase:
                         file_path,
                         topics_json,
                         topics_text,
+                        conversation_data.get("session_id"),
+                        conversation_data.get("user_id"),
+                        conversation_data.get("conversation_type"),
+                        custom_fields_json,
                     ),
                 )
 
@@ -142,13 +226,30 @@ class SearchDatabase:
                     (conversation_data["id"],),
                 )
 
-                for topic in conversation_data.get("topics", []):
+                for topic in topics:
                     conn.execute(
                         """
                         INSERT INTO conversation_topics (conversation_id, topic)
                         VALUES (?, ?)
                     """,
                         (conversation_data["id"], topic),
+                    )
+
+                # Insert tags
+                conn.execute(
+                    "DELETE FROM conversation_tags WHERE conversation_id = ?",
+                    (conversation_data["id"],),
+                )
+
+                for tag in tags:
+                    if not tag:
+                        continue
+                    conn.execute(
+                        """
+                        INSERT OR IGNORE INTO conversation_tags (conversation_id, tag)
+                        VALUES (?, ?)
+                    """,
+                        (conversation_data["id"], tag),
                     )
 
                 conn.commit()
@@ -240,6 +341,96 @@ class SearchDatabase:
             self.logger.error(f"Topic search failed: {e}")
             return []
 
+    def search_by_tag(self, tag: str, limit: int = 10) -> List[Dict[str, Any]]:
+        """Search conversations by a specific tag (exact match, case-sensitive)."""
+        try:
+            with sqlite3.connect(self.db_path) as conn:
+                conn.row_factory = sqlite3.Row
+
+                cursor = conn.execute(
+                    """
+                    SELECT c.id, c.title, c.date, c.topics_json, c.file_path,
+                           c.session_id, c.conversation_type
+                    FROM conversations c
+                    JOIN conversation_tags ct ON c.id = ct.conversation_id
+                    WHERE ct.tag = ?
+                    ORDER BY c.date DESC
+                    LIMIT ?
+                """,
+                    (tag, limit),
+                )
+
+                return [self._row_to_metadata_result(row) for row in cursor]
+
+        except sqlite3.Error as e:
+            self.logger.error(f"Tag search failed: {e}")
+            return []
+
+    def search_by_session_id(
+        self, session_id: str, limit: int = 10
+    ) -> List[Dict[str, Any]]:
+        """Search conversations by session_id (exact match)."""
+        try:
+            with sqlite3.connect(self.db_path) as conn:
+                conn.row_factory = sqlite3.Row
+
+                cursor = conn.execute(
+                    """
+                    SELECT id, title, date, topics_json, file_path,
+                           session_id, conversation_type
+                    FROM conversations
+                    WHERE session_id = ?
+                    ORDER BY date ASC
+                    LIMIT ?
+                """,
+                    (session_id, limit),
+                )
+
+                return [self._row_to_metadata_result(row) for row in cursor]
+
+        except sqlite3.Error as e:
+            self.logger.error(f"Session search failed: {e}")
+            return []
+
+    def search_by_conversation_type(
+        self, conversation_type: str, limit: int = 10
+    ) -> List[Dict[str, Any]]:
+        """Search conversations by conversation_type (exact match)."""
+        try:
+            with sqlite3.connect(self.db_path) as conn:
+                conn.row_factory = sqlite3.Row
+
+                cursor = conn.execute(
+                    """
+                    SELECT id, title, date, topics_json, file_path,
+                           session_id, conversation_type
+                    FROM conversations
+                    WHERE conversation_type = ?
+                    ORDER BY date DESC
+                    LIMIT ?
+                """,
+                    (conversation_type, limit),
+                )
+
+                return [self._row_to_metadata_result(row) for row in cursor]
+
+        except sqlite3.Error as e:
+            self.logger.error(f"Conversation-type search failed: {e}")
+            return []
+
+    @staticmethod
+    def _row_to_metadata_result(row: sqlite3.Row) -> Dict[str, Any]:
+        """Convert a metadata-query row into the standard result dict."""
+        return {
+            "id": row["id"],
+            "title": row["title"],
+            "date": row["date"],
+            "topics": json.loads(row["topics_json"]) if row["topics_json"] else [],
+            "file_path": row["file_path"],
+            "session_id": row["session_id"],
+            "conversation_type": row["conversation_type"],
+        }
+
     def get_conversation_stats(self) -> Dict[str, Any]:
         """Get database statistics."""
         try:
@@ -261,10 +452,43 @@ class SearchDatabase:
                 """)
                 popular_topics = [{"topic": row[0], "count": row[1]} for row in cursor]
 
+                cursor = conn.execute(
+                    "SELECT COUNT(DISTINCT tag) FROM conversation_tags"
+                )
+                unique_tags = cursor.fetchone()[0]
+
+                cursor = conn.execute("""
+                    SELECT tag, COUNT(*) as count
+                    FROM conversation_tags
+                    GROUP BY tag
+                    ORDER BY count DESC
+                    LIMIT 10
+                """)
+                popular_tags = [{"tag": row[0], "count": row[1]} for row in cursor]
+
+                cursor = conn.execute(
+                    "SELECT COUNT(DISTINCT session_id) FROM conversations "
+                    "WHERE session_id IS NOT NULL"
+                )
+                unique_sessions = cursor.fetchone()[0]
+
+                cursor = conn.execute(
+                    "SELECT conversation_type, COUNT(*) as count FROM conversations "
+                    "WHERE conversation_type IS NOT NULL "
+                    "GROUP BY conversation_type ORDER BY count DESC"
+                )
+                conversation_types = [
+                    {"type": row[0], "count": row[1]} for row in cursor
+                ]
+
                 return {
                     "total_conversations": total_conversations,
                     "unique_topics": unique_topics,
                     "popular_topics": popular_topics,
+                    "unique_tags": unique_tags,
+                    "popular_tags": popular_tags,
+                    "unique_sessions": unique_sessions,
+                    "conversation_types": conversation_types,
                 }
 
         except sqlite3.Error as e:
