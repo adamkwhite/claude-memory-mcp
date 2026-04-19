@@ -11,7 +11,7 @@ from datetime import datetime
 from pathlib import Path
 from unittest.mock import patch
 
-import pytest
+import pytest  # type: ignore[import-not-found]
 
 from src.importers.cursor_importer import CursorImporter
 
@@ -86,20 +86,20 @@ class TestCursorImporter:
                     "type": "user_input",
                     "content": "Help me with this code",
                     "timestamp": "2025-01-15T10:00:00Z",
-                    "files": ["main.py"]
+                    "files": ["main.py"],
                 },
                 {
                     "type": "ai_response",
                     "content": "I can help you with your code",
-                    "timestamp": "2025-01-15T10:01:00Z"
-                }
-            ]
+                    "timestamp": "2025-01-15T10:01:00Z",
+                },
+            ],
         }
 
         test_file = self.storage_path / "cursor_session.json"
         test_file.write_text(json.dumps(cursor_data))
 
-        with patch.object(self.importer, '_save_conversation') as mock_save:
+        with patch.object(self.importer, "_save_conversation") as mock_save:
             result = self.importer.import_file(test_file)
 
         assert result.success is True
@@ -114,7 +114,11 @@ class TestCursorImporter:
         test_file = self.storage_path / "test.json"
         test_file.write_text('{"session_id": "test"}')
 
-        with patch.object(self.importer, '_validate_cursor_format', side_effect=Exception("Test error")):
+        with patch.object(
+            self.importer,
+            "_validate_cursor_format",
+            side_effect=Exception("Test error"),
+        ):
             result = self.importer.import_file(test_file)
 
         assert result.success is False
@@ -137,12 +141,7 @@ class TestCursorImporterValidation:
         data = {
             "session_id": "test-session",
             "workspace": "/path/to/project",
-            "interactions": [
-                {
-                    "type": "user_input",
-                    "content": "Hello"
-                }
-            ]
+            "interactions": [{"type": "user_input", "content": "Hello"}],
         }
 
         result = self.importer._validate_cursor_format(data)
@@ -170,7 +169,7 @@ class TestCursorImporterValidation:
         data = {
             "session_id": "test",
             "workspace": "/path",
-            "interactions": "not an array"
+            "interactions": "not an array",
         }
 
         result = self.importer._validate_cursor_format(data)
@@ -198,15 +197,15 @@ class TestCursorImporterParsing:
                     "type": "user_input",
                     "content": "Write a function",
                     "timestamp": "2025-01-15T10:00:00Z",
-                    "files": ["utils.py", "main.py"]
+                    "files": ["utils.py", "main.py"],
                 },
                 {
                     "type": "ai_response",
                     "content": "Here's a function for you",
                     "timestamp": "2025-01-15T10:01:00Z",
-                    "changes": ["modified utils.py"]
-                }
-            ]
+                    "changes": ["modified utils.py"],
+                },
+            ],
         }
 
         conversation = self.importer.parse_conversation(data)
@@ -238,7 +237,7 @@ class TestCursorImporterParsing:
         data = {
             "session_id": "minimal-test",
             "workspace": "/project",
-            "interactions": []
+            "interactions": [],
         }
 
         conversation = self.importer.parse_conversation(data)
@@ -252,14 +251,16 @@ class TestCursorImporterParsing:
         """Test parsing invalid conversation data."""
         data = "not a dictionary"
 
-        with pytest.raises(ValueError, match="Cursor session data must be a dictionary"):
+        with pytest.raises(
+            ValueError, match="Cursor session data must be a dictionary"
+        ):
             self.importer.parse_conversation(data)
 
     def test_parse_conversation_missing_interactions(self):
         """Test parsing session without interactions."""
         data = {
             "session_id": "no-interactions",
-            "workspace": "/project"
+            "workspace": "/project",
             # Missing interactions
         }
 
@@ -275,12 +276,8 @@ class TestCursorImporterParsing:
             "workspace": "/project",
             "created_at": "invalid-date",
             "interactions": [
-                {
-                    "type": "user_input",
-                    "content": "Hello",
-                    "timestamp": "also-invalid"
-                }
-            ]
+                {"type": "user_input", "content": "Hello", "timestamp": "also-invalid"}
+            ],
         }
 
         # Should handle gracefully with current time fallbacks
@@ -303,7 +300,8 @@ class TestCursorImporterHelperMethods:
         """Test _add_session_header method."""
         content_parts = []
         self.importer._add_session_header(
-            content_parts, "/my/project", "claude-3", "session-123")
+            content_parts, "/my/project", "claude-3", "session-123"
+        )
 
         assert "# Cursor AI Session" in content_parts
         assert "**Workspace**: /my/project" in content_parts
@@ -316,7 +314,7 @@ class TestCursorImporterHelperMethods:
             "type": "user_input",
             "content": "Help me debug this",
             "timestamp": "2025-01-15T10:00:00Z",
-            "files": ["debug.py"]
+            "files": ["debug.py"],
         }
         date = datetime.now()
 
@@ -335,7 +333,7 @@ class TestCursorImporterHelperMethods:
             "type": "ai_response",
             "content": "Here's the solution",
             "timestamp": "2025-01-15T10:01:00Z",
-            "changes": ["modified debug.py", "added test.py"]
+            "changes": ["modified debug.py", "added test.py"],
         }
         date = datetime.now()
 
@@ -353,7 +351,7 @@ class TestCursorImporterHelperMethods:
         interaction = {
             "type": "user_input",
             "content": "",
-            "timestamp": "2025-01-15T10:00:00Z"
+            "timestamp": "2025-01-15T10:00:00Z",
         }
         date = datetime.now()
 
@@ -382,12 +380,11 @@ class TestCursorImporterHelperMethods:
         """Test _enhance_interaction_content method."""
         interaction = {
             "files": ["main.py", "utils.py"],
-            "changes": ["modified main.py"]
+            "changes": ["modified main.py"],
         }
         content = "Original content"
 
-        enhanced = self.importer._enhance_interaction_content(
-            interaction, content)
+        enhanced = self.importer._enhance_interaction_content(interaction, content)
 
         assert "Original content" in enhanced
         assert "Files: main.py, utils.py" in enhanced
@@ -398,8 +395,7 @@ class TestCursorImporterHelperMethods:
         interaction = {}
         content = "Just content"
 
-        enhanced = self.importer._enhance_interaction_content(
-            interaction, content)
+        enhanced = self.importer._enhance_interaction_content(interaction, content)
 
         assert enhanced == "Just content"
 
@@ -408,7 +404,7 @@ class TestCursorImporterHelperMethods:
         interaction = {
             "type": "user_input",
             "files": ["test.py"],
-            "changes": ["added feature"]
+            "changes": ["added feature"],
         }
 
         metadata = self.importer._create_interaction_metadata(interaction)
@@ -446,7 +442,7 @@ class TestCursorImporterSaveConversation:
             "date": "2025-01-15T12:00:00",
             "title": "Test Cursor Session",
             "content": "Test content",
-            "platform": "cursor"
+            "platform": "cursor",
         }
 
         file_path = self.importer._save_conversation(conversation)
@@ -458,7 +454,7 @@ class TestCursorImporterSaveConversation:
         assert file_path.name.endswith(".json")
 
         # Verify content
-        with open(file_path, 'r') as f:
+        with open(file_path, "r") as f:
             saved_data = json.load(f)
 
         assert saved_data["id"] == conversation["id"]
@@ -476,26 +472,38 @@ class TestCursorImporterIntegration:
 
     def test_end_to_end_import(self):
         """Test complete end-to-end import workflow."""
-        cursor_data = {"session_id": "e2e-test-session",
-                       "workspace": "/my/coding/project",
-                       "model": "claude-3.5-sonnet",
-                       "created_at": "2025-01-15T09:00:00Z",
-                       "interactions": [{"type": "user_input",
-                                         "content": "I need help implementing a binary search algorithm",
-                                         "timestamp": "2025-01-15T09:00:00Z",
-                                         "files": ["algorithms.py"]},
-                                        {"type": "ai_response",
-                                         "content": "I'll help you implement a binary search. Here's an efficient implementation...",
-                                         "timestamp": "2025-01-15T09:01:30Z",
-                                         "changes": ["modified algorithms.py"]},
-                                        {"type": "user_input",
-                                         "content": "Can you add unit tests for this function?",
-                                         "timestamp": "2025-01-15T09:05:00Z",
-                                         "files": ["algorithms.py"]},
-                                        {"type": "ai_response",
-                                         "content": "Absolutely! Here are comprehensive unit tests...",
-                                         "timestamp": "2025-01-15T09:07:15Z",
-                                         "changes": ["created test_algorithms.py"]}]}
+        cursor_data = {
+            "session_id": "e2e-test-session",
+            "workspace": "/my/coding/project",
+            "model": "claude-3.5-sonnet",
+            "created_at": "2025-01-15T09:00:00Z",
+            "interactions": [
+                {
+                    "type": "user_input",
+                    "content": "I need help implementing a binary search algorithm",
+                    "timestamp": "2025-01-15T09:00:00Z",
+                    "files": ["algorithms.py"],
+                },
+                {
+                    "type": "ai_response",
+                    "content": "I'll help you implement a binary search. Here's an efficient implementation...",
+                    "timestamp": "2025-01-15T09:01:30Z",
+                    "changes": ["modified algorithms.py"],
+                },
+                {
+                    "type": "user_input",
+                    "content": "Can you add unit tests for this function?",
+                    "timestamp": "2025-01-15T09:05:00Z",
+                    "files": ["algorithms.py"],
+                },
+                {
+                    "type": "ai_response",
+                    "content": "Absolutely! Here are comprehensive unit tests...",
+                    "timestamp": "2025-01-15T09:07:15Z",
+                    "changes": ["created test_algorithms.py"],
+                },
+            ],
+        }
 
         test_file = self.storage_path / "complete_session.json"
         test_file.write_text(json.dumps(cursor_data))
@@ -514,12 +522,15 @@ class TestCursorImporterIntegration:
         assert result.metadata["import_format"] == "cursor_session"
 
         # Verify conversation file was created (exclude source file)
-        conversation_files = [f for f in self.storage_path.rglob(
-            "*.json") if f.name != "complete_session.json"]
+        conversation_files = [
+            f
+            for f in self.storage_path.rglob("*.json")
+            if f.name != "complete_session.json"
+        ]
         assert len(conversation_files) == 1
 
         # Verify conversation content
-        with open(conversation_files[0], 'r') as f:
+        with open(conversation_files[0], "r") as f:
             saved_conversation = json.load(f)
 
         assert saved_conversation["platform"] == "cursor"
@@ -540,20 +551,20 @@ class TestCursorImporterIntegration:
                     "type": "user_input",
                     "content": "Review this code for security issues",
                     "files": ["auth.py", "user_model.py", "config.py"],
-                    "metadata": {"review_type": "security"}
+                    "metadata": {"review_type": "security"},
                 },
                 {
                     "type": "ai_response",
                     "content": "I've identified several security concerns...",
                     "changes": ["modified auth.py", "added security_utils.py"],
-                    "metadata": {"confidence": "high"}
+                    "metadata": {"confidence": "high"},
                 },
                 {
                     "type": "system_event",
                     "content": "Code analysis completed",
-                    "metadata": {"duration": "45s"}
-                }
-            ]
+                    "metadata": {"duration": "45s"},
+                },
+            ],
         }
 
         test_file = self.storage_path / "complex_session.json"
@@ -565,9 +576,12 @@ class TestCursorImporterIntegration:
         assert result.conversations_imported == 1
 
         # Verify complex interactions were processed (exclude source file)
-        conversation_files = [f for f in self.storage_path.rglob(
-            "*.json") if f.name != "complex_session.json"]
-        with open(conversation_files[0], 'r') as f:
+        conversation_files = [
+            f
+            for f in self.storage_path.rglob("*.json")
+            if f.name != "complex_session.json"
+        ]
+        with open(conversation_files[0], "r") as f:
             conversation = json.load(f)
 
         assert "messages" in conversation
@@ -583,3 +597,94 @@ class TestCursorImporterIntegration:
         assert "auth.py" in conversation["messages"][0]["content"]
         assert "security concerns" in conversation["messages"][1]["content"]
         assert "modified" in conversation["messages"][1]["content"]
+
+
+class TestCursorUniversalMetadata:
+    """Cursor importer populates universal metadata fields (5.1.3-5.2.4)."""
+
+    def setup_method(self):
+        self.temp_dir = tempfile.mkdtemp()
+        self.storage_path = Path(self.temp_dir)
+        self.importer = CursorImporter(self.storage_path)
+
+    def _base_session(self, **overrides):
+        session = {
+            "session_id": "sess-cursor-001",
+            "workspace": "/home/dev/myproject",
+            "timestamp": "2025-02-01T08:00:00Z",
+            "model": "claude-3.5-sonnet",
+            "interactions": [
+                {
+                    "type": "user_input",
+                    "content": "Refactor this function",
+                    "files": ["src/main.py"],
+                    "timestamp": "2025-02-01T08:00:00Z",
+                },
+                {
+                    "type": "ai_response",
+                    "content": "Done.",
+                    "changes": [{"file": "src/main.py", "diff": "..."}],
+                    "timestamp": "2025-02-01T08:00:30Z",
+                },
+            ],
+        }
+        session.update(overrides)
+        return session
+
+    def test_session_id_from_cursor_session(self):
+        """Cursor's native session_id maps directly to universal session_id."""
+        conv = self.importer.parse_conversation(self._base_session())
+        assert conv["session_id"] == "sess-cursor-001"
+
+    def test_session_id_none_when_blank(self):
+        """Empty/blank session_id collapses to None (not empty string)."""
+        conv = self.importer.parse_conversation(self._base_session(session_id=""))
+        assert conv["session_id"] is None
+
+    def test_user_id_passes_through(self):
+        conv = self.importer.parse_conversation(self._base_session(user_id="dev-007"))
+        assert conv["user_id"] == "dev-007"
+
+    def test_user_id_default_none(self):
+        conv = self.importer.parse_conversation(self._base_session())
+        assert conv["user_id"] is None
+
+    def test_tags_include_workspace_and_file_changes(self):
+        """Workspace name and file-change presence appear as tags."""
+        conv = self.importer.parse_conversation(self._base_session())
+        assert "workspace:myproject" in conv["tags"]
+        assert "has-file-changes" in conv["tags"]
+
+    def test_tags_explicit_appended(self):
+        conv = self.importer.parse_conversation(
+            self._base_session(tags=["sprint-7", "urgent"])
+        )
+        assert "sprint-7" in conv["tags"]
+        assert "urgent" in conv["tags"]
+
+    def test_conversation_type_defaults_code(self):
+        """Cursor sessions default to 'code' since the platform is an IDE."""
+        conv = self.importer.parse_conversation(self._base_session())
+        assert conv["conversation_type"] == "code"
+
+    def test_conversation_type_explicit_overrides(self):
+        conv = self.importer.parse_conversation(
+            self._base_session(conversation_type="analysis")
+        )
+        assert conv["conversation_type"] == "analysis"
+
+    def test_custom_fields_capture_workspace_and_files(self):
+        conv = self.importer.parse_conversation(self._base_session())
+        assert conv["custom_fields"]["workspace_path"] == "/home/dev/myproject"
+        assert conv["custom_fields"]["files_involved"] == ["src/main.py"]
+
+    def test_custom_fields_caller_overrides_merged(self):
+        """Caller-supplied custom_fields are merged on top of defaults."""
+        conv = self.importer.parse_conversation(
+            self._base_session(
+                custom_fields={"experiment": "beta", "workspace_path": "override"}
+            )
+        )
+        assert conv["custom_fields"]["experiment"] == "beta"
+        # Caller wins on key collision
+        assert conv["custom_fields"]["workspace_path"] == "override"

@@ -206,6 +206,18 @@ class ChatGPTImporter(BaseImporter):
         # Extract model information if available
         model = self._extract_model_info(raw_data)
 
+        # Universal metadata extraction.
+        # ChatGPT exports use ``conversation_id`` (and sometimes ``id``)
+        # as the stable identifier — treat this as the session_id so
+        # multiple imports of the same conversation can be grouped.
+        session_id = raw_data.get("conversation_id") or raw_data.get("id") or None
+        # ChatGPT exports rarely include a user identifier, but if a
+        # caller has injected one we preserve it.
+        user_id = raw_data.get("user_id") or None
+        tags = self._extract_chatgpt_tags(raw_data)
+        conversation_type = self._classify_conversation_type(raw_data, content)
+        custom_fields = self._extract_chatgpt_custom_fields(raw_data)
+
         # Create universal conversation
         return self.create_universal_conversation(
             platform_id=platform_id,
@@ -224,7 +236,69 @@ class ChatGPTImporter(BaseImporter):
                 "original_update_time": update_time_str,
                 "message_count": len(messages),
             },
+            session_id=session_id,
+            user_id=user_id,
+            tags=tags,
+            conversation_type=conversation_type,
+            custom_fields=custom_fields,
         )
+
+    def _extract_chatgpt_tags(self, raw_data: Dict[str, Any]) -> List[str]:
+        """Build tags list from ChatGPT-specific signals (starred, archived, gizmo)."""
+        tags: List[str] = []
+        if raw_data.get("is_starred"):
+            tags.append("starred")
+        if raw_data.get("is_archived"):
+            tags.append("archived")
+        gizmo_id = raw_data.get("gizmo_id")
+        if gizmo_id:
+            tags.append(f"gizmo:{gizmo_id}")
+        # Allow callers to inject explicit tags
+        explicit = raw_data.get("tags")
+        if isinstance(explicit, list):
+            tags.extend(str(t) for t in explicit if t)
+        return tags
+
+    def _classify_conversation_type(
+        self, raw_data: Dict[str, Any], content: str
+    ) -> str:
+        """Classify a ChatGPT conversation as chat/code/analysis/etc.
+
+        Uses lightweight heuristics — explicit hints win, otherwise content
+        is inspected for code-fence density.
+        """
+        explicit = raw_data.get("conversation_type")
+        if isinstance(explicit, str) and explicit:
+            return explicit
+        # Heuristic: lots of code fences => code conversation
+        if content and content.count("```") >= 4:
+            return "code"
+        return "chat"
+
+    def _extract_chatgpt_custom_fields(
+        self, raw_data: Dict[str, Any]
+    ) -> Dict[str, Any]:
+        """Capture optional ChatGPT-specific fields into custom_fields.
+
+        Only populates entries that are actually present in the source so the
+        default empty dict is preserved for typical exports.
+        """
+        custom: Dict[str, Any] = {}
+        for key in (
+            "default_model_slug",
+            "conversation_template_id",
+            "gizmo_id",
+            "gizmo_type",
+            "memory_scope",
+        ):
+            value = raw_data.get(key)
+            if value is not None:
+                custom[key] = value
+        # Pass through any caller-supplied custom_fields dict.
+        extra = raw_data.get("custom_fields")
+        if isinstance(extra, dict):
+            custom.update(extra)
+        return custom
 
     def _validate_chatgpt_format(self, data: Any) -> bool:
         """Validate that data is in ChatGPT export format."""

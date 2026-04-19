@@ -12,7 +12,7 @@ import xml.etree.ElementTree as ET
 from pathlib import Path
 from unittest.mock import patch
 
-import pytest
+import pytest  # type: ignore[import-not-found]
 
 from src.importers.generic_importer import GenericImporter
 
@@ -55,7 +55,9 @@ class TestGenericImporter:
         test_file = self.storage_path / "test.json"
         test_file.write_text('{"test": "data"}')
 
-        with patch.object(self.importer, '_import_json_format', side_effect=Exception("Test error")):
+        with patch.object(
+            self.importer, "_import_json_format", side_effect=Exception("Test error")
+        ):
             result = self.importer.import_file(test_file)
 
         assert result.success is False
@@ -79,14 +81,14 @@ class TestGenericImporterJSONFormat:
             "title": "Test Conversation",
             "messages": [
                 {"role": "user", "content": "Hello"},
-                {"role": "assistant", "content": "Hi there!"}
-            ]
+                {"role": "assistant", "content": "Hi there!"},
+            ],
         }
 
         test_file = self.storage_path / "simple.json"
         test_file.write_text(json.dumps(json_data))
 
-        with patch.object(self.importer, '_save_conversation') as mock_save:
+        with patch.object(self.importer, "_save_conversation") as mock_save:
             result = self.importer.import_file(test_file)
 
         assert result.success is True
@@ -100,19 +102,19 @@ class TestGenericImporterJSONFormat:
             {
                 "title": "Conv 1",
                 "content": "First conversation",
-                "messages": [{"role": "user", "content": "Hello 1"}]
+                "messages": [{"role": "user", "content": "Hello 1"}],
             },
             {
                 "title": "Conv 2",
                 "content": "Second conversation",
-                "messages": [{"role": "user", "content": "Hello 2"}]
-            }
+                "messages": [{"role": "user", "content": "Hello 2"}],
+            },
         ]
 
         test_file = self.storage_path / "array.json"
         test_file.write_text(json.dumps(json_data))
 
-        with patch.object(self.importer, '_save_conversation') as mock_save:
+        with patch.object(self.importer, "_save_conversation") as mock_save:
             result = self.importer.import_file(test_file)
 
         assert result.success is True
@@ -153,8 +155,8 @@ class TestGenericImporterJSONFormat:
             "content": "A conversation",
             "messages": [
                 {"role": "user", "content": "Hello"},
-                {"role": "assistant", "content": "Hi"}
-            ]
+                {"role": "assistant", "content": "Hi"},
+            ],
         }
 
         conversations = self.importer._parse_json_object(data)
@@ -168,9 +170,9 @@ class TestGenericImporterJSONFormat:
         data = {
             "chats": [
                 {"title": "Chat 1", "content": "First", "messages": []},
-                {"title": "Chat 2", "content": "Second", "messages": []}
+                {"title": "Chat 2", "content": "Second", "messages": []},
             ],
-            "other_data": "ignored"
+            "other_data": "ignored",
         }
 
         conversations = self.importer._parse_json_object(data)
@@ -181,18 +183,17 @@ class TestGenericImporterJSONFormat:
 
     def test_parse_json_object_fallback(self):
         """Test parsing JSON object as fallback conversation."""
-        data = {
-            "random_field": "random_value",
-            "another_field": 123
-        }
+        data = {"random_field": "random_value", "another_field": 123}
 
         conversations = self.importer._parse_json_object(data)
 
         assert len(conversations) == 1
         assert "Generic Conversation" in conversations[0]["title"]
         # Content should contain the random field data in some form
-        assert "random_value" in conversations[0]["content"] or json.dumps(
-            data) in conversations[0]["content"]
+        assert (
+            "random_value" in conversations[0]["content"]
+            or json.dumps(data) in conversations[0]["content"]
+        )
 
 
 class TestGenericImporterTextFormat:
@@ -220,7 +221,7 @@ class TestGenericImporterTextFormat:
         test_file = self.storage_path / "dialogue.md"
         test_file.write_text(markdown_content)
 
-        with patch.object(self.importer, '_save_conversation') as mock_save:
+        with patch.object(self.importer, "_save_conversation") as mock_save:
             result = self.importer.import_file(test_file)
 
         assert result.success is True
@@ -248,7 +249,7 @@ Final response from assistant
         test_file = self.storage_path / "blocks.txt"
         test_file.write_text(text_content)
 
-        with patch.object(self.importer, '_save_conversation') as mock_save:
+        with patch.object(self.importer, "_save_conversation") as mock_save:
             result = self.importer.import_file(test_file)
 
         assert result.success is True
@@ -263,7 +264,7 @@ Final response from assistant
         test_file = self.storage_path / "plain.txt"
         test_file.write_text(plain_text)
 
-        with patch.object(self.importer, '_save_conversation') as mock_save:
+        with patch.object(self.importer, "_save_conversation") as mock_save:
             result = self.importer.import_file(test_file)
 
         assert result.success is True
@@ -276,7 +277,9 @@ Final response from assistant
         test_file = self.storage_path / "test.txt"
         test_file.write_text("Test content")
 
-        with patch.object(self.importer, '_parse_text_content', side_effect=Exception("Parse error")):
+        with patch.object(
+            self.importer, "_parse_text_content", side_effect=Exception("Parse error")
+        ):
             result = self.importer.import_file(test_file)
 
         assert result.success is False
@@ -300,15 +303,15 @@ class TestGenericImporterCSVFormat:
             ["speaker", "message", "timestamp"],
             ["user", "Hello there", "2025-01-15 10:00:00"],
             ["assistant", "Hi! How can I help?", "2025-01-15 10:01:00"],
-            ["user", "I need help with code", "2025-01-15 10:02:00"]
+            ["user", "I need help with code", "2025-01-15 10:02:00"],
         ]
 
         test_file = self.storage_path / "conversation.csv"
-        with open(test_file, 'w', newline='') as f:
+        with open(test_file, "w", newline="") as f:
             writer = csv.writer(f)
             writer.writerows(csv_data)
 
-        with patch.object(self.importer, '_save_conversation') as mock_save:
+        with patch.object(self.importer, "_save_conversation") as mock_save:
             result = self.importer.import_file(test_file)
 
         assert result.success is True
@@ -319,8 +322,8 @@ class TestGenericImporterCSVFormat:
     def test_import_csv_empty_file(self):
         """Test importing empty CSV file."""
         test_file = self.storage_path / "empty.csv"
-        with open(test_file, 'w', newline='') as f:
-            pass  # Create empty file
+        # Touch an empty file (no contents needed for the empty-CSV test).
+        test_file.write_text("")
 
         result = self.importer.import_file(test_file)
 
@@ -331,9 +334,9 @@ class TestGenericImporterCSVFormat:
     def test_import_csv_exception(self):
         """Test CSV import with exception."""
         test_file = self.storage_path / "test.csv"
-        test_file.write_text("invalid,csv,format\nwith,unbalanced,quotes\"")
+        test_file.write_text('invalid,csv,format\nwith,unbalanced,quotes"')
 
-        with patch('csv.DictReader', side_effect=Exception("CSV error")):
+        with patch("csv.DictReader", side_effect=Exception("CSV error")):
             result = self.importer.import_file(test_file)
 
         assert result.success is False
@@ -363,7 +366,7 @@ class TestGenericImporterXMLFormat:
         test_file = self.storage_path / "conversation.xml"
         test_file.write_text(xml_content)
 
-        with patch.object(self.importer, '_save_conversation') as mock_save:
+        with patch.object(self.importer, "_save_conversation") as mock_save:
             result = self.importer.import_file(test_file)
 
         assert result.success is True
@@ -390,7 +393,7 @@ class TestGenericImporterXMLFormat:
         test_file = self.storage_path / "test.xml"
         test_file.write_text("<conversation></conversation>")
 
-        with patch('xml.etree.ElementTree.parse', side_effect=Exception("XML error")):
+        with patch("xml.etree.ElementTree.parse", side_effect=Exception("XML error")):
             result = self.importer.import_file(test_file)
 
         assert result.success is False
@@ -422,7 +425,7 @@ class TestGenericImporterParsingMethods:
         data = {
             "title": "Test Conv",
             "content": "Test content",
-            "messages": [{"role": "user", "content": "Hello"}]
+            "messages": [{"role": "user", "content": "Hello"}],
         }
 
         result = self.importer.parse_conversation(data)
@@ -435,7 +438,7 @@ class TestGenericImporterParsingMethods:
         """Test parsing list as conversation."""
         data = [
             {"role": "user", "content": "Hello"},
-            {"role": "assistant", "content": "Hi"}
+            {"role": "assistant", "content": "Hi"},
         ]
 
         result = self.importer.parse_conversation(data)
@@ -519,8 +522,7 @@ class TestGenericImporterParsingMethods:
         assert self.importer._extract_field(data, ["name", "title"]) == "Test"
 
         # No match
-        assert self.importer._extract_field(
-            data, ["missing", "absent"]) is None
+        assert self.importer._extract_field(data, ["missing", "absent"]) is None
 
     def test_find_column(self):
         """Test column name matching."""
@@ -555,11 +557,10 @@ class TestGenericImporterHelperMethods:
             "This is continued text",
             "**Assistant**: Hi! How can I help?",
             "More assistant text",
-            "**Human**: Thanks!"
+            "**Human**: Thanks!",
         ]
 
-        messages, content_parts = self.importer._extract_dialogue_messages(
-            lines)
+        messages, content_parts = self.importer._extract_dialogue_messages(lines)
 
         assert len(messages) == 3
         assert messages[0]["role"] == "user"
@@ -584,8 +585,8 @@ class TestGenericImporterHelperMethods:
     def test_start_new_message(self):
         """Test starting new message from regex match."""
         import re
-        match = re.match(r'(\*\*)?(\w+)(\*\*)?\s*:\s*(.*)',
-                         "**Human**: Hello there")
+
+        match = re.match(r"(\*\*)?(\w+)(\*\*)?\s*:\s*(.*)", "**Human**: Hello there")
 
         speaker, message = self.importer._start_new_message(match)
 
@@ -596,7 +597,8 @@ class TestGenericImporterHelperMethods:
         """Test continuing current message."""
         current_message = ["Hello"]
         result = self.importer._continue_current_message(
-            "Human", current_message, "there")
+            "Human", current_message, "there"
+        )
 
         assert result == ["Hello", "there"]
 
@@ -609,10 +611,8 @@ class TestGenericImporterHelperMethods:
 
         random_elem = ET.Element("data")
 
-        assert self.importer._xml_element_looks_like_conversation(
-            conv_elem) is True
-        assert self.importer._xml_element_looks_like_conversation(
-            random_elem) is False
+        assert self.importer._xml_element_looks_like_conversation(conv_elem) is True
+        assert self.importer._xml_element_looks_like_conversation(random_elem) is False
 
 
 class TestGenericImporterSaveConversation:
@@ -631,7 +631,7 @@ class TestGenericImporterSaveConversation:
             "date": "2025-01-15T12:00:00",
             "title": "Test Generic Conversation",
             "content": "Test content",
-            "platform": "generic"
+            "platform": "generic",
         }
 
         file_path = self.importer._save_conversation(conversation)
@@ -643,7 +643,7 @@ class TestGenericImporterSaveConversation:
         assert file_path.name.endswith(".json")
 
         # Verify content
-        with open(file_path, 'r') as f:
+        with open(file_path, "r") as f:
             saved_data = json.load(f)
 
         assert saved_data["id"] == conversation["id"]
@@ -660,7 +660,7 @@ class TestGenericImporterSaveConversation:
                 "platform": "generic",
                 "messages": [],
                 "topics": [],
-                "created_at": "2025-01-15T12:00:00"
+                "created_at": "2025-01-15T12:00:00",
             },
             {
                 "id": "conv2",
@@ -670,13 +670,14 @@ class TestGenericImporterSaveConversation:
                 "platform": "generic",
                 "messages": [],
                 "topics": [],
-                "created_at": "2025-01-15T12:00:00"
-            }
+                "created_at": "2025-01-15T12:00:00",
+            },
         ]
 
         file_path = self.storage_path / "test.json"
         result = self.importer._save_conversations(
-            conversations, file_path, "test_format")
+            conversations, file_path, "test_format"
+        )
 
         assert result.success is True
         assert result.conversations_imported == 2
@@ -694,17 +695,18 @@ class TestGenericImporterSaveConversation:
                 "platform": "generic",
                 "messages": [],
                 "topics": [],
-                "created_at": "2025-01-15T12:00:00"
+                "created_at": "2025-01-15T12:00:00",
             },
             {
                 "id": "invalid_conv"
                 # Missing required fields
-            }
+            },
         ]
 
         file_path = self.storage_path / "test.json"
         result = self.importer._save_conversations(
-            conversations, file_path, "test_format")
+            conversations, file_path, "test_format"
+        )
 
         assert result.success is True  # At least one succeeded
         assert result.conversations_imported == 1
@@ -732,10 +734,12 @@ class TestGenericImporterIntegration:
                         {"role": "user", "content": "Import this conversation"},
                         {"role": "assistant", "content": "I'll import this for you"},
                         {"role": "user", "content": "Make sure it works properly"},
-                        {"role": "assistant",
-                            "content": "The import is working correctly"}
+                        {
+                            "role": "assistant",
+                            "content": "The import is working correctly",
+                        },
                     ],
-                    "metadata": {"test": "e2e_integration"}
+                    "metadata": {"test": "e2e_integration"},
                 }
             ]
         }
@@ -757,12 +761,13 @@ class TestGenericImporterIntegration:
         assert result.metadata["format_type"] == "generic_json"
 
         # Verify conversation file was created (excludes source file)
-        conversation_files = [f for f in self.storage_path.rglob(
-            "*.json") if f.name != "e2e_test.json"]
+        conversation_files = [
+            f for f in self.storage_path.rglob("*.json") if f.name != "e2e_test.json"
+        ]
         assert len(conversation_files) == 1
 
         # Verify conversation content
-        with open(conversation_files[0], 'r') as f:
+        with open(conversation_files[0], "r") as f:
             saved_conversation = json.load(f)
 
         assert saved_conversation["platform"] == "generic"
@@ -816,12 +821,15 @@ For most applications, I'd recommend starting with SQLite FTS as it provides exc
         assert result.metadata["format_type"] == "generic_text"
 
         # Verify conversation file was created (excludes source file)
-        conversation_files = [f for f in self.storage_path.rglob(
-            "*.json") if f.name != "conversation_log.md"]
+        conversation_files = [
+            f
+            for f in self.storage_path.rglob("*.json")
+            if f.name != "conversation_log.md"
+        ]
         assert len(conversation_files) == 1
 
         # Verify conversation content
-        with open(conversation_files[0], 'r') as f:
+        with open(conversation_files[0], "r") as f:
             saved_conversation = json.load(f)
 
         assert saved_conversation["platform"] == "generic"
@@ -836,9 +844,101 @@ For most applications, I'd recommend starting with SQLite FTS as it provides exc
         test_file.write_text("Some content")
 
         # Should fall back to text parsing
-        with patch.object(self.importer, '_save_conversation') as mock_save:
+        with patch.object(self.importer, "_save_conversation") as mock_save:
             result = self.importer.import_file(test_file)
 
         assert result.success is True
         assert result.conversations_imported == 1
         mock_save.assert_called_once()
+
+
+class TestGenericUniversalMetadata:
+    """Generic importer pass-through for universal metadata (5.1.3-5.2.4)."""
+
+    def setup_method(self):
+        self.temp_dir = tempfile.mkdtemp()
+        self.storage_path = Path(self.temp_dir)
+        self.importer = GenericImporter(self.storage_path)
+
+    def _base_dict(self, **overrides):
+        data = {
+            "title": "Generic Conv",
+            "content": "some content",
+            "messages": [
+                {"role": "user", "content": "hi"},
+                {"role": "assistant", "content": "hello"},
+            ],
+        }
+        data.update(overrides)
+        return data
+
+    def test_session_id_from_session_id_key(self):
+        conv = self.importer._parse_dict_as_conversation(
+            self._base_dict(session_id="gen-sess-1")
+        )
+        assert conv["session_id"] == "gen-sess-1"
+
+    def test_session_id_from_conversation_id_alias(self):
+        conv = self.importer._parse_dict_as_conversation(
+            self._base_dict(conversation_id="gen-conv-2")
+        )
+        assert conv["session_id"] == "gen-conv-2"
+
+    def test_session_id_default_none(self):
+        conv = self.importer._parse_dict_as_conversation(self._base_dict())
+        assert conv["session_id"] is None
+
+    def test_user_id_from_owner_id_alias(self):
+        """user_id pulls from common synonyms (user_id/account_id/owner_id)."""
+        conv = self.importer._parse_dict_as_conversation(
+            self._base_dict(owner_id="owner-9")
+        )
+        assert conv["user_id"] == "owner-9"
+
+    def test_tags_from_labels_alias(self):
+        """tags pulls from 'tags' or 'labels'."""
+        conv = self.importer._parse_dict_as_conversation(
+            self._base_dict(labels=["alpha", "beta"])
+        )
+        assert "alpha" in conv["tags"]
+        assert "beta" in conv["tags"]
+
+    def test_tags_default_empty(self):
+        conv = self.importer._parse_dict_as_conversation(self._base_dict())
+        assert conv["tags"] == []
+
+    def test_conversation_type_from_type_alias(self):
+        """conversation_type pulls from 'conversation_type'/'type'/'category'."""
+        conv = self.importer._parse_dict_as_conversation(
+            self._base_dict(type="support")
+        )
+        assert conv["conversation_type"] == "support"
+
+    def test_conversation_type_default_none(self):
+        conv = self.importer._parse_dict_as_conversation(self._base_dict())
+        assert conv["conversation_type"] is None
+
+    def test_custom_fields_from_extras_alias(self):
+        """custom_fields pulls from 'custom_fields'/'extra'/'extras'."""
+        conv = self.importer._parse_dict_as_conversation(
+            self._base_dict(extras={"k": "v"})
+        )
+        assert conv["custom_fields"] == {"k": "v"}
+
+    def test_custom_fields_default_empty(self):
+        conv = self.importer._parse_dict_as_conversation(self._base_dict())
+        assert conv["custom_fields"] == {}
+
+    def test_non_string_session_id_ignored(self):
+        """Non-string session_id values default to None (type safety)."""
+        conv = self.importer._parse_dict_as_conversation(
+            self._base_dict(session_id=12345)
+        )
+        assert conv["session_id"] is None
+
+    def test_non_list_tags_ignored(self):
+        """Non-list tags values default to empty list."""
+        conv = self.importer._parse_dict_as_conversation(
+            self._base_dict(tags="not-a-list")
+        )
+        assert conv["tags"] == []

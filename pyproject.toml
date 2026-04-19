@@ -33,3 +33,14 @@ include_trailing_comma = true
 force_grid_wrap = 0
 use_parentheses = true
 ensure_newline_before_comments = true
+
+# Minimal mypy config: tests import ``src.importers.X`` (via the project
+# root being on ``sys.path``) so we anchor mypy at the repo root. Without
+# ``explicit_package_bases`` mypy refuses to type-check ``src/`` and
+# ``tests/`` in the same invocation — the pre-commit hook does that every
+# time both buckets change in a single commit.
+[tool.mypy]
+explicit_package_bases = true
+namespace_packages = true
+ignore_missing_imports = true
+exclude = "^(build|dist|htmlcov|\\.scannerwork)/"

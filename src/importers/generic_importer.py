@@ -687,6 +687,28 @@ class GenericImporter(BaseImporter):
         if not content and messages:
             content = self._combine_messages_to_content(messages)
 
+        # Pass-through universal metadata extraction.
+        # Generic importer accepts arbitrary dicts so we forward any
+        # known universal-metadata keys directly.
+        session_id = self._extract_field(data, ["session_id", "conversation_id"])
+        user_id = self._extract_field(data, ["user_id", "account_id", "owner_id"])
+        explicit_tags = self._extract_field(data, ["tags", "labels"])
+        tags = (
+            [str(t) for t in explicit_tags if t]
+            if isinstance(explicit_tags, list)
+            else []
+        )
+        explicit_type = self._extract_field(
+            data, ["conversation_type", "type", "category"]
+        )
+        conversation_type = (
+            explicit_type if isinstance(explicit_type, str) and explicit_type else None
+        )
+        explicit_custom = self._extract_field(
+            data, ["custom_fields", "extra", "extras"]
+        )
+        custom_fields = explicit_custom if isinstance(explicit_custom, dict) else {}
+
         return self.create_universal_conversation(
             platform_id=f"generic_{int(datetime.now().timestamp())}",
             title=title,
@@ -695,6 +717,11 @@ class GenericImporter(BaseImporter):
             date=datetime.now(),
             model="unknown",
             metadata={"original_keys": list(data.keys())},
+            session_id=session_id if isinstance(session_id, str) else None,
+            user_id=user_id if isinstance(user_id, str) else None,
+            tags=tags,
+            conversation_type=conversation_type,
+            custom_fields=custom_fields,
         )
 
     def _parse_list_as_conversation(self, data: List[Any]) -> Dict[str, Any]:

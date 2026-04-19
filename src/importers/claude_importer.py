@@ -319,6 +319,15 @@ class ClaudeImporter(BaseImporter):
             "original_format": "claude_json",
         }
 
+        # Universal metadata extraction.
+        session_id = (
+            data.get("session_id") or data.get("conversation_id") or platform_id or None
+        )
+        user_id = data.get("user_id") or data.get("account_id") or None
+        tags = self._extract_claude_tags(data, session_context["claude_variant"])
+        conversation_type = self._classify_claude_conversation_type(data, content)
+        custom_fields = self._extract_claude_custom_fields(data)
+
         # Create universal conversation
         return self.create_universal_conversation(
             platform_id=platform_id or f"claude_{int(date.timestamp())}",
@@ -332,7 +341,47 @@ class ClaudeImporter(BaseImporter):
                 "original_data_keys": list(data.keys()),
                 "claude_variant": session_context["claude_variant"],
             },
+            session_id=session_id,
+            user_id=user_id,
+            tags=tags,
+            conversation_type=conversation_type,
+            custom_fields=custom_fields,
         )
+
+    def _extract_claude_tags(
+        self, data: Dict[str, Any], claude_variant: str
+    ) -> List[str]:
+        """Build tag list for a Claude conversation (variant + caller-supplied)."""
+        tags: List[str] = []
+        if claude_variant:
+            tags.append(f"variant:{claude_variant}")
+        explicit = data.get("tags")
+        if isinstance(explicit, list):
+            tags.extend(str(t) for t in explicit if t)
+        return tags
+
+    def _classify_claude_conversation_type(
+        self, data: Dict[str, Any], content: str
+    ) -> str:
+        """Classify a Claude conversation as chat/code/analysis/etc."""
+        explicit = data.get("conversation_type")
+        if isinstance(explicit, str) and explicit:
+            return explicit
+        if content and content.count("```") >= 4:
+            return "code"
+        return "chat"
+
+    def _extract_claude_custom_fields(self, data: Dict[str, Any]) -> Dict[str, Any]:
+        """Capture optional Claude extras into custom_fields."""
+        custom: Dict[str, Any] = {}
+        for key in ("project_id", "organization_id", "workspace_id"):
+            value = data.get(key)
+            if value is not None:
+                custom[key] = value
+        extra = data.get("custom_fields")
+        if isinstance(extra, dict):
+            custom.update(extra)
+        return custom
 
     def _parse_markdown_conversation(
         self, content: str, file_path: Optional[Path] = None
