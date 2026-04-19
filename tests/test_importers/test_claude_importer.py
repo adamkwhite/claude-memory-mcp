@@ -10,7 +10,7 @@ import tempfile
 from pathlib import Path
 from unittest.mock import patch
 
-import pytest
+import pytest  # type: ignore[import-not-found]
 
 from src.importers.claude_importer import ClaudeImporter
 
@@ -53,7 +53,9 @@ class TestClaudeImporter:
         test_file = self.storage_path / "test.json"
         test_file.write_text('{"test": "data"}')
 
-        with patch.object(self.importer, '_import_json_format', side_effect=Exception("Test error")):
+        with patch.object(
+            self.importer, "_import_json_format", side_effect=Exception("Test error")
+        ):
             result = self.importer.import_file(test_file)
 
         assert result.success is False
@@ -82,17 +84,17 @@ class TestClaudeImporterJSONFormat:
                 {
                     "role": "user",
                     "content": "Hello Claude",
-                    "timestamp": "2025-01-15T12:00:00Z"
+                    "timestamp": "2025-01-15T12:00:00Z",
                 },
                 {
                     "role": "assistant",
                     "content": "Hello! How can I help you?",
-                    "timestamp": "2025-01-15T12:01:00Z"
-                }
+                    "timestamp": "2025-01-15T12:01:00Z",
+                },
             ],
             "date": "2025-01-15T12:00:00Z",
             "topics": ["greeting"],
-            "created_at": "2025-01-15T12:00:00Z"
+            "created_at": "2025-01-15T12:00:00Z",
         }
 
         test_file = self.storage_path / "claude_memory.json"
@@ -156,7 +158,7 @@ class TestClaudeImporterTextFormat:
         test_file = self.storage_path / "claude_web.md"
         test_file.write_text(markdown_content)
 
-        with patch.object(self.importer, '_save_conversation') as mock_save:
+        with patch.object(self.importer, "_save_conversation") as mock_save:
             result = self.importer.import_file(test_file)
 
         assert result.success is True
@@ -169,7 +171,9 @@ class TestClaudeImporterTextFormat:
         test_file = self.storage_path / "test.txt"
         test_file.write_text("Test content")
 
-        with patch.object(self.importer, '_import_text_format', side_effect=Exception("Parse error")):
+        with patch.object(
+            self.importer, "_import_text_format", side_effect=Exception("Parse error")
+        ):
             result = self.importer.import_file(test_file)
 
         assert result.success is False
@@ -192,7 +196,7 @@ class TestClaudeImporterParsingMethods:
         data = {
             "title": "Test Conv",
             "content": "Test content",
-            "messages": [{"role": "user", "content": "Hello"}]
+            "messages": [{"role": "user", "content": "Hello"}],
         }
 
         result = self.importer.parse_conversation(data)
@@ -214,7 +218,7 @@ class TestClaudeImporterParsingMethods:
             "content": "test",
             "messages": [],
             "topics": [],
-            "created_at": "2025-01-15"
+            "created_at": "2025-01-15",
         }
 
         result = self.importer._is_claude_memory_format(data)
@@ -244,7 +248,7 @@ class TestClaudeImporterSaveConversation:
             "date": "2025-01-15T12:00:00",
             "title": "Test Claude Conversation",
             "content": "Test content",
-            "platform": "claude"
+            "platform": "claude",
         }
 
         file_path = self.importer._save_conversation(conversation)
@@ -256,7 +260,7 @@ class TestClaudeImporterSaveConversation:
         assert file_path.name.endswith(".json")
 
         # Verify content
-        with open(file_path, 'r') as f:
+        with open(file_path, "r") as f:
             saved_data = json.load(f)
 
         assert saved_data["id"] == conversation["id"]
@@ -274,20 +278,27 @@ class TestClaudeImporterIntegration:
 
     def test_end_to_end_claude_memory_import(self):
         """Test complete end-to-end Claude Memory import workflow."""
-        claude_data = {"id": "conv_20250115_090000_e2etest",
-                       "platform": "claude",
-                       "title": "E2E Claude Memory Test",
-                       "content": "**Human**: Test the Claude importer\n\n**Claude**: Testing the Claude Memory import functionality.",
-                       "messages": [{"role": "user",
-                                     "content": "Test the Claude importer",
-                                     "timestamp": "2025-01-15T09:00:00Z"},
-                                    {"role": "assistant",
-                                     "content": "Testing the Claude Memory import functionality.",
-                                     "timestamp": "2025-01-15T09:01:00Z"}],
-                       "date": "2025-01-15T09:00:00Z",
-                       "topics": ["testing",
-                                  "import"],
-                       "created_at": "2025-01-15T09:00:00Z"}
+        claude_data = {
+            "id": "conv_20250115_090000_e2etest",
+            "platform": "claude",
+            "title": "E2E Claude Memory Test",
+            "content": "**Human**: Test the Claude importer\n\n**Claude**: Testing the Claude Memory import functionality.",
+            "messages": [
+                {
+                    "role": "user",
+                    "content": "Test the Claude importer",
+                    "timestamp": "2025-01-15T09:00:00Z",
+                },
+                {
+                    "role": "assistant",
+                    "content": "Testing the Claude Memory import functionality.",
+                    "timestamp": "2025-01-15T09:01:00Z",
+                },
+            ],
+            "date": "2025-01-15T09:00:00Z",
+            "topics": ["testing", "import"],
+            "created_at": "2025-01-15T09:00:00Z",
+        }
 
         test_file = self.storage_path / "claude_e2e_test.json"
         test_file.write_text(json.dumps(claude_data))
@@ -313,10 +324,107 @@ class TestClaudeImporterIntegration:
         # (no separate conversation file is created)
         assert test_file.exists()
 
-        with open(test_file, 'r') as f:
+        with open(test_file, "r") as f:
             original_data = json.load(f)
 
         assert original_data["platform"] == "claude"
         assert original_data["id"] == "conv_20250115_090000_e2etest"
         assert len(original_data["messages"]) == 2
         assert "Claude Memory import" in original_data["content"]
+
+
+class TestClaudeUniversalMetadata:
+    """Claude importer populates universal metadata fields (5.1.3-5.2.4)."""
+
+    def setup_method(self):
+        self.temp_dir = tempfile.mkdtemp()
+        self.storage_path = Path(self.temp_dir)
+        self.importer = ClaudeImporter(self.storage_path)
+
+    def _base_payload(self, **overrides):
+        payload = {
+            "id": "claude-conv-9",
+            "title": "Claude Test",
+            "date": "2025-03-01T09:00:00",
+            "content": "Hello world",
+            "messages": [
+                {"role": "user", "content": "ping"},
+                {"role": "assistant", "content": "pong"},
+            ],
+            "model": "claude-3.5-sonnet",
+        }
+        payload.update(overrides)
+        return payload
+
+    def test_session_id_uses_explicit_session_id(self):
+        conv = self.importer._parse_claude_json(
+            self._base_payload(session_id="claude-sess-1")
+        )
+        assert conv["session_id"] == "claude-sess-1"
+
+    def test_session_id_falls_back_to_conversation_id(self):
+        conv = self.importer._parse_claude_json(
+            self._base_payload(conversation_id="claude-conv-2")
+        )
+        assert conv["session_id"] == "claude-conv-2"
+
+    def test_session_id_falls_back_to_platform_id(self):
+        """When neither session_id nor conversation_id present, 'id' is used."""
+        conv = self.importer._parse_claude_json(self._base_payload())
+        assert conv["session_id"] == "claude-conv-9"
+
+    def test_user_id_passes_through(self):
+        conv = self.importer._parse_claude_json(
+            self._base_payload(user_id="claude-user-x")
+        )
+        assert conv["user_id"] == "claude-user-x"
+
+    def test_user_id_falls_back_to_account_id(self):
+        conv = self.importer._parse_claude_json(self._base_payload(account_id="acct-7"))
+        assert conv["user_id"] == "acct-7"
+
+    def test_tags_include_variant(self):
+        """The detected Claude variant is exposed as a tag."""
+        conv = self.importer._parse_claude_json(self._base_payload())
+        # variant detection from generic data => 'claude_generic'
+        assert any(t.startswith("variant:") for t in conv["tags"])
+
+    def test_tags_explicit_appended(self):
+        conv = self.importer._parse_claude_json(
+            self._base_payload(tags=["research", "deep-dive"])
+        )
+        assert "research" in conv["tags"]
+        assert "deep-dive" in conv["tags"]
+
+    def test_conversation_type_default_chat(self):
+        conv = self.importer._parse_claude_json(self._base_payload())
+        assert conv["conversation_type"] == "chat"
+
+    def test_conversation_type_code_heuristic(self):
+        code = "```py\nx=1\n```\n```py\ny=2\n```"
+        conv = self.importer._parse_claude_json(self._base_payload(content=code))
+        assert conv["conversation_type"] == "code"
+
+    def test_conversation_type_explicit_overrides(self):
+        conv = self.importer._parse_claude_json(
+            self._base_payload(conversation_type="creative")
+        )
+        assert conv["conversation_type"] == "creative"
+
+    def test_custom_fields_capture_optional_keys(self):
+        conv = self.importer._parse_claude_json(
+            self._base_payload(
+                project_id="proj-1",
+                organization_id="org-2",
+                workspace_id="ws-3",
+                custom_fields={"flow": "ad-hoc"},
+            )
+        )
+        assert conv["custom_fields"]["project_id"] == "proj-1"
+        assert conv["custom_fields"]["organization_id"] == "org-2"
+        assert conv["custom_fields"]["workspace_id"] == "ws-3"
+        assert conv["custom_fields"]["flow"] == "ad-hoc"
+
+    def test_custom_fields_default_empty(self):
+        conv = self.importer._parse_claude_json(self._base_payload())
+        assert conv["custom_fields"] == {}

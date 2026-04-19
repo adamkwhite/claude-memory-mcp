@@ -90,6 +90,11 @@ class BaseImporter(ABC):
         model: Optional[str] = None,
         session_context: Optional[Dict[str, Any]] = None,
         metadata: Optional[Dict[str, Any]] = None,
+        session_id: Optional[str] = None,
+        user_id: Optional[str] = None,
+        tags: Optional[List[str]] = None,
+        conversation_type: Optional[str] = None,
+        custom_fields: Optional[Dict[str, Any]] = None,
     ) -> Dict[str, Any]:
         """
         Create a conversation in universal internal format.
@@ -103,6 +108,16 @@ class BaseImporter(ABC):
             model: AI model used (if available)
             session_context: Optional session/workspace context
             metadata: Additional platform-specific metadata
+            session_id: Identifier for grouping related conversations within
+                a session (e.g., a Cursor session, ChatGPT conversation_id).
+            user_id: Identifier for the user that owns the conversation
+                (reserved for future multi-user support).
+            tags: Platform-specific categorization tags. Defaults to an
+                empty list when not provided.
+            conversation_type: High-level classification such as "chat",
+                "code", "analysis", etc. Free-form string.
+            custom_fields: Open extensibility bucket for arbitrary
+                platform/user-defined metadata. Defaults to an empty dict.
 
         Returns:
             Conversation in universal format
@@ -126,6 +141,14 @@ class BaseImporter(ABC):
             ),
             "topics": topics,
             "session_context": session_context or {},
+            # Universal metadata fields (todos 5.1.3, 5.1.4, 5.2.1, 5.2.3, 5.2.4).
+            # All optional with sensible defaults so existing callers and
+            # stored conversations remain valid without these fields.
+            "session_id": session_id,
+            "user_id": user_id,
+            "tags": list(tags) if tags else [],
+            "conversation_type": conversation_type,
+            "custom_fields": dict(custom_fields) if custom_fields else {},
             "import_metadata": {
                 "imported_at": datetime.now().isoformat(),
                 "source_format": self.platform_name,

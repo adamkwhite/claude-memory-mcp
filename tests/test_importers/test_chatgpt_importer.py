@@ -10,7 +10,7 @@ import tempfile
 from pathlib import Path
 from unittest.mock import patch
 
-import pytest
+import pytest  # type: ignore[import-not-found]
 
 from src.importers.chatgpt_importer import ChatGPTImporter
 
@@ -44,8 +44,7 @@ class TestChatGPTImporter:
 
     def test_validate_chatgpt_format_valid(self):
         """Test ChatGPT format validation with valid data."""
-        assert self.importer._validate_chatgpt_format(
-            self.valid_export) is True
+        assert self.importer._validate_chatgpt_format(self.valid_export) is True
 
     def test_validate_chatgpt_format_invalid_structure(self):
         """Test ChatGPT format validation with invalid structure."""
@@ -80,7 +79,9 @@ class TestChatGPTImporter:
         conversation = self.importer.parse_conversation(conv_data)
 
         # Check basic fields
-        assert conversation["platform_id"] == "conv-123e4567-e89b-12d3-a456-426614174000"
+        assert (
+            conversation["platform_id"] == "conv-123e4567-e89b-12d3-a456-426614174000"
+        )
         assert conversation["title"] == "Python Programming Help"
         assert conversation["platform"] == "chatgpt"
         assert conversation["model"] == "gpt-4"  # Default assumption
@@ -110,9 +111,9 @@ class TestChatGPTImporter:
                     "id": "msg1",
                     "role": "assistant",
                     "content": "I'm GPT-3.5 and I can help you with this task.",
-                    "create_time": "2025-01-15T10:01:00Z"
+                    "create_time": "2025-01-15T10:01:00Z",
                 }
-            ]
+            ],
         }
 
         conversation = self.importer.parse_conversation(conv_data)
@@ -120,7 +121,9 @@ class TestChatGPTImporter:
 
     def test_parse_conversation_invalid_data(self):
         """Test parsing invalid conversation data."""
-        with pytest.raises(ValueError, match="ChatGPT conversation data must be a dictionary"):
+        with pytest.raises(
+            ValueError, match="ChatGPT conversation data must be a dictionary"
+        ):
             self.importer.parse_conversation("not a dict")
 
     def test_parse_conversation_missing_messages(self):
@@ -128,7 +131,7 @@ class TestChatGPTImporter:
         conv_data = {
             "id": "test_conv",
             "title": "Test",
-            "create_time": "2025-01-15T10:00:00Z"
+            "create_time": "2025-01-15T10:00:00Z",
             # No messages field
         }
 
@@ -145,8 +148,8 @@ class TestChatGPTImporter:
             "messages": [
                 {"role": "user", "content": ""},
                 {"role": "user", "content": "   "},  # Whitespace only
-                {"role": "user", "content": "Valid message"}
-            ]
+                {"role": "user", "content": "Valid message"},
+            ],
         }
 
         conversation = self.importer.parse_conversation(conv_data)
@@ -182,9 +185,8 @@ class TestChatGPTImporter:
         test_file = self.storage_path / "test.json"
 
         # Mock save method to avoid file I/O
-        with patch.object(self.importer, '_save_conversation') as mock_save:
-            result = self.importer._process_conversations(
-                conversations, test_file)
+        with patch.object(self.importer, "_save_conversation") as mock_save:
+            result = self.importer._process_conversations(conversations, test_file)
 
         assert result.success is True
         assert result.conversations_imported == 2
@@ -199,12 +201,11 @@ class TestChatGPTImporter:
         test_file = self.storage_path / "test.json"
 
         # Mock validation to fail for second conversation
-        with patch.object(self.importer, '_validate_conversation') as mock_validate:
+        with patch.object(self.importer, "_validate_conversation") as mock_validate:
             # First succeeds, second fails
             mock_validate.side_effect = [True, False]
-            with patch.object(self.importer, '_save_conversation'):
-                result = self.importer._process_conversations(
-                    conversations, test_file)
+            with patch.object(self.importer, "_save_conversation"):
+                result = self.importer._process_conversations(conversations, test_file)
 
         assert result.conversations_imported == 1
         assert result.conversations_failed == 1
@@ -216,10 +217,9 @@ class TestChatGPTImporter:
         test_file = self.storage_path / "test.json"
 
         # Mock parse_conversation to raise exception
-        with patch.object(self.importer, 'parse_conversation') as mock_parse:
+        with patch.object(self.importer, "parse_conversation") as mock_parse:
             mock_parse.side_effect = Exception("Parse error")
-            result = self.importer._process_conversations(
-                conversations, test_file)
+            result = self.importer._process_conversations(conversations, test_file)
 
         assert result.conversations_imported == 0
         assert result.conversations_failed == 1
@@ -281,7 +281,7 @@ class TestChatGPTImporter:
         valid_file.write_text(json.dumps(self.valid_export))
 
         # Mock to raise general exception
-        with patch.object(self.importer, '_validate_chatgpt_format') as mock_validate:
+        with patch.object(self.importer, "_validate_chatgpt_format") as mock_validate:
             mock_validate.side_effect = Exception("General error")
             result = self.importer.import_file(valid_file)
 
@@ -294,7 +294,7 @@ class TestChatGPTImporter:
             "id": "conv_test_123",
             "title": "Test Conversation",
             "date": "2025-01-15T10:30:00Z",
-            "content": "Test content"
+            "content": "Test content",
         }
 
         file_path = self.importer._save_conversation(conversation)
@@ -352,7 +352,7 @@ class TestChatGPTImporterEdgeCases:
         conv_data = {
             "id": "test_conv",
             "create_time": "2025-01-15T10:00:00Z",
-            "messages": []
+            "messages": [],
         }
 
         conversation = self.importer.parse_conversation(conv_data)
@@ -369,9 +369,9 @@ class TestChatGPTImporterEdgeCases:
                     "id": "msg1",
                     "role": "user",
                     "content": "Test",
-                    "create_time": "also-invalid"
+                    "create_time": "also-invalid",
                 }
-            ]
+            ],
         }
 
         conversation = self.importer.parse_conversation(conv_data)
@@ -390,14 +390,14 @@ class TestChatGPTImporterEdgeCases:
                 {
                     "role": "user",
                     "content": "Valid message",
-                    "create_time": "2025-01-15T10:01:00Z"
+                    "create_time": "2025-01-15T10:01:00Z",
                 },
                 {
                     "role": "assistant",
                     "content": "",  # Empty content - should be skipped
-                    "create_time": "2025-01-15T10:02:00Z"
-                }
-            ]
+                    "create_time": "2025-01-15T10:02:00Z",
+                },
+            ],
         }
 
         conversation = self.importer.parse_conversation(conv_data)
@@ -408,11 +408,7 @@ class TestChatGPTImporterEdgeCases:
     def test_validate_chatgpt_format_edge_cases(self):
         """Test ChatGPT format validation edge cases."""
         # Empty messages array is valid
-        data = {
-            "conversations": [
-                {"messages": []}
-            ]
-        }
+        data = {"conversations": [{"messages": []}]}
         assert self.importer._validate_chatgpt_format(data) is True
 
         # Message without role/content should fail
@@ -426,3 +422,127 @@ class TestChatGPTImporterEdgeCases:
             ]
         }
         assert self.importer._validate_chatgpt_format(data) is False
+
+
+class TestChatGPTUniversalMetadata:
+    """ChatGPT importer populates universal metadata fields (5.1.3-5.2.4)."""
+
+    def setup_method(self):
+        self.temp_dir = tempfile.mkdtemp()
+        self.storage_path = Path(self.temp_dir)
+        self.importer = ChatGPTImporter(self.storage_path)
+
+    def _base_payload(self, **overrides):
+        payload = {
+            "id": "fallback-id",
+            "title": "Test",
+            "create_time": "2025-01-15T10:30:00Z",
+            "messages": [
+                {
+                    "role": "user",
+                    "content": "hi",
+                    "create_time": "2025-01-15T10:30:00Z",
+                },
+                {
+                    "role": "assistant",
+                    "content": "hello",
+                    "create_time": "2025-01-15T10:31:00Z",
+                },
+            ],
+        }
+        payload.update(overrides)
+        return payload
+
+    def test_session_id_uses_conversation_id_when_available(self):
+        """ChatGPT's conversation_id maps to universal session_id."""
+        payload = self._base_payload(conversation_id="conv-real-uuid")
+        conv = self.importer.parse_conversation(payload)
+        assert conv["session_id"] == "conv-real-uuid"
+
+    def test_session_id_falls_back_to_id(self):
+        """When conversation_id is absent the legacy 'id' becomes session_id."""
+        payload = self._base_payload()  # only 'id', no 'conversation_id'
+        conv = self.importer.parse_conversation(payload)
+        assert conv["session_id"] == "fallback-id"
+
+    def test_user_id_passes_through_when_present(self):
+        """A caller-injected user_id flows through to the universal field."""
+        payload = self._base_payload(user_id="user-123")
+        conv = self.importer.parse_conversation(payload)
+        assert conv["user_id"] == "user-123"
+
+    def test_user_id_default_none(self):
+        """Standard ChatGPT exports omit user_id; default is None."""
+        conv = self.importer.parse_conversation(self._base_payload())
+        assert conv["user_id"] is None
+
+    def test_tags_include_starred_archived_and_gizmo(self):
+        """Starred/archived/gizmo signals become tags."""
+        payload = self._base_payload(
+            is_starred=True, is_archived=True, gizmo_id="g-abc"
+        )
+        conv = self.importer.parse_conversation(payload)
+        assert "starred" in conv["tags"]
+        assert "archived" in conv["tags"]
+        assert "gizmo:g-abc" in conv["tags"]
+
+    def test_tags_explicit_tags_appended(self):
+        """Caller-supplied tags are merged in."""
+        payload = self._base_payload(tags=["work", "ml"])
+        conv = self.importer.parse_conversation(payload)
+        assert "work" in conv["tags"]
+        assert "ml" in conv["tags"]
+
+    def test_tags_default_empty(self):
+        """No tag-worthy signals => empty tags list."""
+        conv = self.importer.parse_conversation(self._base_payload())
+        assert conv["tags"] == []
+
+    def test_conversation_type_explicit_wins(self):
+        payload = self._base_payload(conversation_type="analysis")
+        conv = self.importer.parse_conversation(payload)
+        assert conv["conversation_type"] == "analysis"
+
+    def test_conversation_type_code_heuristic(self):
+        """Heavy code-fence content triggers the 'code' classification."""
+        code_blob = "```python\nprint('x')\n```\n```bash\nls\n```"
+        payload = self._base_payload(
+            messages=[
+                {
+                    "role": "user",
+                    "content": code_blob,
+                    "create_time": "2025-01-15T10:30:00Z",
+                },
+                {
+                    "role": "assistant",
+                    "content": code_blob,
+                    "create_time": "2025-01-15T10:31:00Z",
+                },
+            ],
+        )
+        conv = self.importer.parse_conversation(payload)
+        assert conv["conversation_type"] == "code"
+
+    def test_conversation_type_default_chat(self):
+        """Plain chat content defaults to 'chat'."""
+        conv = self.importer.parse_conversation(self._base_payload())
+        assert conv["conversation_type"] == "chat"
+
+    def test_custom_fields_capture_extras(self):
+        """Optional ChatGPT-specific keys are captured into custom_fields."""
+        payload = self._base_payload(
+            default_model_slug="gpt-4o",
+            gizmo_id="g-1",
+            memory_scope="user_memory",
+            custom_fields={"experiment": "alpha"},
+        )
+        conv = self.importer.parse_conversation(payload)
+        assert conv["custom_fields"]["default_model_slug"] == "gpt-4o"
+        assert conv["custom_fields"]["gizmo_id"] == "g-1"
+        assert conv["custom_fields"]["memory_scope"] == "user_memory"
+        assert conv["custom_fields"]["experiment"] == "alpha"
+
+    def test_custom_fields_default_empty(self):
+        """Standard exports without optional keys produce an empty dict."""
+        conv = self.importer.parse_conversation(self._base_payload())
+        assert conv["custom_fields"] == {}

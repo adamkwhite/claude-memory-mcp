@@ -183,6 +183,20 @@ class CursorImporter(BaseImporter):
             "interaction_count": len(messages),
         }
 
+        # Universal metadata extraction.
+        # Cursor sessions map naturally onto session_id.
+        files_involved = self._extract_files_from_interactions(interactions)
+        tags = self._extract_cursor_tags(workspace, files_involved, raw_data)
+        custom_fields = self._extract_cursor_custom_fields(
+            raw_data, workspace, files_involved
+        )
+        explicit_type = raw_data.get("conversation_type")
+        conversation_type = (
+            explicit_type
+            if isinstance(explicit_type, str) and explicit_type
+            else "code"
+        )
+
         # Create universal conversation
         return self.create_universal_conversation(
             platform_id=session_id,
@@ -197,9 +211,50 @@ class CursorImporter(BaseImporter):
                 "workspace_path": workspace,
                 "session_timestamp": session_timestamp,
                 "interaction_count": len(interactions),
-                "files_involved": self._extract_files_from_interactions(interactions),
+                "files_involved": files_involved,
             },
+            session_id=session_id or None,
+            user_id=raw_data.get("user_id") or None,
+            tags=tags,
+            conversation_type=conversation_type,
+            custom_fields=custom_fields,
         )
+
+    def _extract_cursor_tags(
+        self,
+        workspace: str,
+        files_involved: List[str],
+        raw_data: Dict[str, Any],
+    ) -> List[str]:
+        """Build tag list for a Cursor session (workspace + caller-supplied)."""
+        tags: List[str] = []
+        if workspace:
+            workspace_name = Path(workspace).name
+            if workspace_name:
+                tags.append(f"workspace:{workspace_name}")
+        if files_involved:
+            tags.append("has-file-changes")
+        explicit = raw_data.get("tags")
+        if isinstance(explicit, list):
+            tags.extend(str(t) for t in explicit if t)
+        return tags
+
+    def _extract_cursor_custom_fields(
+        self,
+        raw_data: Dict[str, Any],
+        workspace: str,
+        files_involved: List[str],
+    ) -> Dict[str, Any]:
+        """Capture Cursor-specific extras into custom_fields."""
+        custom: Dict[str, Any] = {}
+        if workspace:
+            custom["workspace_path"] = workspace
+        if files_involved:
+            custom["files_involved"] = files_involved
+        extra = raw_data.get("custom_fields")
+        if isinstance(extra, dict):
+            custom.update(extra)
+        return custom
 
     def _process_interactions(
         self,

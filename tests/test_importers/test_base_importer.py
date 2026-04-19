@@ -30,7 +30,7 @@ class TestImporter(BaseImporter):
             conversations_failed=0,
             errors=[],
             imported_ids=["test_id"],
-            metadata={"test": True}
+            metadata={"test": True},
         )
 
     def parse_conversation(self, raw_data: Any) -> Dict[str, Any]:
@@ -41,7 +41,7 @@ class TestImporter(BaseImporter):
             content="Test content",
             messages=[],
             date=datetime.now(),
-            model="test-model"
+            model="test-model",
         )
 
 
@@ -56,7 +56,7 @@ class TestImportResult:
             conversations_failed=2,
             errors=["Error 1", "Error 2"],
             imported_ids=["id1", "id2", "id3"],
-            metadata={"source": "test"}
+            metadata={"source": "test"},
         )
 
         assert result.success is True
@@ -74,7 +74,7 @@ class TestImportResult:
             conversations_failed=2,
             errors=[],
             imported_ids=[],
-            metadata={}
+            metadata={},
         )
 
         assert result.success_rate == 0.8  # 8/(8+2) = 0.8
@@ -87,7 +87,7 @@ class TestImportResult:
             conversations_failed=0,
             errors=[],
             imported_ids=[],
-            metadata={}
+            metadata={},
         )
 
         assert result.success_rate == 0.0
@@ -100,7 +100,7 @@ class TestImportResult:
             conversations_failed=0,
             errors=[],
             imported_ids=[],
-            metadata={}
+            metadata={},
         )
 
         assert result.success_rate == 1.0
@@ -129,7 +129,7 @@ class TestBaseImporter:
                 "role": "user",
                 "content": "Hello",
                 "timestamp": date.isoformat(),
-                "metadata": {}
+                "metadata": {},
             }
         ]
 
@@ -141,7 +141,7 @@ class TestBaseImporter:
             date=date,
             model="gpt-4",
             session_context={"session_id": "abc123"},
-            metadata={"test_key": "test_value"}
+            metadata={"test_key": "test_value"},
         )
 
         # Verify required fields
@@ -183,7 +183,7 @@ class TestBaseImporter:
             content="Hello world",
             timestamp=timestamp,
             message_id="msg_123",
-            metadata={"source": "test"}
+            metadata={"source": "test"},
         )
 
         assert message["role"] == "user"
@@ -196,7 +196,7 @@ class TestBaseImporter:
         """Test message creation with auto-generated ID."""
         message = self.importer._create_message(
             role="ASSISTANT",  # Test case conversion
-            content="Hello back"
+            content="Hello back",
         )
 
         assert message["role"] == "assistant"  # Should be lowercased
@@ -270,12 +270,14 @@ class TestBaseImporter:
         messages = [
             {"role": "user", "content": "Hello"},
             {"role": "assistant", "content": "Hi there!"},
-            {"role": "user", "content": "How are you?"}
+            {"role": "user", "content": "How are you?"},
         ]
 
         content = self.importer._combine_messages_to_content(messages)
 
-        expected = "**Human**: Hello\n\n**Assistant**: Hi there!\n\n**Human**: How are you?"
+        expected = (
+            "**Human**: Hello\n\n**Assistant**: Hi there!\n\n**Human**: How are you?"
+        )
         assert content == expected
 
     def test_validate_conversation_valid(self):
@@ -293,7 +295,7 @@ class TestBaseImporter:
             "topics": ["test"],
             "session_context": {},
             "import_metadata": {},
-            "created_at": datetime.now().isoformat()
+            "created_at": datetime.now().isoformat(),
         }
 
         assert self.importer._validate_conversation(conversation) is True
@@ -302,7 +304,7 @@ class TestBaseImporter:
         """Test conversation validation with missing required fields."""
         conversation = {
             "id": "conv_123",
-            "title": "Test"
+            "title": "Test",
             # Missing required fields
         }
 
@@ -316,7 +318,7 @@ class TestBaseImporter:
             "content": "Test content",
             "date": datetime.now().isoformat(),
             "platform": "test",
-            "messages": "not_a_list"  # Should be list
+            "messages": "not_a_list",  # Should be list
         }
 
         assert self.importer._validate_conversation(conversation) is False
@@ -374,7 +376,7 @@ class TestBaseImporterEdgeCases:
             title="Minimal",
             content="Content",
             messages=[],
-            date=datetime.now()
+            date=datetime.now(),
         )
 
         # Should have sensible defaults
@@ -385,17 +387,12 @@ class TestBaseImporterEdgeCases:
     def test_create_message_edge_cases(self):
         """Test message creation edge cases."""
         # Empty content
-        message = self.importer._create_message(
-            role="user",
-            content=""
-        )
+        message = self.importer._create_message(role="user", content="")
         assert message["content"] == ""
 
         # None timestamp (should use current time)
         message = self.importer._create_message(
-            role="user",
-            content="test",
-            timestamp=None
+            role="user", content="test", timestamp=None
         )
         assert "timestamp" in message
 
@@ -423,3 +420,135 @@ class TestBaseImporterEdgeCases:
         # Invalid format returns current time
         result = self.importer._parse_timestamp("not-a-date")
         assert isinstance(result, datetime)
+
+
+class TestUniversalMetadataFields:
+    """Test the universal conversation metadata fields (todos 5.1.3-5.2.4).
+
+    These cover ``session_id``, ``user_id``, ``tags``, ``conversation_type``
+    and ``custom_fields`` on ``create_universal_conversation``. All five
+    are optional with sensible defaults to preserve backward compat.
+    """
+
+    def setup_method(self):
+        """Set up test environment."""
+        self.temp_dir = tempfile.mkdtemp()
+        self.storage_path = Path(self.temp_dir)
+        self.importer = TestImporter(self.storage_path)
+
+    def _build(self, **kwargs):
+        """Build a minimal universal conversation with overrides."""
+        defaults = dict(
+            platform_id="meta_test",
+            title="Meta",
+            content="content",
+            messages=[],
+            date=datetime(2026, 4, 18, 10, 0, 0),
+        )
+        defaults.update(kwargs)
+        return self.importer.create_universal_conversation(**defaults)
+
+    def test_defaults_present_when_omitted(self):
+        """All new metadata fields appear with sensible defaults."""
+        conv = self._build()
+
+        # Field presence — keys MUST exist so downstream code can rely on them.
+        assert "session_id" in conv
+        assert "user_id" in conv
+        assert "tags" in conv
+        assert "conversation_type" in conv
+        assert "custom_fields" in conv
+
+        # Sensible defaults
+        assert conv["session_id"] is None
+        assert conv["user_id"] is None
+        assert conv["tags"] == []
+        assert conv["conversation_type"] is None
+        assert conv["custom_fields"] == {}
+
+    def test_session_id_populated(self):
+        """session_id (5.1.3) flows through when provided."""
+        conv = self._build(session_id="sess-abc-123")
+        assert conv["session_id"] == "sess-abc-123"
+
+    def test_user_id_populated(self):
+        """user_id (5.1.4) flows through when provided."""
+        conv = self._build(user_id="user-42")
+        assert conv["user_id"] == "user-42"
+
+    def test_tags_populated_and_isolated(self):
+        """tags (5.2.1) is stored as a *copy* (mutation isolation)."""
+        original_tags = ["work", "important"]
+        conv = self._build(tags=original_tags)
+        assert conv["tags"] == ["work", "important"]
+
+        # Mutating the input list should NOT affect the stored conversation —
+        # this protects against accidental cross-conversation mutation when
+        # callers reuse a tags list.
+        original_tags.append("oops")
+        assert conv["tags"] == ["work", "important"]
+
+    def test_conversation_type_populated(self):
+        """conversation_type (5.2.3) flows through when provided."""
+        conv = self._build(conversation_type="analysis")
+        assert conv["conversation_type"] == "analysis"
+
+    def test_custom_fields_populated_and_isolated(self):
+        """custom_fields (5.2.4) is stored as a *copy* (mutation isolation)."""
+        original = {"project": "alpha", "priority": 1}
+        conv = self._build(custom_fields=original)
+        assert conv["custom_fields"] == {"project": "alpha", "priority": 1}
+
+        # Mutating the input dict should NOT affect the stored conversation.
+        original["leaked"] = True
+        assert "leaked" not in conv["custom_fields"]
+
+    def test_validate_conversation_does_not_require_new_fields(self):
+        """Existing conversations without the new fields still validate."""
+        legacy_conv = {
+            "id": "conv_legacy",
+            "platform": "test",
+            "title": "Legacy",
+            "content": "legacy content",
+            "date": datetime.now().isoformat(),
+            "messages": [],
+            # Intentionally missing: session_id, user_id, tags,
+            # conversation_type, custom_fields
+        }
+        assert self.importer._validate_conversation(legacy_conv) is True
+
+    def test_backward_compat_call_signature(self):
+        """Callers that don't pass the new params still work unchanged."""
+        # Old-style call — only the original parameters.
+        conv = self.importer.create_universal_conversation(
+            platform_id="legacy",
+            title="Legacy",
+            content="legacy content",
+            messages=[],
+            date=datetime(2025, 1, 1),
+            model="legacy-model",
+            session_context={"foo": "bar"},
+            metadata={"baz": "qux"},
+        )
+
+        # Pre-existing behavior preserved
+        assert conv["model"] == "legacy-model"
+        assert conv["session_context"] == {"foo": "bar"}
+        assert conv["platform_metadata"] == {"baz": "qux"}
+
+        # New fields default cleanly
+        assert conv["session_id"] is None
+        assert conv["user_id"] is None
+        assert conv["tags"] == []
+        assert conv["conversation_type"] is None
+        assert conv["custom_fields"] == {}
+
+    def test_empty_tags_list_yields_empty_list(self):
+        """Passing an empty list explicitly should produce an empty list."""
+        conv = self._build(tags=[])
+        assert conv["tags"] == []
+
+    def test_empty_custom_fields_dict_yields_empty_dict(self):
+        """Passing an empty dict explicitly should produce an empty dict."""
+        conv = self._build(custom_fields={})
+        assert conv["custom_fields"] == {}
