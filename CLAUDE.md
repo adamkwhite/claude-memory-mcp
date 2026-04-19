@@ -4,23 +4,30 @@
 
 **Claude Memory MCP** is a universal conversation memory system that provides persistent storage and intelligent search across multiple AI platforms. Originally designed for Claude, it now supports ChatGPT, Cursor AI, and custom formats through an extensible architecture.
 
-## Current Status (November 24, 2025)
+## Current Status (April 18, 2026)
 
 **Branch**: `main`
-**Recent Work**: Gitignore maintenance - Added .claude/ directory to .gitignore (PR #87)
-**Test Coverage**: 78% overall (435 tests passing)
-**Code Quality**: 0 code smells, 0 security hotspots, CI/CD fully functional
-**User Experience**: Installation now works on first try for new users
-**Documentation**: Complete, accurate, and up-to-date with Claude Code integration
+**Recent Work**: Universal Memory MCP parallel push — 8 PRs merged in one session (#109-#116)
+**Test Coverage**: ~589 tests passing (was 435; +218 across 5 PRs); ≥80% coverage on every new code path
+**Code Quality**: 0 code smells, 0 security hotspots, all SonarCloud quality gates green
+**Architecture**: Importer/Exporter mirror pattern (`src/importers/` ↔ `src/exporters/`); `src/config.py` is the single source of configuration truth (env > file > profile > default)
 
 ### Recent Major Implementations
+- ✅ **Centralized Configuration** (PRs #111, #116): `src/config.py` `Config` dataclass with env/file/profile precedence and validation, wired into `server_fastmcp.py`/`logging_config.py`/`path_utils.py`. Replaces scattered `os.getenv()` reads.
+- ✅ **Export Module** (PR #115): `src/exporters/` mirrors `src/importers/` — `BaseExporter`, `JsonExporter`, `ChatgptExporter`, `Filters` dataclass. Reuses `chatgpt_schema` for output validation. Lossy on tree branching (linear chains only).
+- ✅ **Universal Metadata Fields** (PR #114): `session_id`, `user_id`, `tags`, `conversation_type`, `custom_fields` plumbed through `BaseImporter.create_universal_conversation()` and populated by all four importers from real source data.
+- ✅ **Bulk Import Auto-Detect** (PR #112): `bulk_import_enhanced.py` uses `FormatDetector` to dispatch to platform importers; falls back to legacy extractor below confidence threshold. Fixed a latent broken import.
 - ✅ **Async File I/O Migration**: Converted all synchronous file operations to async using aiofiles
 - ✅ **SonarCloud Quality Gates**: All code quality issues resolved, 80%+ coverage on new code
 - ✅ **Universal Memory Framework**: Complete architecture for multi-platform support
 - ✅ **ChatGPT Integration**: Production-ready with real export validation and jsonschema validation
 - ✅ **SQLite FTS Search**: 4.4x performance improvement over linear search
-- ✅ **Comprehensive Testing**: 435/435 tests passing with complete edge case coverage
 - ✅ **CI/CD Pipeline**: GitHub Actions with SonarCloud integration fully operational
+
+### Open architectural follow-ups (see `todos.md` for full list)
+- Wire new metadata fields (`tags`, `session_id`, `conversation_type`) into `src/search_database.py` FTS schema so they're searchable.
+- Round-trip-able ChatGPT export — current exporter emits `mapping` structure but importer expects flat `messages` list (asymmetric).
+- Project-wide mypy hook fix (dual `src.foo` ↔ `foo` import naming).
 
 ## Technology Stack
 
@@ -50,7 +57,7 @@
 ```
 claude-memory-mcp/
 ├── data/                    # Consolidated application data
-│   ├── conversations/       # Local conversation storage  
+│   ├── conversations/       # Local conversation storage
 │   ├── summaries/          # Weekly summary storage
 │   └── config/             # Project configuration files
 ├── pyproject.toml          # Symlink to data/config/pyproject.toml
@@ -80,7 +87,7 @@ Always use `python3.11` explicitly for consistency with CI:
 # Run tests
 python3.11 -m pytest tests/test_100_percent_coverage.py --cov=src --cov-report=xml
 
-# Install dependencies 
+# Install dependencies
 python3.11 -m pip install -r requirements.txt
 
 # Run server
@@ -115,7 +122,7 @@ Recent fixes applied to resolve code quality issues:
 
 **Coverage Milestones Achieved:**
 - ✅ **conversation_memory.py**: 100% coverage
-- ✅ **exceptions.py**: 100% coverage  
+- ✅ **exceptions.py**: 100% coverage
 - 🎯 **Total Project**: 98.68% coverage (11 lines remaining)
 - 📈 **Progress**: Achieved near-perfect coverage
 
@@ -124,7 +131,7 @@ When creating new files, automatically check if they need SonarCloud coverage an
 
 **Files that DON'T need coverage (auto-exclude):**
 - Tests: `tests/*`, `test_*.py`, `*_test.py`, `*benchmark*.py`, `*performance*.py`
-- Scripts: `scripts/*`, `*.sh`, utility files  
+- Scripts: `scripts/*`, `*.sh`, utility files
 - Generated: `docs/generated/*`, `benchmark_results/*`
 - Examples: `examples/*`
 - Build artifacts: `build/*`, `dist/*`, `__pycache__/*`
@@ -210,7 +217,7 @@ git push origin feature/your-feature-name
 
 ### **CRITICAL: No Direct Pushes to Main**
 - ❌ **ALL direct pushes to main are BLOCKED** - even for simple documentation updates
-- ❌ **Force pushes are BLOCKED** 
+- ❌ **Force pushes are BLOCKED**
 - ❌ **Quality gate failures block merges**
 - ✅ **EVERY change must go through feature branch + PR process**
 - ⚠️ **This applies to todos.md, README.md, and ALL files without exception**
@@ -319,7 +326,7 @@ This prevents back-and-forth in PRs due to test failures.
 
 ### Coverage Breakdown by Module
 - `conversation_memory.py`: **100%** ✅ (237 lines, 0 missing)
-- `exceptions.py`: **100%** ✅ (10 lines, 0 missing)  
+- `exceptions.py`: **100%** ✅ (10 lines, 0 missing)
 - `server_fastmcp.py`: **99.01%** (405 lines, 4 missing)
 - `validators.py`: **98.65%** (74 lines, 1 missing)
 - `logging_config.py`: **94.44%** (108 lines, 6 missing)
@@ -332,7 +339,7 @@ This prevents back-and-forth in PRs due to test failures.
 
 **Phase 2: Edge Cases (COMPLETED ✅)**
 - Target: validators.py line 104, server_fastmcp.py key lines
-- Achievement: 96.52% → 97.96% total coverage  
+- Achievement: 96.52% → 97.96% total coverage
 
 **Phase 3: Integration Testing (COMPLETED ✅)**
 - Target: logging_config.py remaining lines
@@ -340,7 +347,7 @@ This prevents back-and-forth in PRs due to test failures.
 
 ### Test Modules for Coverage
 - `test_importerror_coverage.py` - ImportError exception paths
-- `test_json_exception_coverage.py` - JSON processing edge cases  
+- `test_json_exception_coverage.py` - JSON processing edge cases
 - `test_validator_edge_cases.py` - Input validation boundaries
 - `test_100_percent_coverage.py` - Comprehensive edge case testing
 
@@ -492,7 +499,7 @@ The system uses a pluggable importer architecture where each AI platform has a d
 
 **Coverage Achievements:**
 - `format_detector.py`: 40% → 83% (+43% improvement)
-- `generic_importer.py`: 13% → 86% (+73% improvement) 
+- `generic_importer.py`: 13% → 86% (+73% improvement)
 - `chatgpt_schema.py`: 0% → 57% (+57% improvement)
 - `cursor_importer.py`: 13% → 84% (+71% improvement)
 - `claude_importer.py`: 15% → 75% (+60% improvement)
@@ -623,5 +630,5 @@ Add to Claude Desktop MCP configuration:
 }
 ```
 
-**Log Location**: `~/.claude-memory/logs/claude-mcp.log`  
+**Log Location**: `~/.claude-memory/logs/claude-mcp.log`
 **Storage Location**: `~/claude-memory/conversations/`

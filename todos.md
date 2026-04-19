@@ -4,26 +4,57 @@ This file maintains persistent todos across Claude Code sessions.
 
 ## Recent Session (April 18, 2026) ✅ COMPLETED
 
-**Universal Memory MCP — high-priority parallel push (PRs #109-#113)**
+**Universal Memory MCP — high-priority parallel push (PRs #109-#116, 8 PRs)**
 - [x] **#109** docs: log April 18 dependabot batch session notes
 - [x] **#110** fix(tests): unshadow duplicate `test_get_preview_exception_handling` (test count 439 → 440 — duplicate method had silently disabled coverage of the unreadable-file branch). Closed out the stale "consolidate redundant test files" todo with audit notes (literal `test_final_*.py` targets had already been merged in earlier work).
-- [x] **#111** feat: add centralized configuration module (`src/config.py`) — `Config` dataclass with env > file > profile > default precedence, `Config.validate()`, built-in `PLATFORM_PROFILES` registry. 100% coverage on the new module, 40 new tests. Module exists but is not yet wired into the rest of the codebase (D1 follow-up).
-- [x] **#112** feat(scripts): add format auto-detection to `bulk_import_enhanced.py` — uses `FormatDetector` to dispatch to `ChatGPTImporter`/`ClaudeImporter`/`CursorImporter`/`GenericImporter`, falls back to legacy extractor below confidence threshold, adds `--format`/`--confidence-threshold`/`--progress-interval` flags, periodic progress reporting. **Bug fix**: the script previously imported `ConversationMemoryServer` from `server_fastmcp` (where the class is now `FastMCPConversationMemoryServer`); the script could not run before. 37 new tests, suite now 476 passing.
+- [x] **#111** feat: add centralized configuration module (`src/config.py`) — `Config` dataclass with env > file > profile > default precedence, `Config.validate()`, built-in `PLATFORM_PROFILES` registry. 100% coverage on the new module, 40 new tests. *(Wired in by #116 below.)*
+- [x] **#112** feat(scripts): add format auto-detection to `bulk_import_enhanced.py` — uses `FormatDetector` to dispatch to `ChatGPTImporter`/`ClaudeImporter`/`CursorImporter`/`GenericImporter`, falls back to legacy extractor below confidence threshold, adds `--format`/`--confidence-threshold`/`--progress-interval` flags, periodic progress reporting. **Bug fix**: the script previously imported `ConversationMemoryServer` from `server_fastmcp` (where the class is now `FastMCPConversationMemoryServer`); the script could not run before. 37 new tests, suite at 476.
 - [x] **#113** chore: remove redundant `scripts/bulk_import.py` and `scripts/simple_bulk_import.py` (superseded by `bulk_import_enhanced.py`); refresh todos.md.
+- [x] **#114** feat(importers): add universal conversation metadata fields — `session_id`, `user_id`, `tags`, `conversation_type`, `custom_fields` plumbed through `BaseImporter.create_universal_conversation()` and populated by all four concrete importers from real source data (e.g. ChatGPT `conversation_id`, Cursor `workspace_path`, Claude `session_id`/`account_id`/`organization_id`). 52 new tests, 100% coverage on new code. **Bonus**: added `[tool.mypy]` block to `pyproject.toml` (closes Stream A's mypy follow-up #1).
+- [x] **#115** feat(exporters): add export module (`src/exporters/`) — parallel to `src/importers/`. `BaseExporter`, `JsonExporter`, `ChatgptExporter`, `Filters` dataclass (date range, platforms, limit). 100% coverage on new module, 77 new tests. Round-trip-preserves: id/platform/platform_id/model/title/messages/topics/dates/import_metadata. Lossy: ChatGPT tree branching (linear chains only), per-message model_slug/request_id, current_node selection.
+- [x] **#116** feat: wire `Config.load()` into `server_fastmcp.py`, `logging_config.py`, `path_utils.py` — replaces direct `os.getenv()` calls. Sentinel-based detection so explicit constructor args still win over Config. `Config.validate()` runs at FastMCP startup. 12 new tests, 0 regressions.
 
 **Earlier in the same session — dependabot batch merge (PRs #103-#108)**
 - [x] mcp >=1.9.2 → >=1.27.0, pytest-asyncio >=0.21 → >=1.3.0, pytest-cov >=4.0 → >=7.1.0, setuptools >=61.0 → >=82.0.1, jsonschema >=4.0.0 → >=4.26.0, python-multipart 0.0.22 → 0.0.26
 - [x] Sequential merge workflow: merge one → `@dependabot rebase` next → wait for CI → repeat (pyproject.toml conflicts)
 
-**Follow-ups surfaced this session (open):**
-- `src/config.py` is not yet consumed — wire it into `server_fastmcp.py` / `logging_config.py` / `path_utils.py` to replace direct `os.getenv()` calls *(in flight)*.
-- README / docs: add `~/.claude-memory/config.json` format and the new env vars (`CLAUDE_MCP_LOG_LEVEL`, `CLAUDE_MCP_ENABLE_SQLITE`, `CLAUDE_MCP_PLATFORM_PROFILE`).
-- CLI commands for config (`get`, `set`, `show`, `init`) — todo 3.2.2, deferred.
+**Test-suite growth this session:** 435 → ~589 (+~218 tests across 5 PRs).
+
+**Follow-ups surfaced this session (open, ranked by leverage):**
+
+*High-leverage, small PRs:*
+- `CLAUDE_MCP_LOG_FILE` should become a `Config` field — currently `init_default_logging` still reads it directly via `os.getenv`. Trivial follow-up. (D1)
+- README / docs: add `~/.claude-memory/config.json` format and the new env vars (`CLAUDE_MCP_LOG_LEVEL`, `CLAUDE_MCP_ENABLE_SQLITE`, `CLAUDE_MCP_PLATFORM_PROFILE`, `CLAUDE_MCP_LOG_FILE` once promoted). (B)
+
+*Searchability (medium):*
+- 5.3.x — search-by-tag, search-by-`session_id`, search-by-`conversation_type` (need MCP tool wiring + SQLite FTS index extension in `src/search_database.py`). The new metadata fields are stored in JSON conversation files but **not yet indexed in SQLite FTS**. (D2)
+
+*Bulk import polish (medium):*
+- 2.4.2 progress UX with `tqdm` (currently periodic prints).
+- 2.4.3 import rollback / transactional writes in `ConversationMemoryServer.add_conversation`.
+- 2.4.4 persisted JSON validation report alongside imports.
+
+*Export expansion (medium):*
+- CLI script `scripts/export_conversations.py` (argparse around exporters).
+- MCP tool wiring for `export_conversations` in `server_fastmcp.py`.
+- `src/exporters/cursor_exporter.py` mirroring `cursor_importer.py` (workspace/session structure).
+- `src/exporters/claude_exporter.py` (multi-variant: web/desktop/memory).
+- Markdown / PDF exporters (no schema validation needed; share `BaseExporter`).
+- Round-trip-able ChatGPT export — current `ChatgptExporter` emits `mapping` structure but `ChatGPTImporter` expects flat `messages` list. Either extend the importer or emit a hybrid.
+- True tree preservation in universal format — would require `parent_id`/`children_ids` on messages.
+- Per-message `platform_metadata` field so `model_slug`/`request_id` survive round-trips.
+
+*Configuration polish (medium):*
+- CLI commands for config (`get`, `set`, `show`, `init`) — todo 3.2.2.
 - Per-platform topic-extraction patterns and date-format handling under `PLATFORM_PROFILES` — todos 3.1.2 / 3.1.3.
-- Bulk-import progress UX with `tqdm` (todo 2.4.2).
-- Bulk-import rollback / transactional writes (todo 2.4.3).
-- Bulk-import validation report persisted as JSON (todo 2.4.4).
-- Tests directory not linted by mypy/flake8 — pre-existing E501 violations on `tests/test_100_percent_coverage.py:497,814` invisible to CI but tripping local hooks.
+
+*Metadata polish (low):*
+- 5.2.2 `project_context` field — deferred per task brief; needs deeper design.
+
+*Dev hygiene (low, would prevent future friction):*
+- Project-wide mypy hook is broken on main — pre-existing dual-naming + missing-stub errors, hook is gated off in CI. PR #114 added a partial `[tool.mypy]` config; a complete fix would either resolve `src.foo` ↔ `foo` dual-import naming via `__init__.py` placement or re-enable the hook with proper exclusions. (D1)
+- Local-dev `.pth` shadowing: `pip install -e` of the main repo creates a `.pth` file pointing the venv at the main repo's `src/`, which shadows worktree changes. Affects local testing only. Clean fix would be a per-worktree venv, or PEP 660 install. PR #116 added a defensive `TypeError` fallback in `init_default_logging` to make worktrees resilient. (D1)
+- Tests directory not linted by mypy/flake8 — pre-existing E501 violations on `tests/test_100_percent_coverage.py:497,814` invisible to CI but tripping legacy local hooks.
 - Local dev hygiene: `tests/` was hidden by overly broad `/*test*/` pattern in `.gitignore`; PR #111 added `!/tests/` to undo it. Consider tightening the original pattern to e.g. `/test_env_*/`.
 - Local dev hygiene: removed broken `.git/hooks/pre-commit.legacy` (chained to a broken system Black install). Local-only; not in repo. Consider documenting the framework hooks as the source of truth.
 
