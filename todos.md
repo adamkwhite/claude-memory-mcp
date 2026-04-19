@@ -4,20 +4,28 @@ This file maintains persistent todos across Claude Code sessions.
 
 ## Recent Session (April 18, 2026) ✅ COMPLETED
 
-**Dependabot PR batch merge (PRs #103-#108)**
-- [x] Merged 6 dependabot dependency update PRs
-  - #103: mcp >=1.9.2 → >=1.27.0
-  - #104: pytest-asyncio >=0.21 → >=1.3.0
-  - #105: pytest-cov >=4.0 → >=7.1.0
-  - #106: setuptools >=61.0 → >=82.0.1
-  - #107: jsonschema >=4.0.0 → >=4.26.0
-  - #108: python-multipart 0.0.22 → 0.0.26
-- [x] All CI checks passed on each PR (Quick Validation, Performance, Tests & SonarQube)
-- [x] Sequential merge workflow: each pyproject.toml PR required dependabot rebase after prior merge
+**Universal Memory MCP — high-priority parallel push (PRs #109-#113)**
+- [x] **#109** docs: log April 18 dependabot batch session notes
+- [x] **#110** fix(tests): unshadow duplicate `test_get_preview_exception_handling` (test count 439 → 440 — duplicate method had silently disabled coverage of the unreadable-file branch). Closed out the stale "consolidate redundant test files" todo with audit notes (literal `test_final_*.py` targets had already been merged in earlier work).
+- [x] **#111** feat: add centralized configuration module (`src/config.py`) — `Config` dataclass with env > file > profile > default precedence, `Config.validate()`, built-in `PLATFORM_PROFILES` registry. 100% coverage on the new module, 40 new tests. Module exists but is not yet wired into the rest of the codebase (D1 follow-up).
+- [x] **#112** feat(scripts): add format auto-detection to `bulk_import_enhanced.py` — uses `FormatDetector` to dispatch to `ChatGPTImporter`/`ClaudeImporter`/`CursorImporter`/`GenericImporter`, falls back to legacy extractor below confidence threshold, adds `--format`/`--confidence-threshold`/`--progress-interval` flags, periodic progress reporting. **Bug fix**: the script previously imported `ConversationMemoryServer` from `server_fastmcp` (where the class is now `FastMCPConversationMemoryServer`); the script could not run before. 37 new tests, suite now 476 passing.
+- [x] **#113** chore: remove redundant `scripts/bulk_import.py` and `scripts/simple_bulk_import.py` (superseded by `bulk_import_enhanced.py`); refresh todos.md.
 
-**Session Notes:**
-- Conflicts expected when multiple PRs touch the same file (pyproject.toml)
-- Efficient pattern: merge one → `@dependabot rebase` on next → wait for CI → merge → repeat
+**Earlier in the same session — dependabot batch merge (PRs #103-#108)**
+- [x] mcp >=1.9.2 → >=1.27.0, pytest-asyncio >=0.21 → >=1.3.0, pytest-cov >=4.0 → >=7.1.0, setuptools >=61.0 → >=82.0.1, jsonschema >=4.0.0 → >=4.26.0, python-multipart 0.0.22 → 0.0.26
+- [x] Sequential merge workflow: merge one → `@dependabot rebase` next → wait for CI → repeat (pyproject.toml conflicts)
+
+**Follow-ups surfaced this session (open):**
+- `src/config.py` is not yet consumed — wire it into `server_fastmcp.py` / `logging_config.py` / `path_utils.py` to replace direct `os.getenv()` calls *(in flight)*.
+- README / docs: add `~/.claude-memory/config.json` format and the new env vars (`CLAUDE_MCP_LOG_LEVEL`, `CLAUDE_MCP_ENABLE_SQLITE`, `CLAUDE_MCP_PLATFORM_PROFILE`).
+- CLI commands for config (`get`, `set`, `show`, `init`) — todo 3.2.2, deferred.
+- Per-platform topic-extraction patterns and date-format handling under `PLATFORM_PROFILES` — todos 3.1.2 / 3.1.3.
+- Bulk-import progress UX with `tqdm` (todo 2.4.2).
+- Bulk-import rollback / transactional writes (todo 2.4.3).
+- Bulk-import validation report persisted as JSON (todo 2.4.4).
+- Tests directory not linted by mypy/flake8 — pre-existing E501 violations on `tests/test_100_percent_coverage.py:497,814` invisible to CI but tripping local hooks.
+- Local dev hygiene: `tests/` was hidden by overly broad `/*test*/` pattern in `.gitignore`; PR #111 added `!/tests/` to undo it. Consider tightening the original pattern to e.g. `/test_env_*/`.
+- Local dev hygiene: removed broken `.git/hooks/pre-commit.legacy` (chained to a broken system Black install). Local-only; not in repo. Consider documenting the framework hooks as the source of truth.
 
 ## Recent Session (November 24, 2025) ✅ COMPLETED
 
@@ -602,10 +610,10 @@ Transform this project from Claude-specific to universal AI assistant memory sys
 - [ ] 2.3.4 Create export validation and verification
 
 **2.4** Bulk Import Enhancement
-- [ ] 2.4.1 Update bulk import scripts to detect format automatically
-- [ ] 2.4.2 Add progress reporting for large imports
+- [x] 2.4.1 Update bulk import scripts to detect format automatically — PR #112 (April 18, 2026); also fixed a latent broken import in the script and removed two redundant predecessor scripts in PR #113
+- [~] 2.4.2 Add progress reporting for large imports — partial: periodic prints land in PR #112; richer `tqdm` UX deferred
 - [ ] 2.4.3 Implement error handling and rollback for failed imports
-- [ ] 2.4.4 Add import statistics and validation reports
+- [ ] 2.4.4 Add import statistics and validation reports — partial: per-format counts in summary land in PR #112; persisted JSON validation report deferred
 
 ### 3. **Configuration Enhancements (High Priority)**
 
