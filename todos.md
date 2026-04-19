@@ -121,7 +121,12 @@ This file maintains persistent todos across Claude Code sessions.
   - Merge test_final_2_lines.py into appropriate existing test files
   - Remove duplicate test coverage that already exists in other files
   - Aim to reduce from 17 test files to ~12-13 focused test files
-- [ ] Implement centralized configuration management system
+- [~] Implement centralized configuration management system (in progress)
+  - [x] `src/config.py` module with `Config` dataclass, platform profiles, env+file loading, validation (PR: feature/central-config-module)
+  - [ ] Wire `Config.load()` into `server_fastmcp.py` / `logging_config.py` / `path_utils.py` (replace direct `os.getenv` calls) — follow-up
+  - [ ] CLI commands for config management (`get`, `set`, `show`, `init`) — follow-up (todos 3.2.2)
+  - [ ] Per-platform topic extraction patterns and date-format handling (todos 3.1.2 / 3.1.3) — follow-up
+  - [ ] Document configuration file format in README — follow-up
 - [x] **Add proper logging throughout the application** ✅ COMPLETED
   - ✅ PR #13: Implemented comprehensive logging system
   - ✅ Security-focused logging with log injection prevention
