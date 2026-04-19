@@ -104,8 +104,10 @@ benchmark_data/
 /None/
 /test_*/
 /*test*/
+# Re-include the canonical tests directory (overrides /*test*/ above)
+!/tests/
 
-# Test data artifacts  
+# Test data artifacts
 test_*.db
 test_*.db-journal
 **/test_*.json
