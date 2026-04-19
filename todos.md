@@ -2,6 +2,23 @@
 
 This file maintains persistent todos across Claude Code sessions.
 
+## Recent Session (April 18, 2026) ✅ COMPLETED
+
+**Dependabot PR batch merge (PRs #103-#108)**
+- [x] Merged 6 dependabot dependency update PRs
+  - #103: mcp >=1.9.2 → >=1.27.0
+  - #104: pytest-asyncio >=0.21 → >=1.3.0
+  - #105: pytest-cov >=4.0 → >=7.1.0
+  - #106: setuptools >=61.0 → >=82.0.1
+  - #107: jsonschema >=4.0.0 → >=4.26.0
+  - #108: python-multipart 0.0.22 → 0.0.26
+- [x] All CI checks passed on each PR (Quick Validation, Performance, Tests & SonarQube)
+- [x] Sequential merge workflow: each pyproject.toml PR required dependabot rebase after prior merge
+
+**Session Notes:**
+- Conflicts expected when multiple PRs touch the same file (pyproject.toml)
+- Efficient pattern: merge one → `@dependabot rebase` on next → wait for CI → merge → repeat
+
 ## Recent Session (November 24, 2025) ✅ COMPLETED
 
 **PR #87: Add .claude/ directory to .gitignore**
@@ -74,7 +91,7 @@ This file maintains persistent todos across Claude Code sessions.
   - Completed fixes:
     - Removed redundant IOError and UnicodeDecodeError exception classes
     - Reduced cognitive complexity in search_conversations method (16→15)
-    - Reduced cognitive complexity in _format_weekly_summary method (21→15)  
+    - Reduced cognitive complexity in _format_weekly_summary method (21→15)
     - Reduced cognitive complexity in _analyze_conversations method (17→15)
 - [x] **Address final 2 code smells to achieve zero**
   - ✅ COMPLETED: SonarCloud now reports 0 code smells!
@@ -113,32 +130,32 @@ This file maintains persistent todos across Claude Code sessions.
   - ✅ Path redaction for security compliance
 - [x] **Remove hard-coded system paths to improve portability** ✅ COMPLETED
   - ✅ PR #38: Added path_utils.py module with cross-platform path resolution
-  - ✅ PR #37: Fixed hardcoded paths in shell scripts with dynamic detection  
+  - ✅ PR #37: Fixed hardcoded paths in shell scripts with dynamic detection
   - ✅ PR #36: Fixed hardcoded paths in Python import scripts
   - ✅ All hardcoded `/home/adam/` paths replaced with dynamic resolution
   - ✅ Project now works on any installation location and OS
 
   ### 1. Analysis and Discovery
-  
+
   **1.1** Identify All Hardcoded Paths
   - 1.1.1 Search for `/home/adam/` patterns in all files
   - 1.1.2 Search for absolute Windows paths (C:\, D:\, etc.)
   - 1.1.3 Search for `/usr/`, `/opt/`, and other Unix system paths
   - 1.1.4 Document each occurrence with file, line number, and context
-  
+
   **1.2** Categorize Path Types
   - 1.2.1 Project root paths (`/home/adam/Code/claude-memory-mcp`)
   - 1.2.2 User-specific tool paths (`/home/adam/.local/bin/uv`)
   - 1.2.3 Test data paths (`/home/adam/claude-memory-test`)
   - 1.2.4 Default storage paths (`~/claude-memory`)
-  
+
   **1.3** Assess Impact
   - 1.3.1 Determine which paths are critical for functionality
   - 1.3.2 Identify paths that break cross-platform compatibility
   - 1.3.3 Prioritize fixes based on impact and usage frequency
-  
+
   ### 2. Create Path Resolution Module
-  
+
   **2.1** Create `src/path_utils.py`
   - 2.1.1 Import `pathlib`, `os`, and `sys` modules
   - 2.1.2 Create `get_project_root()` function
@@ -147,21 +164,21 @@ This file maintains persistent todos across Claude Code sessions.
     - 2.1.2.3 Look for `pyproject.toml` or `.git` directory
   - 2.1.3 Create `get_data_directory()` function with configurable default
   - 2.1.4 Create `resolve_user_path()` for expanding ~ paths
-  
+
   **2.2** Implement Configuration Support
   - 2.2.1 Add `get_config_value()` function for reading env vars
   - 2.2.2 Support `.env` file loading (optional)
   - 2.2.3 Create fallback chain: env var → config file → default
   - 2.2.4 Add `validate_path()` to ensure paths exist and are accessible
-  
+
   **2.3** Cross-platform Path Handling
   - 2.3.1 Use `pathlib.Path` exclusively for path operations
   - 2.3.2 Create `normalize_path()` for consistent path separators
   - 2.3.3 Add Windows-specific path resolution if needed
   - 2.3.4 Test on Windows, macOS, and Linux
-  
+
   ### 3. Fix Shell Scripts
-  
+
   **3.1** Update `scripts/run_server_absolute.sh`
   - 3.1.1 Replace hardcoded project path with dynamic detection
     - 3.1.1.1 Use `dirname "$(readlink -f "$0")"` to find script location
@@ -171,21 +188,21 @@ This file maintains persistent todos across Claude Code sessions.
     - 3.1.2.1 Use `command -v uv` to find uv in PATH
     - 3.1.2.2 Fall back to common locations if not found
     - 3.1.2.3 Exit with error if uv not found
-  
+
   **3.2** Update `scripts/setup_environment.sh`
   - 3.2.1 Remove hardcoded path from error message
   - 3.2.2 Use `$PWD` or dynamic project root detection
   - 3.2.3 Make script location-independent
   - 3.2.4 Add comments explaining path resolution
-  
+
   **3.3** Archive Script Updates
   - 3.3.1 Update `archive/run_server.sh` similarly
   - 3.3.2 Add deprecation notice if archive scripts shouldn't be used
   - 3.3.3 Consider removing if no longer needed
   - 3.3.4 Document why they're archived
-  
+
   ### 4. Fix Python Scripts
-  
+
   **4.1** Update Import Path Additions
   - 4.1.1 Replace `sys.path.append('/home/adam/Code/claude-memory-mcp')`
     - 4.1.1.1 Use `os.path.dirname(os.path.dirname(os.path.abspath(__file__)))`
@@ -193,7 +210,7 @@ This file maintains persistent todos across Claude Code sessions.
     - 4.1.1.3 Add to `scripts/bulk_import.py`
     - 4.1.1.4 Add to `scripts/bulk_import_enhanced.py`
     - 4.1.1.5 Add to `tests/test_direct_coverage.py`
-  
+
   **4.2** Update Test Scripts
   - 4.2.1 Fix `tests/analyze_json.py`
     - 4.2.1.1 Import path_utils module
@@ -203,15 +220,15 @@ This file maintains persistent todos across Claude Code sessions.
     - 4.2.2.1 Use temp directory for test data
     - 4.2.2.2 Or use configurable test directory
     - 4.2.2.3 Clean up after tests
-  
+
   **4.3** Update Default Paths
   - 4.3.1 Review all `~/claude-memory` usages
   - 4.3.2 Ensure they use `Path.home()` instead of string literals
   - 4.3.3 Make configurable via environment variable
   - 4.3.4 Document default path behavior
-  
+
   ### 5. Configuration File Updates
-  
+
   **5.1** Update Makefile
   - 5.1.1 Replace `$(HOME)/claude-memory-mcp/server.py`
     - 5.1.1.1 Use relative paths from Makefile location
@@ -221,87 +238,87 @@ This file maintains persistent todos across Claude Code sessions.
     - 5.1.2.1 Add `TEST_DIR` variable
     - 5.1.2.2 Default to temp directory
     - 5.1.2.3 Allow override via environment
-  
+
   **5.2** Create Path Configuration
   - 5.2.1 Add `config/paths.conf` or similar
   - 5.2.2 Document all configurable paths
   - 5.2.3 Provide platform-specific examples
   - 5.2.4 Include in `.gitignore` if user-specific
-  
+
   ### 6. Environment Variable Support
-  
+
   **6.1** Define Standard Variables
   - 6.1.1 `CLAUDE_MEMORY_HOME` - base directory for data
   - 6.1.2 `CLAUDE_MEMORY_PROJECT_ROOT` - override project detection
   - 6.1.3 `CLAUDE_MEMORY_TEST_DIR` - test data location
   - 6.1.4 `CLAUDE_MEMORY_UV_PATH` - specific uv binary location
-  
+
   **6.2** Update Documentation
   - 6.2.1 Add environment variables to README
   - 6.2.2 Create `.env.example` with all variables
   - 6.2.3 Update CLAUDE.md with path configuration
   - 6.2.4 Add to installation instructions
-  
+
   **6.3** Implement Loading
   - 6.3.1 Check environment on startup
   - 6.3.2 Validate provided paths
   - 6.3.3 Log which paths are being used
   - 6.3.4 Provide helpful error messages
-  
+
   ### 7. Testing Path Resolution
-  
+
   **7.1** Create `tests/test_path_utils.py`
   - 7.1.1 Test project root detection
   - 7.1.2 Test path resolution with different working directories
   - 7.1.3 Test environment variable overrides
   - 7.1.4 Mock different OS environments
-  
+
   **7.2** Update Existing Tests
   - 7.2.1 Remove hardcoded paths from all tests
   - 7.2.2 Use temp directories for test data
   - 7.2.3 Ensure tests work from any location
   - 7.2.4 Add CI tests from different directories
-  
+
   **7.3** Cross-platform Testing
   - 7.3.1 Test on Windows with different path formats
   - 7.3.2 Test on macOS with different home structures
   - 7.3.3 Test in Docker containers
   - 7.3.4 Test with symlinked directories
-  
+
   ### 8. Migration and Compatibility
-  
+
   **8.1** Create Migration Script
   - 8.1.1 Scan for old hardcoded paths in user data
   - 8.1.2 Update any stored absolute paths
   - 8.1.3 Backup data before migration
   - 8.1.4 Provide rollback option
-  
+
   **8.2** Backward Compatibility
   - 8.2.1 Check for data in old locations
   - 8.2.2 Provide migration prompts
   - 8.2.3 Support gradual migration
   - 8.2.4 Log deprecation warnings
-  
+
   **8.3** Update CI/CD
   - 8.3.1 Remove any hardcoded paths from workflows
   - 8.3.2 Use GitHub Actions variables
   - 8.3.3 Test portability in CI
   - 8.3.4 Add multi-OS testing matrix
-  
+
   ### 9. Documentation and Communication
-  
+
   **9.1** Update User Documentation
   - 9.1.1 Remove all hardcoded path examples
   - 9.1.2 Use placeholders like `<project-root>`
   - 9.1.3 Explain path configuration options
   - 9.1.4 Add troubleshooting section
-  
+
   **9.2** Developer Documentation
   - 9.2.1 Document path_utils module
   - 9.2.2 Explain path resolution strategy
   - 9.2.3 Provide examples for common scenarios
   - 9.2.4 Add to contributing guidelines
-  
+
   **9.3** Release Notes
   - 9.3.1 List all changed paths
   - 9.3.2 Provide migration instructions
@@ -316,195 +333,195 @@ This file maintains persistent todos across Claude Code sessions.
   - Verified that test_100_percent_coverage.py serves unique purpose for edge cases
 - [ ] **Monitor SonarQube quality gate status after latest fixes**
   - [x] ✅ Verify all quality gates are now passing (COMPLETED)
-  - [x] ✅ Confirm coverage metrics are accurate with archive/scripts exclusions (COMPLETED)  
+  - [x] ✅ Confirm coverage metrics are accurate with archive/scripts exclusions (COMPLETED)
   - [x] ✅ Check that all recent fixes resolved the "8 Issues > 0" condition (COMPLETED)
   - [x] ✅ Ensure all PRs trigger SonarQube analysis (COMPLETED)
   - [x] ✅ Add quality gate status checks that block merging (COMPLETED)
   - [x] ✅ Set up automatic badge updates after each merge (COMPLETED)
   - [x] ✅ Configure branch protection rules requiring SonarQube (COMPLETED)
-  
+
   **Remaining workflow integration tasks:**
 
   ### 1. Documentation Infrastructure
-  
+
   **1.1** SonarQube Notification Documentation
   - [ ] 1.1.1 Document how GitHub displays SonarQube check status in PRs
   - [ ] 1.1.2 Explain notifications PR authors receive on quality gate failures
   - [ ] 1.1.3 Document how branch protection blocks merges on failures
   - [ ] 1.1.4 Create troubleshooting guide for accessing SonarQube reports
-  
+
   **1.2** Local Development Documentation
   - [ ] 1.2.1 Create developer setup guide for SonarLint IDE integration
   - [ ] 1.2.2 Document local SonarQube analysis commands and setup
   - [ ] 1.2.3 Add IDE-specific SonarLint configuration instructions
   - [ ] 1.2.4 Document how to interpret local analysis results
-  
+
   **1.3** Process Documentation
   - [ ] 1.3.1 Create PR review checklist including SonarQube verification
   - [ ] 1.3.2 Document standard procedures for quality gate failures
   - [ ] 1.3.3 Create escalation process for persistent quality issues
   - [ ] 1.3.4 Document when and how to request quality gate overrides
-  
+
   ### 2. Pre-commit Hook Implementation
-  
+
   **2.1** Setup Pre-commit Framework
   - [ ] 2.1.1 Install pre-commit package (`pip install pre-commit`)
   - [ ] 2.1.2 Create `.pre-commit-config.yaml` configuration file
   - [ ] 2.1.3 Initialize pre-commit hooks (`pre-commit install`)
   - [ ] 2.1.4 Test pre-commit setup with sample commit
-  
+
   **2.2** Configure Basic Quality Hooks
   - [ ] 2.2.1 Add Python code formatting (black or autopep8)
   - [ ] 2.2.2 Add import sorting (isort)
   - [ ] 2.2.3 Add basic linting (flake8 or pylint)
   - [ ] 2.2.4 Add trailing whitespace and end-of-file checks
-  
+
   **2.3** Add Security and Quality Checks
   - [ ] 2.3.1 Add secrets detection hook (detect-secrets or similar)
   - [ ] 2.3.2 Add basic security scanning (bandit)
   - [ ] 2.3.3 Add JSON/YAML syntax validation
   - [ ] 2.3.4 Add commit message format validation
-  
+
   **2.4** Test and Documentation
   - [ ] 2.4.1 Test all hooks with various commit scenarios
   - [ ] 2.4.2 Document hook bypass procedures for emergencies
   - [ ] 2.4.3 Add pre-commit setup to developer onboarding guide
   - [ ] 2.4.4 Create troubleshooting guide for hook failures
-  
+
   ### 3. Local SonarLint Integration
-  
+
   **3.1** IDE Integration Setup
   - [ ] 3.1.1 Create VS Code SonarLint configuration guide
   - [ ] 3.1.2 Add PyCharm/IntelliJ SonarLint setup instructions
   - [ ] 3.1.3 Document Vim/Neovim SonarLint plugin setup
   - [ ] 3.1.4 Create configuration files for common IDEs
-  
+
   **3.2** SonarLint Configuration
   - [ ] 3.2.1 Create `.sonarlint/` configuration directory
   - [ ] 3.2.2 Configure rule sets to match SonarCloud analysis
   - [ ] 3.2.3 Set up connected mode to sync with SonarCloud project
   - [ ] 3.2.4 Configure file exclusions to match CI analysis
-  
+
   **3.3** Developer Workflow Integration
   - [ ] 3.3.1 Document real-time issue detection in IDE
   - [ ] 3.3.2 Create guide for fixing SonarLint warnings before commit
   - [ ] 3.3.3 Add SonarLint check to development workflow documentation
   - [ ] 3.3.4 Document how to disable rules for false positives
-  
+
   ### 4. Local SonarQube Analysis
-  
+
   **4.1** Scanner Setup
   - [ ] 4.1.1 Document SonarQube Scanner installation methods
   - [ ] 4.1.2 Create local analysis script (`scripts/run_sonar_analysis.sh`)
   - [ ] 4.1.3 Configure environment variables for local analysis
   - [ ] 4.1.4 Set up local SonarQube server (optional, for offline analysis)
-  
+
   **4.2** Analysis Configuration
   - [ ] 4.2.1 Create local analysis property files
   - [ ] 4.2.2 Configure file exclusions to match CI setup
   - [ ] 4.2.3 Set up local test coverage integration
   - [ ] 4.2.4 Configure local report generation
-  
+
   **4.3** Developer Workflow
   - [ ] 4.3.1 Document when to run local analysis (before PR creation)
   - [ ] 4.3.2 Create script to compare local vs CI analysis results
   - [ ] 4.3.3 Add local analysis to development checklist
   - [ ] 4.3.4 Document troubleshooting common analysis issues
-  
+
   ### 5. PR Review Process Documentation
-  
+
   **5.1** Review Checklist Creation
   - [ ] 5.1.1 Create comprehensive PR review template
   - [ ] 5.1.2 Add SonarQube status verification to checklist
   - [ ] 5.1.3 Include coverage impact assessment requirements
   - [ ] 5.1.4 Add security hotspot review procedures
-  
+
   **5.2** Reviewer Guidelines
   - [ ] 5.2.1 Document how to interpret SonarQube reports in PRs
   - [ ] 5.2.2 Create guidelines for acceptable vs unacceptable issues
   - [ ] 5.2.3 Document when to request changes vs approve with comments
   - [ ] 5.2.4 Add escalation procedures for disagreements
-  
+
   **5.3** Author Guidelines
   - [ ] 5.3.1 Create PR preparation checklist including SonarQube
   - [ ] 5.3.2 Document how to address SonarQube feedback
   - [ ] 5.3.3 Add guidelines for explaining SonarQube suppressions
   - [ ] 5.3.4 Create template for documenting quality gate bypasses
-  
+
   ### 6. Quality Gate Failure Procedures
-  
+
   **6.1** Immediate Response Procedures
   - [ ] 6.1.1 Create step-by-step failure investigation guide
   - [ ] 6.1.2 Document common failure types and solutions
   - [ ] 6.1.3 Add emergency bypass procedures with approval requirements
   - [ ] 6.1.4 Create rollback procedures for quality regressions
-  
+
   **6.2** Root Cause Analysis
   - [ ] 6.2.1 Create template for failure analysis documentation
   - [ ] 6.2.2 Document process for identifying systemic issues
   - [ ] 6.2.3 Add procedures for updating quality gates after analysis
   - [ ] 6.2.4 Create learning documentation from past failures
-  
+
   **6.3** Prevention Measures
   - [ ] 6.3.1 Document pre-merge quality verification procedures
   - [ ] 6.3.2 Create guidelines for incremental quality improvements
   - [ ] 6.3.3 Add process for proactive rule updates
   - [ ] 6.3.4 Document team learning sessions for quality issues
-  
+
   ### 7. Ongoing Monitoring Processes
-  
+
   **7.1** Weekly Dashboard Reviews
   - [ ] 7.1.1 Create SonarQube dashboard monitoring checklist
   - [ ] 7.1.2 Set up automated weekly report generation
   - [ ] 7.1.3 Document trend analysis procedures
   - [ ] 7.1.4 Create action item templates for trend issues
-  
+
   **7.2** Coverage Degradation Monitoring
   - [ ] 7.2.1 Set up coverage threshold alerts
   - [ ] 7.2.2 Create coverage trend analysis procedures
   - [ ] 7.2.3 Document acceptable coverage variance ranges
   - [ ] 7.2.4 Add coverage recovery action plans
-  
+
   **7.3** Performance Impact Monitoring
   - [ ] 7.3.1 Monitor SonarQube analysis execution time trends
   - [ ] 7.3.2 Track CI/CD pipeline impact of quality gates
   - [ ] 7.3.3 Document optimization procedures for slow analysis
   - [ ] 7.3.4 Create performance baseline documentation
-  
+
   ### 8. Configuration Management
-  
+
   **8.1** Quality Gate Threshold Management
   - [ ] 8.1.1 Document current quality gate configuration
   - [ ] 8.1.2 Create procedure for threshold updates
   - [ ] 8.1.3 Add approval process for quality standard changes
   - [ ] 8.1.4 Document rollback procedures for threshold changes
-  
+
   **8.2** Rule Set Management
   - [ ] 8.2.1 Create process for adding new SonarQube rules
   - [ ] 8.2.2 Document rule customization procedures
   - [ ] 8.2.3 Add team consensus process for rule changes
   - [ ] 8.2.4 Create documentation for rule exception handling
-  
+
   **8.3** Project Structure Updates
   - [ ] 8.3.1 Create process for updating exclusions when structure changes
   - [ ] 8.3.2 Document impact assessment for structural changes
   - [ ] 8.3.3 Add validation procedures for exclusion updates
   - [ ] 8.3.4 Create regression testing for configuration changes
-  
+
   ### 9. Training and Knowledge Transfer
-  
+
   **9.1** Developer Onboarding
   - [ ] 9.1.1 Create SonarQube basics training materials
   - [ ] 9.1.2 Add hands-on exercises for common scenarios
   - [ ] 9.1.3 Document best practices for quality-focused development
   - [ ] 9.1.4 Create mentoring procedures for quality practices
-  
+
   **9.2** Advanced Training
   - [ ] 9.2.1 Create advanced SonarQube analysis interpretation guide
   - [ ] 9.2.2 Document complex rule configuration procedures
   - [ ] 9.2.3 Add training for custom rule development
   - [ ] 9.2.4 Create troubleshooting expertise development path
-  
+
   **9.3** Knowledge Documentation
   - [ ] 9.3.1 Create searchable knowledge base for common issues
   - [ ] 9.3.2 Document lessons learned from quality incidents
@@ -522,7 +539,7 @@ This file maintains persistent todos across Claude Code sessions.
 
   **1.1** Path Portability Resolution (Must Complete First)
   - 1.1.1 Fix hardcoded paths in test_100_percent_coverage.py (line 37: sys.path.append)
-  - 1.1.2 Fix hardcoded paths in test_memory_server.py (line 21: sys.path.append)  
+  - 1.1.2 Fix hardcoded paths in test_memory_server.py (line 21: sys.path.append)
   - 1.1.3 Implement dynamic path resolution using Path(__file__).parent.parent
   - 1.1.4 Verify all tests pass after path portability fixes
 
@@ -567,7 +584,7 @@ Transform this project from Claude-specific to universal AI assistant memory sys
 - [x] 2.1.3 Add format-specific parsers in `importers/` directory ✅ Complete framework implemented
 - [ ] 2.1.4 Create standardized internal conversation format **IN PROGRESS** (Base framework complete)
 
-**2.2** Platform-Specific Importers  
+**2.2** Platform-Specific Importers
 - [x] 2.2.1 Create `ChatGPTImporter` class for OpenAI exports ✅ COMPLETED with real export validation
 - [x] 2.2.2 Create `CursorImporter` class for Cursor session exports ✅ Framework complete, needs real data testing
 - [x] 2.2.3 Create `ClaudeImporter` class (refactor existing logic) ✅ Multiple variant support implemented
@@ -741,7 +758,7 @@ Replace linear search with SQLite FTS indexing for improved performance and scal
 
 **1.1** Current System Analysis
 - 1.1.1 Audit existing search implementation in conversation_memory.py
-- 1.1.2 Identify performance bottlenecks in linear search algorithm  
+- 1.1.2 Identify performance bottlenecks in linear search algorithm
 - 1.1.3 Document current search limitations and edge cases
 
 **1.2** Performance Benchmarking
@@ -911,7 +928,7 @@ Replace linear search with SQLite FTS indexing for improved performance and scal
 ### **Production-Ready Components**
 ✅ **ChatGPT Support (Full Implementation)**
 - Complete OpenAI export format support with complex message mapping
-- JSON schema validation based on real export analysis  
+- JSON schema validation based on real export analysis
 - Privacy-safe export sanitization tools for development
 - Tested and validated with actual ChatGPT exports
 
@@ -935,7 +952,7 @@ Replace linear search with SQLite FTS indexing for improved performance and scal
 
 ### **Next Session Priorities**
 1. **Test Additional Platforms** - Validate Cursor/Claude importers with real data
-2. **Complete Schema Validation** - Finish schemas for all platforms  
+2. **Complete Schema Validation** - Finish schemas for all platforms
 3. **FastMCP Integration** - Wire up importers to MCP server
 4. **End-to-End Testing** - Full import pipeline validation
 
