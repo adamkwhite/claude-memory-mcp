@@ -116,11 +116,11 @@ This file maintains persistent todos across Claude Code sessions.
   - ✅ Added 24 security tests with 100% validation coverage
   - ✅ Custom exceptions with clear error messages
   - ✅ Maintains zero security hotspots in SonarQube
-- [ ] **Consolidate redundant test files** - Address PR review feedback
-  - Merge test_final_100_percent_coverage.py into test_100_percent_coverage.py
-  - Merge test_final_2_lines.py into appropriate existing test files
-  - Remove duplicate test coverage that already exists in other files
-  - Aim to reduce from 17 test files to ~12-13 focused test files
+- [x] **Consolidate redundant test files** - Address PR review feedback ✅ COMPLETED (April 18, 2026)
+  - ✅ test_final_100_percent_coverage.py and test_final_2_lines.py were already merged in earlier work (no longer present)
+  - ✅ Audit (April 18, 2026) confirmed current layout is 13 top-level test files + 6 importer/schema files in subpackages, matching the original "12-13 focused" target
+  - ✅ Cross-file name overlaps (e.g. test_add_conversation, test_search_conversations, test_extract_topics_basic) verified as legitimate — they exercise different layers (functional server, FastMCP wrapper, SQLite, performance, importers) or different objects (ConversationMemoryServer vs BaseImporter), not duplicate coverage
+  - ✅ Found and fixed one real bug surfaced by the audit: `test_get_preview_exception_handling` in `TestCompleteEdgeCaseCoverage` was defined twice in the same class (lines 104 and 429), so Python silently shadowed the first method and the unreadable-file branch never ran. Renamed to `test_get_preview_exception_handling_unreadable_file`; both branches now run (440 → 441 collected tests)
 - [ ] Implement centralized configuration management system
 - [x] **Add proper logging throughout the application** ✅ COMPLETED
   - ✅ PR #13: Implemented comprehensive logging system

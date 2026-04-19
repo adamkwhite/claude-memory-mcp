@@ -101,8 +101,15 @@ class TestCompleteEdgeCaseCoverage:
             assert any("error" in str(result) for result in results)
         # If empty, that's also valid error handling behavior
 
-    def test_get_preview_exception_handling(self, server, temp_storage):
-        """Test preview generation exception handling (lines 139-140)"""
+    def test_get_preview_exception_handling_unreadable_file(self, server, temp_storage):
+        """Test _get_preview exception path via unreadable file (lines 139-140).
+
+        Renamed from test_get_preview_exception_handling: the original name
+        collided with the async test at line 429 (same class), so Python
+        silently shadowed this method and it never ran. The unreadable-file
+        exception path is distinct from the nonexistent-file path covered by
+        test_get_preview_exception_handling_private.
+        """
         # Create a file that will cause an exception when reading
         test_file = Path(temp_storage) / "bad_file.md"
         test_file.touch()
@@ -489,7 +496,9 @@ class TestCompleteEdgeCaseCoverage:
         # Test with no title provided to trigger auto-generation
         long_content = "This is a very long first line that should be truncated when used as a title because it exceeds fifty characters in length"
         await server.add_conversation(
-            long_content, None, "2025-06-02T10:00:00Z"  # No title provided
+            long_content,
+            None,
+            "2025-06-02T10:00:00Z",  # No title provided
         )
 
         # Check that title was auto-generated and truncated
@@ -1225,7 +1234,6 @@ class TestServerExceptionCoverage:
             "conversation_memory.SearchDatabase",
             side_effect=Exception("SQLite initialization failed"),
         ):
-
             try:
                 # This should catch the SQLite exception and continue
                 server = ConversationMemoryServer(temp_storage, enable_sqlite=True)
