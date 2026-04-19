@@ -241,6 +241,113 @@ class TestMCPToolFunctions:
         assert "Status:" in result
 
     @pytest.mark.asyncio
+    async def test_mcp_add_conversation_tool_forwards_metadata(self, monkeypatch):
+        """The MCP add_conversation tool forwards the D2 metadata kwargs."""
+        captured = {}
+
+        async def fake_add(*args, **kwargs):
+            captured["args"] = args
+            captured["kwargs"] = kwargs
+            return {"status": "success", "message": "ok"}
+
+        monkeypatch.setattr(server_fastmcp.memory_server, "add_conversation", fake_add)
+
+        result = await server_fastmcp.add_conversation(
+            content="c",
+            title="t",
+            date="2026-04-18T10:00:00",
+            session_id="s1",
+            user_id="u1",
+            tags=["a", "b"],
+            conversation_type="code",
+        )
+
+        assert "Status: success" in result
+        assert captured["args"] == ("c", "t", "2026-04-18T10:00:00")
+        assert captured["kwargs"] == {
+            "session_id": "s1",
+            "user_id": "u1",
+            "tags": ["a", "b"],
+            "conversation_type": "code",
+        }
+
+    @pytest.mark.asyncio
+    async def test_mcp_search_by_tag_tool_formats_results(self, monkeypatch):
+        """search_by_tag MCP tool renders tag/session/type in output."""
+
+        async def fake_search(tag, limit):
+            return [
+                {
+                    "id": "conv_x",
+                    "title": "Tagged note",
+                    "date": "2026-04-18",
+                    "session_id": "sess_x",
+                    "conversation_type": "code",
+                }
+            ]
+
+        monkeypatch.setattr(server_fastmcp.memory_server, "search_by_tag", fake_search)
+
+        result = await server_fastmcp.search_by_tag("starred", limit=3)
+        assert "Found 1 conversations for tag 'starred'" in result
+        assert "Tagged note" in result
+        assert "Session: sess_x" in result
+        assert "Type: code" in result
+
+    @pytest.mark.asyncio
+    async def test_mcp_search_by_tag_tool_no_results(self, monkeypatch):
+        async def fake_search(tag, limit):
+            return []
+
+        monkeypatch.setattr(server_fastmcp.memory_server, "search_by_tag", fake_search)
+
+        result = await server_fastmcp.search_by_tag("missing")
+        assert "No conversations found for tag 'missing'" in result
+
+    @pytest.mark.asyncio
+    async def test_mcp_search_by_session_id_tool(self, monkeypatch):
+        async def fake_search(sid, limit):
+            return [
+                {"id": "a", "title": "A", "date": "2026-04-18"},
+                {"id": "b", "title": "B", "date": "2026-04-19"},
+            ]
+
+        monkeypatch.setattr(
+            server_fastmcp.memory_server, "search_by_session_id", fake_search
+        )
+
+        result = await server_fastmcp.search_by_session_id("sess_x")
+        assert "Found 2 conversations for session 'sess_x'" in result
+        assert "**1. A**" in result and "**2. B**" in result
+
+    @pytest.mark.asyncio
+    async def test_mcp_search_by_conversation_type_tool(self, monkeypatch):
+        async def fake_search(ctype, limit):
+            return [{"id": "z", "title": "Z", "date": "2026-04-18"}]
+
+        monkeypatch.setattr(
+            server_fastmcp.memory_server,
+            "search_by_conversation_type",
+            fake_search,
+        )
+
+        result = await server_fastmcp.search_by_conversation_type("code")
+        assert "Found 1 conversations for conversation_type 'code'" in result
+        assert "**1. Z**" in result
+
+    @pytest.mark.asyncio
+    async def test_mcp_metadata_tool_renders_error_marker(self, monkeypatch):
+        """Error marker from underlying server surfaces in the tool output."""
+
+        async def fake_search(tag, limit):
+            return [{"error": "Tag search requires SQLite FTS to be enabled"}]
+
+        monkeypatch.setattr(server_fastmcp.memory_server, "search_by_tag", fake_search)
+
+        result = await server_fastmcp.search_by_tag("starred")
+        assert "Error: Tag search requires SQLite FTS to be enabled" in result
+
+    @pytest.mark.asyncio
     async def test_mcp_weekly_summary_tool(self, server):
         """Test the MCP weekly summary tool"""
         # Add some test data

@@ -7,7 +7,7 @@ Supports storing conversations locally and retrieving context for current sessio
 """
 
 from pathlib import Path
-from typing import Optional
+from typing import List, Optional
 
 from mcp.server.fastmcp import FastMCP
 
@@ -185,10 +185,31 @@ async def search_conversations(query: str, limit: int = DEFAULT_SEARCH_LIMIT) ->
 
 @mcp.tool()
 async def add_conversation(
-    content: str, title: Optional[str] = None, date: Optional[str] = None
+    content: str,
+    title: Optional[str] = None,
+    date: Optional[str] = None,
+    session_id: Optional[str] = None,
+    user_id: Optional[str] = None,
+    tags: Optional[List[str]] = None,
+    conversation_type: Optional[str] = None,
 ) -> str:
-    """Add a new conversation to the memory system"""
-    result = await memory_server.add_conversation(content, title, date)
+    """Add a new conversation to the memory system.
+
+    ``session_id``, ``user_id``, ``tags``, and ``conversation_type`` are the
+    universal metadata fields introduced in PR #114; when provided, they are
+    persisted alongside the conversation and indexed for metadata search
+    (``search_by_tag`` / ``search_by_session_id`` /
+    ``search_by_conversation_type``).
+    """
+    result = await memory_server.add_conversation(
+        content,
+        title,
+        date,
+        session_id=session_id,
+        user_id=user_id,
+        tags=tags,
+        conversation_type=conversation_type,
+    )
     return f"Status: {result['status']}\n{result['message']}"
 
 
@@ -202,21 +223,69 @@ async def generate_weekly_summary(week_offset: int = 0) -> str:
 async def search_by_topic(topic: str, limit: int = 10) -> str:
     """Search conversations by a specific topic"""
     results = await memory_server.search_by_topic(topic, limit)
+    return _format_metadata_results(results, label="topic", value=topic)
 
+
+@mcp.tool()
+async def search_by_tag(tag: str, limit: int = 10) -> str:
+    """Search conversations tagged with a specific tag (D2 metadata field).
+
+    Tags are universal metadata populated by the importers (e.g.
+    ``starred``, ``archived``, ``workspace:my-project``, ``variant:web``).
+    Requires SQLite FTS.
+    """
+    results = await memory_server.search_by_tag(tag, limit)
+    return _format_metadata_results(results, label="tag", value=tag)
+
+
+@mcp.tool()
+async def search_by_session_id(session_id: str, limit: int = 10) -> str:
+    """Find all conversations sharing a session_id (D2 metadata field).
+
+    Useful for reconstructing a multi-turn session that spans several
+    stored conversation records (e.g. a Cursor working session, a Claude
+    thread continued across days). Results are sorted chronologically.
+    Requires SQLite FTS.
+    """
+    results = await memory_server.search_by_session_id(session_id, limit)
+    return _format_metadata_results(results, label="session", value=session_id)
+
+
+@mcp.tool()
+async def search_by_conversation_type(conversation_type: str, limit: int = 10) -> str:
+    """Search conversations by conversation_type (D2 metadata field).
+
+    Typical values: ``chat``, ``code``, ``analysis``. Requires SQLite FTS.
+    """
+    results = await memory_server.search_by_conversation_type(conversation_type, limit)
+    return _format_metadata_results(
+        results, label="conversation_type", value=conversation_type
+    )
+
+
+def _format_metadata_results(results: list, *, label: str, value: str) -> str:
+    """Shared rendering for metadata-query MCP tools."""
     if not results:
-        return f"No conversations found for topic '{topic}'"
+        return f"No conversations found for {label} '{value}'"
 
-    response = f"Found {len(results)} conversations for topic '{topic}':\n\n"
+    response = f"Found {len(results)} conversations for {label} '{value}':\n\n"
     for i, result in enumerate(results, 1):
         if "error" in result:
             response += f"Error: {result['error']}\n"
+            continue
+
+        response += f"**{i}. {result.get('title', 'Untitled')}**\n"
+        response += f"ID: {result['id']}\n"
+        if "date" in result:
+            response += f"Date: {result['date']}\n"
+        if result.get("session_id"):
+            response += f"Session: {result['session_id']}\n"
+        if result.get("conversation_type"):
+            response += f"Type: {result['conversation_type']}\n"
+        if "preview" in result:
+            response += f"Preview:\n```\n{result['preview']}\n```\n\n"
         else:
-            response += f"**{i}. {result.get('title', 'Untitled')}**\n"
-            response += f"ID: {result['id']}\n"
-            if "date" in result:
-                response += f"Date: {result['date']}\n"
-            if "preview" in result:
-                response += f"Preview:\n```\n{result['preview']}\n```\n\n"
+            response += "\n"
 
     return response
 

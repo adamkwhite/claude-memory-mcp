@@ -298,8 +298,22 @@ class ConversationMemoryServer:
         content: str,
         title: Optional[str] = None,
         conversation_date: Optional[str] = None,
+        *,
+        session_id: Optional[str] = None,
+        user_id: Optional[str] = None,
+        tags: Optional[List[str]] = None,
+        conversation_type: Optional[str] = None,
+        custom_fields: Optional[Dict[str, Any]] = None,
     ) -> Dict[str, Any]:
-        """Add a new conversation to storage"""
+        """Add a new conversation to storage.
+
+        The ``session_id``/``user_id``/``tags``/``conversation_type``/
+        ``custom_fields`` parameters are keyword-only and all optional; they
+        mirror the universal metadata fields produced by the importers in
+        ``src/importers`` (PR #114) and are persisted alongside the
+        conversation JSON plus indexed in the SQLite FTS database when
+        available.
+        """
         try:
             # Parse date or use current
             if conversation_date:
@@ -330,7 +344,7 @@ class ConversationMemoryServer:
             # Extract topics
             topics = self._extract_topics(content)
 
-            conversation_data = {
+            conversation_data: Dict[str, Any] = {
                 "id": conversation_id,
                 "title": title,
                 "content": content,
@@ -338,6 +352,19 @@ class ConversationMemoryServer:
                 "topics": topics,
                 "created_at": datetime.now().isoformat(),
             }
+
+            # Only persist metadata keys when non-empty so legacy JSON files
+            # stay shaped the same for existing users.
+            if session_id:
+                conversation_data["session_id"] = session_id
+            if user_id:
+                conversation_data["user_id"] = user_id
+            if tags:
+                conversation_data["tags"] = list(tags)
+            if conversation_type:
+                conversation_data["conversation_type"] = conversation_type
+            if custom_fields:
+                conversation_data["custom_fields"] = dict(custom_fields)
 
             # Save conversation file
             async with aiofiles.open(file_path, "w", encoding="utf-8") as f:
@@ -745,6 +772,50 @@ class ConversationMemoryServer:
 
         # Fallback to JSON-based topic search
         return await self._search_topic_json(topic, limit)
+
+    async def search_by_tag(self, tag: str, limit: int = 10) -> List[Dict[str, Any]]:
+        """Search conversations by a specific tag (D2 metadata field).
+
+        SQLite-only: if SQLite search is unavailable, returns an empty list
+        with an error marker. Tags were introduced in PR #114 and are not
+        maintained in the JSON topic index.
+        """
+        if self.use_sqlite_search and self.search_db:
+            try:
+                return self.search_db.search_by_tag(tag, limit)
+            except Exception as e:
+                self.logger.warning("SQLite tag search failed: %s", e)
+                return [{"error": f"Tag search failed: {e}"}]
+
+        return [{"error": "Tag search requires SQLite FTS to be enabled"}]
+
+    async def search_by_session_id(
+        self, session_id: str, limit: int = 10
+    ) -> List[Dict[str, Any]]:
+        """Search conversations by session_id (D2 metadata field)."""
+        if self.use_sqlite_search and self.search_db:
+            try:
+                return self.search_db.search_by_session_id(session_id, limit)
+            except Exception as e:
+                self.logger.warning("SQLite session search failed: %s", e)
+                return [{"error": f"Session search failed: {e}"}]
+
+        return [{"error": "Session search requires SQLite FTS to be enabled"}]
+
+    async def search_by_conversation_type(
+        self, conversation_type: str, limit: int = 10
+    ) -> List[Dict[str, Any]]:
+        """Search conversations by conversation_type (D2 metadata field)."""
+        if self.use_sqlite_search and self.search_db:
+            try:
+                return self.search_db.search_by_conversation_type(
+                    conversation_type, limit
+                )
+            except Exception as e:
+                self.logger.warning("SQLite conversation-type search failed: %s", e)
+                return [{"error": f"Conversation-type search failed: {e}"}]
+
+        return [{"error": "Conversation-type search requires SQLite FTS to be enabled"}]
 
     async def _search_topic_json(self, topic: str, limit: int) -> List[Dict[str, Any]]:
         """Helper method for JSON-based topic search."""

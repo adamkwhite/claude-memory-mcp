@@ -449,6 +449,72 @@ class TestSaveAndReport:
         assert importer.imported_count == 1
         assert importer.platform_counts == {"chatgpt": 1}
 
+    @pytest.mark.asyncio
+    async def test_save_conversation_forwards_metadata_kwargs(self, fake_memory_server):
+        """Metadata kwargs are forwarded to memory_server.add_conversation."""
+        importer = EnhancedBulkImporter(
+            dry_run=False,
+            memory_server=fake_memory_server,
+            detector=_make_detector(PlatformType.UNKNOWN, 0.0),
+        )
+        await importer._save_conversation(
+            content="c",
+            title="t",
+            date="2026-04-18T10:00:00",
+            platform_label="chatgpt",
+            session_id="sess_x",
+            user_id="user_y",
+            tags=["starred"],
+            conversation_type="code",
+            custom_fields={"workspace": "/x"},
+        )
+        fake_memory_server.add_conversation.assert_awaited_once_with(
+            "c",
+            "t",
+            "2026-04-18T10:00:00",
+            session_id="sess_x",
+            user_id="user_y",
+            tags=["starred"],
+            conversation_type="code",
+            custom_fields={"workspace": "/x"},
+        )
+
+    @pytest.mark.asyncio
+    async def test_persist_staged_conversation_lifts_metadata_from_json(
+        self, tmp_path, fake_memory_server
+    ):
+        """A staged universal-format JSON has its metadata extracted and passed through."""
+        staged = tmp_path / "conv.json"
+        staged.write_text(
+            json.dumps(
+                {
+                    "title": "Imported from staging",
+                    "content": "some content",
+                    "date": "2026-04-18T10:00:00",
+                    "session_id": "sess_42",
+                    "user_id": "user_42",
+                    "tags": ["imported", "starred"],
+                    "conversation_type": "chat",
+                    "custom_fields": {"origin": "chatgpt"},
+                }
+            )
+        )
+
+        importer = EnhancedBulkImporter(
+            dry_run=False,
+            memory_server=fake_memory_server,
+            detector=_make_detector(PlatformType.UNKNOWN, 0.0),
+        )
+
+        await importer._persist_staged_conversation(staged, "chatgpt")
+
+        call = fake_memory_server.add_conversation.await_args
+        assert call.kwargs["session_id"] == "sess_42"
+        assert call.kwargs["user_id"] == "user_42"
+        assert call.kwargs["tags"] == ["imported", "starred"]
+        assert call.kwargs["conversation_type"] == "chat"
+        assert call.kwargs["custom_fields"] == {"origin": "chatgpt"}
+
     def test_print_summary_with_no_run(self, capsys):
         importer = EnhancedBulkImporter(
             dry_run=True,
