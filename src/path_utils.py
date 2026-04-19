@@ -2,11 +2,36 @@
 
 This module provides utilities for resolving paths dynamically to ensure
 the project works correctly regardless of installation location.
+
+The path-resolution helpers below accept an optional :class:`~config.Config`
+instance. When supplied, the helpers read paths from the config rather than
+re-reading environment variables. When omitted, they call
+``Config.load(validate=False)`` so existing call sites that rely on env-var
+behaviour continue to work unchanged.
 """
 
 import os
 from pathlib import Path
-from typing import Optional
+from typing import TYPE_CHECKING, Optional
+
+if TYPE_CHECKING:  # pragma: no cover - type-only import
+    from config import Config
+
+
+def _resolve_config(config: "Optional[Config]") -> "Config":
+    """Return ``config`` when supplied, otherwise build one from env+file.
+
+    ``validate=False`` is used because the path helpers are called from many
+    lightweight contexts (logging setup, importers, scripts) where attempting
+    to create the storage directory is unwanted side-effect.
+    """
+    if config is not None:
+        return config
+    # Local import keeps the module side-effect free at import time and
+    # avoids a circular import between ``path_utils`` and ``config``.
+    from config import Config as _Config
+
+    return _Config.load(validate=False)
 
 
 def get_project_root() -> Path:
@@ -41,35 +66,48 @@ def get_project_root() -> Path:
     raise RuntimeError("Could not determine project root directory")
 
 
-def get_data_directory() -> Path:
+def get_data_directory(config: "Optional[Config]" = None) -> Path:
     """Get the data directory for storing conversations.
 
     The directory is determined by the following priority:
-    1. CLAUDE_MEMORY_PATH environment variable
-    2. Default: ~/claude-memory/
+    1. ``config.storage_path`` (if ``config`` is provided)
+    2. ``CLAUDE_MEMORY_PATH`` environment variable (resolved via
+       :class:`~config.Config`)
+    3. Default: ``~/claude-memory/``
+
+    Args:
+        config: Optional pre-loaded :class:`~config.Config` instance. When
+            omitted, a fresh ``Config.load(validate=False)`` is used.
 
     Returns:
         Path: The data directory path
     """
-    # Check for environment variable override
-    env_path = os.environ.get("CLAUDE_MEMORY_PATH")
-    if env_path:
-        return Path(env_path).expanduser().resolve()
-
-    # Default to home directory location
-    return Path.home() / "claude-memory"
+    cfg = _resolve_config(config)
+    return cfg.resolved_storage_path()
 
 
-def get_log_directory() -> Path:
+def get_log_directory(config: "Optional[Config]" = None) -> Path:
     """Get the log directory for storing application logs.
 
     The directory is determined by:
-    1. CLAUDE_MCP_LOG_FILE environment variable (if set, extract directory)
-    2. Default: ~/.claude-memory/logs/
+    1. ``CLAUDE_MCP_LOG_FILE`` environment variable (if set, extract directory)
+    2. Default: ``~/.claude-memory/logs/``
+
+    ``CLAUDE_MCP_LOG_FILE`` is intentionally not part of :class:`~config.Config`
+    yet, so this function still reads it directly. The ``config`` parameter is
+    accepted for API symmetry and forward-compatibility.
+
+    Args:
+        config: Optional pre-loaded :class:`~config.Config` instance. Reserved
+            for forward compatibility; currently unused.
 
     Returns:
         Path: The log directory path
     """
+    # ``config`` is accepted for API symmetry; CLAUDE_MCP_LOG_FILE is not (yet)
+    # part of Config so we still read it directly here.
+    del config  # explicitly unused
+
     # Check if log file is specified
     log_file = os.environ.get("CLAUDE_MCP_LOG_FILE")
     if log_file:
@@ -79,13 +117,17 @@ def get_log_directory() -> Path:
     return Path.home() / ".claude-memory" / "logs"
 
 
-def get_default_log_file() -> Path:
+def get_default_log_file(config: "Optional[Config]" = None) -> Path:
     """Get the default log file path.
+
+    Args:
+        config: Optional pre-loaded :class:`~config.Config` instance, forwarded
+            to :func:`get_log_directory`.
 
     Returns:
         Path: The default log file path
     """
-    return get_log_directory() / "claude-mcp.log"
+    return get_log_directory(config) / "claude-mcp.log"
 
 
 def resolve_user_path(path: str) -> Path:

@@ -5,7 +5,12 @@ import sys
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
-from path_utils import (
+# Add src to path for imports
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "src"))
+
+from config import Config  # noqa: E402
+from path_utils import (  # noqa: E402
+    _resolve_config,
     ensure_directory_exists,
     get_data_directory,
     get_default_log_file,
@@ -14,9 +19,6 @@ from path_utils import (
     get_uv_command,
     resolve_user_path,
 )
-
-# Add src to path for imports
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "src"))
 
 
 class TestGetProjectRoot:
@@ -225,3 +227,41 @@ class TestGetUvCommand:
 
         result = get_uv_command()
         assert result is None
+
+
+class TestConfigWiring:
+    """Tests for the new ``config`` parameter on path-resolution helpers."""
+
+    def test_resolve_config_returns_supplied_instance(self, tmp_path):
+        """An explicit Config is returned unchanged (no env/file lookup)."""
+        cfg = Config(storage_path=str(tmp_path))
+        assert _resolve_config(cfg) is cfg
+
+    def test_resolve_config_loads_when_none(self, monkeypatch, tmp_path):
+        """Without an explicit config, env-driven Config.load is used."""
+        monkeypatch.setenv("CLAUDE_MEMORY_PATH", str(tmp_path))
+        # validate=False is used internally so this should never raise even
+        # when the storage path isn't writable.
+        cfg = _resolve_config(None)
+        assert isinstance(cfg, Config)
+        assert cfg.resolved_storage_path() == tmp_path.resolve()
+
+    def test_get_data_directory_uses_supplied_config(self, tmp_path):
+        """``get_data_directory`` should respect an explicit Config."""
+        cfg = Config(storage_path=str(tmp_path))
+        assert get_data_directory(cfg) == tmp_path.resolve()
+
+    def test_get_default_log_file_accepts_config(self, tmp_path):
+        """``get_default_log_file`` should accept a Config without raising."""
+        cfg = Config(storage_path=str(tmp_path))
+        # Even though Config doesn't (yet) drive the log-file location, the
+        # helper must not break when one is supplied.
+        log_file = get_default_log_file(cfg)
+        assert log_file.name == "claude-mcp.log"
+
+    def test_get_log_directory_accepts_config(self, tmp_path):
+        """``get_log_directory`` should accept a Config without raising."""
+        cfg = Config(storage_path=str(tmp_path))
+        # Same as above: parameter is reserved for forward-compat.
+        log_dir = get_log_directory(cfg)
+        assert log_dir.name == "logs"

@@ -12,6 +12,7 @@ from typing import Optional
 from mcp.server.fastmcp import FastMCP
 
 try:
+    from .config import Config
     from .conversation_memory import ConversationMemoryServer as CoreMemoryServer
     from .logging_config import (
         get_logger,
@@ -21,6 +22,7 @@ try:
     )
 except ImportError:
     # For direct imports during testing
+    from config import Config
     from conversation_memory import ConversationMemoryServer as CoreMemoryServer
     from logging_config import (
         get_logger,
@@ -72,11 +74,30 @@ COMMON_TECH_TERMS = [
 class FastMCPConversationMemoryServer(CoreMemoryServer):
     """FastMCP-specific wrapper around the core ConversationMemoryServer."""
 
+    # Sentinel used to detect "caller did not pass storage_path" so we can
+    # fall back to the Config-derived value while preserving the public API.
+    _DEFAULT_STORAGE_SENTINEL = "~/claude-memory"
+
     def __init__(
-        self, storage_path: str = "~/claude-memory", use_data_dir: Optional[bool] = None
+        self,
+        storage_path: str = _DEFAULT_STORAGE_SENTINEL,
+        use_data_dir: Optional[bool] = None,
+        config: Optional[Config] = None,
     ):
-        # Initialize logging for FastMCP
-        init_default_logging()
+        # Load (or accept) centralized configuration. Validation runs here so
+        # misconfiguration fails loudly at server startup rather than later.
+        # ConfigError is a ValueError subclass and is allowed to propagate.
+        self.config = config if config is not None else Config.load()
+
+        # If the caller didn't explicitly override storage_path, defer to
+        # the Config value (which honours CLAUDE_MEMORY_PATH and the config
+        # file). This keeps backwards compatibility: explicit args win.
+        if storage_path == self._DEFAULT_STORAGE_SENTINEL:
+            storage_path = self.config.storage_path
+
+        # Initialize logging using the (validated) Config so log_format /
+        # log_level / console_output flow from the same source.
+        init_default_logging(self.config)
         self.fastmcp_logger = get_logger("claude_memory_mcp.server")
 
         log_function_call(
@@ -89,9 +110,11 @@ class FastMCPConversationMemoryServer(CoreMemoryServer):
         storage_path_obj = Path(storage_path).expanduser().resolve()
         self._validate_storage_path(storage_path_obj)
 
-        # Initialize the core memory server with SQLite enabled
+        # Initialize the core memory server with SQLite per Config.
         super().__init__(
-            storage_path=storage_path, use_data_dir=use_data_dir, enable_sqlite=True
+            storage_path=storage_path,
+            use_data_dir=use_data_dir,
+            enable_sqlite=self.config.enable_sqlite,
         )
 
         self.fastmcp_logger.info(

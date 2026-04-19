@@ -14,11 +14,12 @@ from pathlib import Path
 import pytest
 
 # Add src directory to path
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'src'))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "src"))
 
 try:
     import server_fastmcp
     from conversation_memory import ConversationMemoryServer
+
     FASTMCP_AVAILABLE = True
 except ImportError:
     FASTMCP_AVAILABLE = False
@@ -55,24 +56,25 @@ class TestWeeklySummaryGeneration:
         """Test weekly summary generation with conversations"""
         # Add conversations for current week (use UTC to match _calculate_week_range)
         from datetime import timezone
+
         current_time = datetime.now(timezone.utc).isoformat()
 
         await server.add_conversation(
             "Python coding discussion about functions and classes",
             "Coding Discussion",
-            current_time
+            current_time,
         )
 
         await server.add_conversation(
             "We decided to use FastMCP for our approach",
             "Decision Making",
-            current_time
+            current_time,
         )
 
         await server.add_conversation(
             "Learning how to implement MCP servers tutorial",
             "Learning Session",
-            current_time
+            current_time,
         )
 
         summary = await server.generate_weekly_summary(0)
@@ -89,13 +91,14 @@ class TestWeeklySummaryGeneration:
         """Test that weekly summary analyzes topics correctly"""
         # Use UTC time to match _calculate_week_range
         from datetime import timezone
+
         current_time = datetime.now(timezone.utc).isoformat()
 
         # Add conversation with multiple python mentions
         await server.add_conversation(
             "Python development with python libraries and python frameworks",
             "Python Discussion",
-            current_time
+            current_time,
         )
 
         summary = await server.generate_weekly_summary(0)
@@ -108,34 +111,38 @@ class TestWeeklySummaryGeneration:
         """Test that conversations are categorized correctly"""
         # Use UTC time to match _calculate_week_range
         from datetime import timezone
+
         current_time = datetime.now(timezone.utc).isoformat()
 
         # Add coding conversation
         await server.add_conversation(
             "Writing code for a new function with git repository management",
             "Coding Task",
-            current_time
+            current_time,
         )
 
         # Add decision conversation
         await server.add_conversation(
             "We decided to use the recommended approach for this feature",
             "Architecture Decision",
-            current_time
+            current_time,
         )
 
         # Add learning conversation
         await server.add_conversation(
             "Learning how to explain complex concepts in tutorials",
             "Learning Topic",
-            current_time
+            current_time,
         )
 
         summary = await server.generate_weekly_summary(0)
 
         # Check for category sections or conversation titles
         assert "💻 Coding & Development" in summary or "Coding Task" in summary
-        assert "🎯 Decisions & Recommendations" in summary or "Architecture Decision" in summary
+        assert (
+            "🎯 Decisions & Recommendations" in summary
+            or "Architecture Decision" in summary
+        )
         assert "📚 Learning & Exploration" in summary or "Learning Topic" in summary
 
     @pytest.mark.asyncio
@@ -151,12 +158,11 @@ class TestWeeklySummaryGeneration:
         """Test that weekly summary is saved to file"""
         # Use UTC time to match _calculate_week_range
         from datetime import timezone
+
         current_time = datetime.now(timezone.utc).isoformat()
 
         await server.add_conversation(
-            "Test conversation for file saving",
-            "File Save Test",
-            current_time
+            "Test conversation for file saving", "File Save Test", current_time
         )
 
         summary = await server.generate_weekly_summary(0)
@@ -189,7 +195,9 @@ class TestMCPToolFunctions:
     @pytest.mark.asyncio
     async def test_mcp_search_tool_no_results(self):
         """Test MCP search tool when no results found"""
-        result = await server_fastmcp.search_conversations("nonexistentquery12345", limit=5)
+        result = await server_fastmcp.search_conversations(
+            "nonexistentquery12345", limit=5
+        )
         assert "No conversations found" in result
 
     @pytest.mark.asyncio
@@ -199,7 +207,7 @@ class TestMCPToolFunctions:
         await server.add_conversation(
             "Testing MCP search tool functionality",
             "MCP Search Test",
-            "2025-06-01T11:00:00Z"
+            "2025-06-01T11:00:00Z",
         )
 
         # Test the MCP tool function
@@ -215,9 +223,7 @@ class TestMCPToolFunctions:
     async def test_mcp_add_conversation_tool(self):
         """Test the MCP add_conversation tool"""
         result = await server_fastmcp.add_conversation(
-            "Test content for MCP add tool",
-            "MCP Add Test",
-            "2025-06-01T12:00:00Z"
+            "Test content for MCP add tool", "MCP Add Test", "2025-06-01T12:00:00Z"
         )
 
         assert "Status: success" in result
@@ -228,9 +234,7 @@ class TestMCPToolFunctions:
         """Test MCP add_conversation tool error handling"""
         # Test with invalid date format
         result = await server_fastmcp.add_conversation(
-            "Test content",
-            "Error Test",
-            "invalid-date-format"
+            "Test content", "Error Test", "invalid-date-format"
         )
 
         # Should handle error gracefully
@@ -242,11 +246,10 @@ class TestMCPToolFunctions:
         # Add some test data
         # Use UTC time to match _calculate_week_range
         from datetime import timezone
+
         current_time = datetime.now(timezone.utc).isoformat()
         await server.add_conversation(
-            "Weekly summary test conversation",
-            "Weekly Test",
-            current_time
+            "Weekly summary test conversation", "Weekly Test", current_time
         )
 
         # Test weekly summary tool
@@ -264,13 +267,11 @@ class TestErrorHandlingAndEdgeCases:
         """Test search when conversation files are missing"""
         # Add a conversation normally
         result = await server.add_conversation(
-            "Test content",
-            "Test Title",
-            "2025-01-15T10:30:00"
+            "Test content", "Test Title", "2025-01-15T10:30:00"
         )
 
         # Remove the conversation file but keep index entry
-        file_path = Path(result['file_path'])
+        file_path = Path(result["file_path"])
         if file_path.exists():
             file_path.unlink()
 
@@ -288,13 +289,11 @@ class TestErrorHandlingAndEdgeCases:
             conversations_dir.chmod(0o444)  # Read-only
 
             result = await server.add_conversation(
-                "Test content",
-                "Error Test",
-                "2025-01-15T10:30:00"
+                "Test content", "Error Test", "2025-01-15T10:30:00"
             )
 
             # Should handle error gracefully
-            assert result['status'] in ['success', 'error']
+            assert result["status"] in ["success", "error"]
 
         finally:
             # Restore permissions for cleanup
@@ -305,18 +304,16 @@ class TestErrorHandlingAndEdgeCases:
         """Test index updates with corrupted JSON files"""
         # Corrupt the index file
         index_file = Path(temp_storage) / "data" / "conversations" / "index.json"
-        with open(index_file, 'w') as f:
+        with open(index_file, "w") as f:
             f.write("invalid json content")
 
         # This should either succeed by recreating the file or handle error gracefully
         result = await server.add_conversation(
-            "Test content after corruption",
-            "Corruption Test",
-            "2025-01-15T10:30:00"
+            "Test content after corruption", "Corruption Test", "2025-01-15T10:30:00"
         )
 
         # Check that operation either succeeded or failed gracefully
-        assert 'status' in result
+        assert "status" in result
 
     def test_topic_extraction_with_unicode(self, server):
         """Test topic extraction with unicode characters"""
@@ -341,16 +338,18 @@ class TestErrorHandlingAndEdgeCases:
     async def test_conversation_content_encoding_issues(self, server):
         """Test handling of various text encodings"""
         # Content with various special characters
-        special_content = "Content with special chars: àáâãäåæçèéêë ñ 中文 русский العربية"
+        special_content = (
+            "Content with special chars: àáâãäåæçèéêë ñ 中文 русский العربية"
+        )
 
         result = await server.add_conversation(
             content=special_content,
             title="Encoding Test",
-            conversation_date="2025-01-15T10:30:00"
+            conversation_date="2025-01-15T10:30:00",
         )
 
         # Should handle encoding gracefully
-        assert result['status'] == 'success'
+        assert result["status"] == "success"
 
         # Search should also handle special characters
         search_results = await server.search_conversations("special", limit=1)
@@ -371,10 +370,10 @@ Line 5: Final line
         result = await server.add_conversation(
             content=content,
             title="Preview Test",
-            conversation_date="2025-01-15T10:30:00"
+            conversation_date="2025-01-15T10:30:00",
         )
 
-        file_path = Path(result['file_path'])
+        file_path = Path(result["file_path"])
 
         # Test preview generation
         preview = server._get_preview(file_path, ["search", "term"])
@@ -397,6 +396,56 @@ Line 5: Final line
             assert str(test_date.year) in str(folder)
 
 
+@pytest.fixture
+def home_temp_storage():
+    """Temp storage directory created under HOME so FastMCP path validation passes."""
+    home = Path.home()
+    temp_dir = tempfile.mkdtemp(prefix="claude_memory_test_", dir=str(home))
+    yield temp_dir
+    shutil.rmtree(temp_dir, ignore_errors=True)
+
+
+@pytest.mark.skipif(not FASTMCP_AVAILABLE, reason="FastMCP server not available")
+class TestFastMCPConfigWiring:
+    """Test the new ``config`` parameter on ``FastMCPConversationMemoryServer``."""
+
+    def test_init_uses_supplied_config(self, home_temp_storage):
+        """Passing an explicit Config bypasses Config.load() and sets storage."""
+        from config import Config
+
+        cfg = Config(storage_path=home_temp_storage, enable_sqlite=False)
+        srv = server_fastmcp.FastMCPConversationMemoryServer(config=cfg)
+
+        assert srv.config is cfg
+        # Storage path should be derived from Config when caller didn't override.
+        assert str(srv.storage_path) == str(Path(home_temp_storage).expanduser())
+        # enable_sqlite from Config is honoured.
+        assert srv.use_sqlite_search is False
+
+    def test_explicit_storage_path_overrides_config(self, home_temp_storage):
+        """Explicit ``storage_path`` argument wins over ``config.storage_path``."""
+        from config import Config
+
+        # Config points to a different directory (also under HOME so it validates).
+        other = tempfile.mkdtemp(prefix="other_storage_", dir=str(Path.home()))
+        try:
+            cfg = Config(storage_path=other, enable_sqlite=False)
+            srv = server_fastmcp.FastMCPConversationMemoryServer(
+                storage_path=home_temp_storage, config=cfg
+            )
+            assert str(srv.storage_path) == str(Path(home_temp_storage).expanduser())
+        finally:
+            shutil.rmtree(other, ignore_errors=True)
+
+
 if __name__ == "__main__":
     # Run tests with coverage
-    pytest.main([__file__, "-v", "--cov=server_fastmcp", "--cov-report=html", "--cov-report=term"])
+    pytest.main(
+        [
+            __file__,
+            "-v",
+            "--cov=server_fastmcp",
+            "--cov-report=html",
+            "--cov-report=term",
+        ]
+    )

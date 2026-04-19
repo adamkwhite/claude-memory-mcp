@@ -1,4 +1,10 @@
-"""Logging configuration for Claude Memory MCP system"""
+"""Logging configuration for Claude Memory MCP system.
+
+Settings (log level, log format, console output) are sourced from
+:class:`~config.Config`. Functions here accept an optional ``config``
+parameter; when omitted, ``Config.load(validate=False)`` is used so existing
+env-var-driven tests continue to work without modification.
+"""
 
 import json
 import logging
@@ -6,7 +12,7 @@ import logging.handlers
 import os
 import sys
 from pathlib import Path
-from typing import Optional
+from typing import TYPE_CHECKING, Optional
 
 # Import path utilities for dynamic path resolution
 try:
@@ -14,6 +20,24 @@ try:
 except ImportError:
     # Fallback if path_utils is not available
     get_default_log_file = None  # type: ignore[assignment]
+
+if TYPE_CHECKING:  # pragma: no cover - type-only import
+    from config import Config
+
+
+def _resolve_config(config: "Optional[Config]") -> "Config":
+    """Return ``config`` when supplied, otherwise build one from env+file.
+
+    Uses ``validate=False`` because logging setup is performed early in the
+    process lifecycle and we don't want to raise on (e.g.) a missing storage
+    directory just because someone wanted to write a log line.
+    """
+    if config is not None:
+        return config
+    from config import Config as _Config
+
+    return _Config.load(validate=False)
+
 
 # Control character removal pattern for log injection prevention
 CONTROL_CHAR_PATTERN = r"[\x00-\x08\x0B\x0C\x0E-\x1F\x7F-\x9F]"
@@ -108,20 +132,31 @@ class ColoredFormatter(logging.Formatter):
         return super().format(record)
 
 
-def _get_log_format() -> str:
+def _get_log_format(config: "Optional[Config]" = None) -> str:
     """
-    Get the log format from environment variable.
+    Get the log format, preferring an explicit :class:`~config.Config`.
 
-    Reads CLAUDE_MCP_LOG_FORMAT environment variable and validates the value.
-    Valid values are 'json' or 'text'. Defaults to 'text' for backward compatibility.
+    When ``config`` is omitted the value is sourced from
+    ``Config.load(validate=False)``, which still consults
+    ``CLAUDE_MCP_LOG_FORMAT`` (and the optional config file). Invalid values
+    fall back to ``"text"`` with a warning, preserving the historical behaviour
+    of this function.
+
+    Args:
+        config: Optional pre-loaded :class:`~config.Config` instance.
 
     Returns:
-        str: Log format ('json' or 'text')
+        str: Log format (``'json'`` or ``'text'``).
 
     Environment Variables:
         CLAUDE_MCP_LOG_FORMAT: Log output format (json|text). Default: text
     """
-    log_format = os.getenv("CLAUDE_MCP_LOG_FORMAT", "text").lower()
+    try:
+        cfg = _resolve_config(config)
+        log_format = (cfg.log_format or "text").lower()
+    except Exception:
+        # Defensive: never let a malformed config bring down logging setup.
+        log_format = os.getenv("CLAUDE_MCP_LOG_FORMAT", "text").lower()
 
     # Validate format value
     valid_formats = ["json", "text"]
@@ -143,6 +178,7 @@ def setup_logging(
     console_output: bool = True,
     max_bytes: int = 10_485_760,  # 10MB
     backup_count: int = 5,
+    config: "Optional[Config]" = None,
 ) -> logging.Logger:
     """
     Set up comprehensive logging for the application
@@ -153,6 +189,10 @@ def setup_logging(
         console_output: Whether to output to console
         max_bytes: Maximum size of log file before rotation
         backup_count: Number of backup files to keep
+        config: Optional pre-loaded :class:`~config.Config` instance.
+            When supplied, the log format is sourced from it; otherwise
+            ``Config.load(validate=False)`` is used (which still respects
+            ``CLAUDE_MCP_LOG_FORMAT``).
 
     Returns:
         Configured logger instance
@@ -167,8 +207,8 @@ def setup_logging(
     # Clear existing handlers
     logger.handlers = []
 
-    # Determine log format from environment variable
-    log_format = _get_log_format()
+    # Determine log format via Config (env-aware) or the explicit instance.
+    log_format = _get_log_format(config)
 
     # Create formatters based on log format
     file_formatter: logging.Formatter
@@ -376,27 +416,46 @@ def log_file_operation(operation: str, file_path: str, success: bool, **details)
 
 
 # Default logging setup for the application
-def init_default_logging():
-    """Initialize default logging configuration"""
-    # Get log level from environment or default to INFO
-    log_level = os.getenv("CLAUDE_MCP_LOG_LEVEL", "INFO")
+def init_default_logging(config: "Optional[Config]" = None):
+    """Initialize default logging configuration.
 
-    # Get log file path from environment or use default
+    Args:
+        config: Optional pre-loaded :class:`~config.Config`. When omitted,
+            ``Config.load(validate=False)`` is used so existing env-var-driven
+            behaviour is preserved (``CLAUDE_MCP_LOG_LEVEL``,
+            ``CLAUDE_MCP_CONSOLE_OUTPUT``).
+    """
+    cfg = _resolve_config(config)
+
+    # Log level from Config (already upper-cased on validate, but safe).
+    log_level = (cfg.log_level or "INFO").upper()
+
+    # Get log file path from environment or use default. ``CLAUDE_MCP_LOG_FILE``
+    # is not yet a Config field (deferred follow-up), so we still read it here.
     log_file = os.getenv("CLAUDE_MCP_LOG_FILE")
     if not log_file:
         if get_default_log_file is not None:
-            # Use path_utils for dynamic path resolution
-            log_file = str(get_default_log_file())
+            # Use path_utils for dynamic path resolution. The helper accepts an
+            # optional ``config`` kwarg in newer versions; older builds did not,
+            # so we try with ``cfg`` first and gracefully fall back.
+            try:
+                log_file = str(get_default_log_file(cfg))
+            except TypeError:
+                log_file = str(get_default_log_file())
         elif os.getenv("HOME"):
             # Fallback to manual construction
             log_file = os.path.join(
                 os.getenv("HOME"), ".claude-memory", "logs", "claude-mcp.log"
             )
 
-    # Disable console output for MCP server mode to prevent JSON-RPC interference
-    console_output = os.getenv("CLAUDE_MCP_CONSOLE_OUTPUT", "false").lower() == "true"
+    # Console output for MCP server mode (must remain False by default to
+    # avoid corrupting the JSON-RPC stream over stdout).
+    console_output = bool(cfg.console_output)
 
     # Set up logging
     return setup_logging(
-        log_level=log_level, log_file=log_file, console_output=console_output
+        log_level=log_level,
+        log_file=log_file,
+        console_output=console_output,
+        config=cfg,
     )
