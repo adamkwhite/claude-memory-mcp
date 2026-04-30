@@ -3,8 +3,10 @@ name: Performance Benchmarks
 on:
   push:
     branches: [ main ]
+    paths-ignore: ['*.md', 'docs/**', 'LICENSE', '.gitignore', '.github/**']
   pull_request:
     branches: [ main ]
+    paths-ignore: ['*.md', 'docs/**', 'LICENSE', '.gitignore', '.github/**']
   schedule:
     # Run weekly on Sundays at 6 AM UTC
     - cron: '0 6 * * 0'
@@ -15,7 +17,7 @@ jobs:
     permissions:
       contents: read
       pull-requests: write
-    
+
     steps:
     - uses: actions/checkout@v4
 
@@ -31,50 +33,50 @@ jobs:
         key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
         restore-keys: |
           ${{ runner.os }}-pip-
-    
+
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
         pip install pytest pytest-asyncio psutil
         pip install -e .
-    
+
     - name: Generate test data
       run: |
         python scripts/generate_test_data.py --conversations 159 --clean
-        
+
     - name: Cache test data
       uses: actions/cache@v4
       with:
         path: ~/claude-memory-test
         key: test-data-159-convs-v1
-        
+
     - name: Run performance benchmarks
       run: |
         PYTHONPATH=. python -m pytest tests/test_performance_benchmarks.py -v --tb=short
-        
+
     - name: Generate performance report
       run: |
         # Find latest results file
         RESULTS_FILE=$(ls -t benchmark_results/performance_results_*.json | head -1)
         python scripts/generate_performance_report.py "$RESULTS_FILE"
-        
+
     - name: Upload performance report
       uses: actions/upload-artifact@v4
       with:
         name: performance-report
         path: docs/PERFORMANCE_BENCHMARKS.md
-        
+
     - name: Upload benchmark results
       uses: actions/upload-artifact@v4
       with:
         name: benchmark-results
         path: benchmark_results/
-        
+
     - name: Check performance regression
       run: |
         # Extract key metrics from the latest run
         RESULTS_FILE=$(ls -t benchmark_results/performance_results_*.json | head -1)
-        
+
         # Check if search time for 159 conversations exceeds 5 seconds
         SEARCH_TIME=$(python3 -c "
         import json
@@ -86,9 +88,9 @@ jobs:
         else:
             print('0')
         ")
-        
+
         echo "Search time for 159 conversations: ${SEARCH_TIME}s"
-        
+
         # Fail if search takes longer than 5 seconds
         if (( $(echo "$SEARCH_TIME > 5.0" | bc -l) )); then
           echo "❌ Performance regression: Search took ${SEARCH_TIME}s (> 5s threshold)"
@@ -96,36 +98,36 @@ jobs:
         else
           echo "✅ Performance check passed: ${SEARCH_TIME}s < 5s"
         fi
-        
+
     - name: Comment performance results on PR
       if: github.event_name == 'pull_request'
       uses: actions/github-script@v7
       with:
         script: |
           const fs = require('fs');
-          
+
           // Read the performance report
           const report = fs.readFileSync('docs/PERFORMANCE_BENCHMARKS.md', 'utf8');
-          
+
           // Extract key metrics for comment
           const lines = report.split('\n');
           const summaryStart = lines.findIndex(l => l.includes('## Executive Summary'));
           const summaryEnd = lines.findIndex(l => l.includes('## README Claims Validation'));
-          
+
           let summary = '';
           if (summaryStart >= 0 && summaryEnd >= 0) {
             summary = lines.slice(summaryStart, summaryEnd).join('\n');
           }
-          
+
           const comment = `## 🚀 Performance Benchmark Results
-          
+
           ${summary}
-          
+
           **Full Report**: See the uploaded artifact for complete details.
-          
+
           ---
           *Automated performance check completed* ✅`;
-          
+
           github.rest.issues.createComment({
             issue_number: context.issue.number,
             owner: context.repo.owner,
@@ -136,23 +138,23 @@ jobs:
   performance-comparison:
     runs-on: ubuntu-latest
     if: false  # Disabled for now - causing PR failures
-    
+
     steps:
     - uses: actions/checkout@v4
       with:
         fetch-depth: 0  # Fetch full history for comparison
-        
+
     - name: Set up Python
       uses: actions/setup-python@v6
       with:
         python-version: '3.14'
-        
+
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
         pip install pytest pytest-asyncio psutil
         pip install -e .
-        
+
     - name: Run baseline performance (main branch)
       run: |
         git checkout main
@@ -161,38 +163,38 @@ jobs:
         # Rename results
         mkdir -p baseline_results
         mv benchmark_results/* baseline_results/ 2>/dev/null || true
-        
+
     - name: Run current performance (PR branch)
       run: |
         git checkout ${{ github.event.pull_request.head.sha }}
-        python scripts/generate_test_data.py --conversations 159 --clean --storage-path ~/current-test  
+        python scripts/generate_test_data.py --conversations 159 --clean --storage-path ~/current-test
         PYTHONPATH=. python -m pytest tests/test_performance_benchmarks.py::TestOverallPerformance::test_readme_claims_validation -v --tb=short
-        
+
     - name: Compare performance
       run: |
         python3 -c "
         import json
         import os
-        
+
         # Load baseline results
         baseline_files = [f for f in os.listdir('baseline_results') if f.endswith('.json')]
         current_files = [f for f in os.listdir('benchmark_results') if f.endswith('.json')]
-        
+
         if baseline_files and current_files:
             with open(f'baseline_results/{baseline_files[0]}', 'r') as f:
                 baseline = json.load(f)
             with open(f'benchmark_results/{current_files[0]}', 'r') as f:
                 current = json.load(f)
-                
+
             # Extract search times
             baseline_time = next((r['duration_seconds'] for r in baseline['results'] if r['operation'] == 'readme_claim_validation'), 0)
             current_time = next((r['duration_seconds'] for r in current['results'] if r['operation'] == 'readme_claim_validation'), 0)
-            
+
             if baseline_time > 0:
                 change = ((current_time - baseline_time) / baseline_time) * 100
                 print(f'Performance change: {change:+.1f}%')
                 print(f'Baseline: {baseline_time:.3f}s → Current: {current_time:.3f}s')
-                
+
                 # Check for significant regression (>10%)
                 if change > 10:
                     print(f'❌ Performance regression detected: {change:+.1f}% slower')
