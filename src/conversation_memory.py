@@ -396,6 +396,260 @@ class ConversationMemoryServer:
                 "message": f"Failed to save conversation: {str(e)}",
             }
 
+    _CONVERSATION_ID_RE = re.compile(r"^conv_(\d{8})_(\d{6})_\d{4}$")
+
+    def _resolve_conversation_path(self, conversation_id: str) -> Optional[Path]:
+        """Resolve a conversation_id to its on-disk JSON path, or None if the
+        ID is malformed or the file is missing."""
+        match = self._CONVERSATION_ID_RE.match(conversation_id)
+        if not match:
+            return None
+        try:
+            date = datetime.strptime(match.group(1), "%Y%m%d")
+        except ValueError:
+            return None
+        year_folder = self.conversations_path / str(date.year)
+        month_folder = year_folder / (f"{date.month:02d}-{date.strftime('%B').lower()}")
+        file_path = month_folder / f"{conversation_id}.json"
+        return file_path if file_path.exists() else None
+
+    async def update_conversation(
+        self,
+        conversation_id: str,
+        *,
+        content: Optional[str] = None,
+        title: Optional[str] = None,
+        add_tags: Optional[List[str]] = None,
+        remove_tags: Optional[List[str]] = None,
+        set_tags: Optional[List[str]] = None,
+        conversation_type: Optional[str] = None,
+        session_id: Optional[str] = None,
+        user_id: Optional[str] = None,
+        change_note: Optional[str] = None,
+    ) -> Dict[str, Any]:
+        """Update fields on an existing conversation in place.
+
+        Mirrors ``add_conversation`` but operates on an existing record. The
+        first line of ``content`` is always rewritten with a self-documenting
+        change line — ``[update <iso-timestamp> — <change_note>]`` — so the
+        record carries its own audit trail (chained for repeated updates).
+
+        Tag ops: ``set_tags`` replaces the full list; ``add_tags`` /
+        ``remove_tags`` mutate it. ``set_tags`` is mutually exclusive with the
+        other two. Pass ``set_tags=[]`` to clear all tags.
+
+        Returns ``{"status": "success", ...}`` on success or
+        ``{"status": "error", "message": ...}`` on failure (malformed ID,
+        missing file, no-op call, conflicting tag ops, I/O error).
+        """
+        if set_tags is not None and (add_tags or remove_tags):
+            return {
+                "status": "error",
+                "message": ("set_tags is mutually exclusive with add_tags/remove_tags"),
+            }
+
+        file_path = self._resolve_conversation_path(conversation_id)
+        if file_path is None:
+            return {
+                "status": "error",
+                "message": (f"Conversation not found or invalid ID: {conversation_id}"),
+            }
+
+        try:
+            async with aiofiles.open(file_path, "r", encoding="utf-8") as f:
+                conversation_data = json.loads(await f.read())
+        except (OSError, ValueError) as e:
+            return {
+                "status": "error",
+                "message": f"Failed to read conversation: {str(e)}",
+            }
+
+        changes: List[str] = []
+
+        if title is not None and title != conversation_data.get("title"):
+            conversation_data["title"] = title
+            changes.append("title")
+
+        if content is not None:
+            conversation_data["content"] = content
+            changes.append("content")
+
+        if conversation_type is not None:
+            conversation_data["conversation_type"] = conversation_type
+            changes.append("conversation_type")
+
+        if session_id is not None:
+            conversation_data["session_id"] = session_id
+            changes.append("session_id")
+
+        if user_id is not None:
+            conversation_data["user_id"] = user_id
+            changes.append("user_id")
+
+        existing_tags = list(conversation_data.get("tags") or [])
+        new_tags = existing_tags
+        if set_tags is not None:
+            new_tags = list(dict.fromkeys(set_tags))
+        elif add_tags or remove_tags:
+            tags_set = list(dict.fromkeys(existing_tags))
+            for t in add_tags or []:
+                if t and t not in tags_set:
+                    tags_set.append(t)
+            if remove_tags:
+                remove_lookup = set(remove_tags)
+                tags_set = [t for t in tags_set if t not in remove_lookup]
+            new_tags = tags_set
+        if new_tags != existing_tags:
+            conversation_data["tags"] = new_tags
+            changes.append("tags")
+
+        if not changes and change_note is None:
+            return {
+                "status": "error",
+                "message": "No changes provided",
+            }
+
+        # Compose blockchain-style audit line and prepend to content.
+        timestamp = datetime.now().isoformat(timespec="seconds")
+        note = change_note if change_note else "; ".join(changes) or "no-op"
+        audit_line = f"[update {timestamp} — {note}]"
+        body = conversation_data.get("content", "")
+        conversation_data["content"] = f"{audit_line}\n\n{body}"
+
+        # Re-extract topics now that content has changed.
+        old_topics = list(conversation_data.get("topics") or [])
+        new_topics = self._extract_topics(conversation_data["content"])
+        conversation_data["topics"] = new_topics
+        conversation_data["updated_at"] = datetime.now().isoformat()
+
+        try:
+            async with aiofiles.open(file_path, "w", encoding="utf-8") as f:
+                await f.write(
+                    json.dumps(conversation_data, indent=2, ensure_ascii=False)
+                )
+        except OSError as e:
+            return {
+                "status": "error",
+                "message": f"Failed to write conversation: {str(e)}",
+            }
+
+        # Resync derived stores. INSERT OR REPLACE on the SQLite row also
+        # cascades through the FTS triggers, so the FTS index stays current.
+        if self.use_sqlite_search and self.search_db:
+            relative_path = str(file_path.relative_to(self.storage_path))
+            self.search_db.add_conversation(conversation_data, relative_path)
+
+        self._replace_index_entry(conversation_data, file_path)
+        self._resync_topics_index(old_topics, new_topics, conversation_id)
+
+        return {
+            "status": "success",
+            "id": conversation_id,
+            "file_path": str(file_path),
+            "changes": changes,
+            "audit_line": audit_line,
+            "message": (
+                f"Conversation {conversation_id} updated "
+                f"({', '.join(changes) if changes else 'note-only'})"
+            ),
+        }
+
+    def _replace_index_entry(self, conversation_data: Dict, file_path: Path):
+        """Replace (or insert) the index.json entry for a conversation."""
+        try:
+            with open(self.index_file, "r") as f:
+                index_data = json.load(f)
+
+            relative_path = file_path.relative_to(self.storage_path)
+            new_entry = {
+                "id": conversation_data["id"],
+                "title": conversation_data["title"],
+                "date": conversation_data["date"],
+                "topics": conversation_data["topics"],
+                "file_path": str(relative_path),
+                "added_at": datetime.now().isoformat(),
+            }
+
+            conversations = index_data.get("conversations", [])
+            replaced = False
+            for i, entry in enumerate(conversations):
+                if entry.get("id") == conversation_data["id"]:
+                    # Preserve original added_at if present so the entry's
+                    # creation time isn't rewritten on every update.
+                    if "added_at" in entry:
+                        new_entry["added_at"] = entry["added_at"]
+                    conversations[i] = new_entry
+                    replaced = True
+                    break
+            if not replaced:
+                conversations.append(new_entry)
+
+            index_data["conversations"] = conversations
+            index_data["last_updated"] = datetime.now().isoformat()
+
+            with open(self.index_file, "w") as f:
+                json.dump(index_data, f, indent=2)
+
+        except (OSError, ValueError, KeyError, TypeError) as e:
+            self.logger.error(f"Error replacing index entry: {e}")
+
+    def _resync_topics_index(
+        self,
+        old_topics: List[str],
+        new_topics: List[str],
+        conversation_id: str,
+    ):
+        """Update the topics index after a content change: drop entries for
+        topics no longer present, add entries for newly-extracted topics.
+        Topics still present after the update are left untouched so we don't
+        churn ``added_at`` timestamps."""
+        try:
+            with open(self.topics_file, "r") as f:
+                topics_data = json.load(f)
+        except (OSError, ValueError) as e:
+            self.logger.error(f"Error loading topics index: {e}")
+            return
+
+        topics_index = topics_data.get("topics", {})
+        old_set = set(old_topics)
+        new_set = set(new_topics)
+        dropped = old_set - new_set
+        added = new_set - old_set
+
+        for topic in dropped:
+            entries = topics_index.get(topic)
+            if not isinstance(entries, list):
+                continue
+            topics_index[topic] = [
+                e
+                for e in entries
+                if not (
+                    isinstance(e, dict) and e.get("conversation_id") == conversation_id
+                )
+            ]
+            if not topics_index[topic]:
+                del topics_index[topic]
+
+        for topic in added:
+            existing = topics_index.get(topic)
+            if not isinstance(existing, list):
+                topics_index[topic] = []
+            topics_index[topic].append(
+                {
+                    "conversation_id": conversation_id,
+                    "added_at": datetime.now().isoformat(),
+                }
+            )
+
+        topics_data["topics"] = topics_index
+        topics_data["last_updated"] = datetime.now().isoformat()
+
+        try:
+            with open(self.topics_file, "w") as f:
+                json.dump(topics_data, f, indent=2)
+        except OSError as e:
+            self.logger.error(f"Error writing topics index: {e}")
+
     def _calculate_search_score(
         self,
         query_terms: List[str],

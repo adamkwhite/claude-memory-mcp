@@ -214,6 +214,48 @@ async def add_conversation(
 
 
 @mcp.tool()
+async def update_conversation(
+    conversation_id: str,
+    content: Optional[str] = None,
+    title: Optional[str] = None,
+    add_tags: Optional[List[str]] = None,
+    remove_tags: Optional[List[str]] = None,
+    set_tags: Optional[List[str]] = None,
+    conversation_type: Optional[str] = None,
+    session_id: Optional[str] = None,
+    user_id: Optional[str] = None,
+    change_note: Optional[str] = None,
+) -> str:
+    """Update fields on an existing conversation in place.
+
+    Pass ``conversation_id`` plus any subset of fields to change. The first
+    line of the stored content is rewritten with a self-documenting audit
+    line: ``[update <iso-timestamp> — <change_note>]``. If ``change_note`` is
+    omitted, it's auto-derived from which fields changed.
+
+    Tag ops: ``set_tags`` replaces the full list; ``add_tags`` and
+    ``remove_tags`` mutate it. ``set_tags`` is mutually exclusive with the
+    other two; pass ``set_tags=[]`` to clear all tags.
+    """
+    result = await memory_server.update_conversation(
+        conversation_id,
+        content=content,
+        title=title,
+        add_tags=add_tags,
+        remove_tags=remove_tags,
+        set_tags=set_tags,
+        conversation_type=conversation_type,
+        session_id=session_id,
+        user_id=user_id,
+        change_note=change_note,
+    )
+    response = f"Status: {result['status']}\n{result['message']}"
+    if result.get("audit_line"):
+        response += f"\nAudit: {result['audit_line']}"
+    return response
+
+
+@mcp.tool()
 async def generate_weekly_summary(week_offset: int = 0) -> str:
     """Generate a summary of conversations from the past week"""
     return await memory_server.generate_weekly_summary(week_offset)
