@@ -74,7 +74,7 @@ class TestDefaults:
 
     def test_default_config_file_path(self) -> None:
         # Sanity-check the documented default.
-        assert DEFAULT_CONFIG_FILE == Path.home() / ".claude-memory" / "config.json"
+        assert Path.home() / ".claude-memory" / "config.json" == DEFAULT_CONFIG_FILE
 
 
 # ---------------------------------------------------------------------------
@@ -370,6 +370,21 @@ class TestValidation:
 
         cfg = Config(storage_path=str(target))
         with pytest.raises(ConfigError, match="not writable"):
+            cfg.validate()
+
+    @pytest.mark.parametrize(
+        "sentinel", ["None", "none", "NONE", "null", "Null", "nil", "  None  "]
+    )
+    def test_storage_path_rejects_python_sentinel_string(self, sentinel: str) -> None:
+        """``storage_path`` set to the literal string 'None'/'null'/'nil' is rejected.
+
+        Defends against the bug observed 2026-04-19 where an upstream caller
+        stringified a None value into the config, producing a ``./None/``
+        directory next to the cwd. Validation now catches this class of typo
+        loudly instead of silently creating a misnamed data directory.
+        """
+        cfg = Config(storage_path=sentinel)
+        with pytest.raises(ConfigError, match="literal sentinel string"):
             cfg.validate()
 
     def test_storage_path_mkdir_failure(
