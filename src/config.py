@@ -32,9 +32,10 @@ from __future__ import annotations
 
 import json
 import os
+from collections.abc import Mapping
 from dataclasses import asdict, dataclass, fields, replace
 from pathlib import Path
-from typing import Any, ClassVar, Dict, Mapping, Optional
+from typing import Any, ClassVar
 
 # ---------------------------------------------------------------------------
 # Constants
@@ -61,7 +62,7 @@ VALID_LOG_LEVELS: tuple[str, ...] = (
 #: Built-in platform profiles. Each profile supplies a partial set of
 #: defaults that are layered onto the base defaults.  Users can extend this
 #: behaviour by selecting a profile via the ``platform_profile`` field.
-PLATFORM_PROFILES: Dict[str, Dict[str, Any]] = {
+PLATFORM_PROFILES: dict[str, dict[str, Any]] = {
     "default": {},
     "claude": {
         "log_format": "text",
@@ -146,7 +147,7 @@ class Config:
     platform_profile: str = "default"
 
     #: Mapping of dataclass field name -> environment variable name.
-    ENV_MAPPING: ClassVar[Dict[str, str]] = {
+    ENV_MAPPING: ClassVar[dict[str, str]] = {
         "storage_path": "CLAUDE_MEMORY_PATH",
         "log_format": "CLAUDE_MCP_LOG_FORMAT",
         "log_level": "CLAUDE_MCP_LOG_LEVEL",
@@ -160,10 +161,10 @@ class Config:
     @classmethod
     def load(
         cls,
-        config_file: Optional[Path] = None,
-        env: Optional[Mapping[str, str]] = None,
+        config_file: Path | None = None,
+        env: Mapping[str, str] | None = None,
         validate: bool = True,
-    ) -> "Config":
+    ) -> Config:
         """Construct a :class:`Config` from the environment and config file.
 
         Loading order, lowest to highest precedence:
@@ -233,8 +234,7 @@ class Config:
             )
         if self.log_level.upper() not in VALID_LOG_LEVELS:
             raise ConfigError(
-                f"Invalid log_level {self.log_level!r}; "
-                f"must be one of {sorted(VALID_LOG_LEVELS)}"
+                f"Invalid log_level {self.log_level!r}; must be one of {sorted(VALID_LOG_LEVELS)}"
             )
         if self.platform_profile not in PLATFORM_PROFILES:
             raise ConfigError(
@@ -256,6 +256,21 @@ class Config:
         if not self.storage_path or not str(self.storage_path).strip():
             raise ConfigError("storage_path must be a non-empty string")
 
+        # Defense-in-depth: reject literal Python-sentinel strings. These
+        # almost always indicate an upstream bug where ``str(None)`` or
+        # ``str(null_var)`` was used to build the path. Without this guard
+        # the value validates fine and the server happily creates a
+        # ``./None/`` (or ``./null/``) directory next to the cwd, scattering
+        # data into the source tree. Observed in production 2026-04-19.
+        if str(self.storage_path).strip().lower() in {"none", "null", "nil"}:
+            raise ConfigError(
+                f"storage_path is the literal sentinel string "
+                f"{self.storage_path!r} — likely an upstream bug where a "
+                f"None/null value was stringified into the config. Set "
+                f"CLAUDE_MEMORY_PATH explicitly or remove the offending "
+                f"override."
+            )
+
         path = self.resolved_storage_path()
         try:
             path.mkdir(parents=True, exist_ok=True)
@@ -272,7 +287,7 @@ class Config:
         expanded = os.path.expanduser(os.path.expandvars(str(self.storage_path)))
         return Path(expanded).resolve()
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Return a plain-dict representation suitable for serialisation."""
         return asdict(self)
 
@@ -282,7 +297,7 @@ class Config:
 # ---------------------------------------------------------------------------
 
 
-def _load_file_data(path: Path) -> Dict[str, Any]:
+def _load_file_data(path: Path) -> dict[str, Any]:
     """Read and parse the JSON configuration file.
 
     Returns an empty dict when ``path`` does not exist. Raises
@@ -311,8 +326,7 @@ def _apply_profile(cfg: Config, profile_name: str) -> Config:
     """Return a new :class:`Config` with the profile's defaults applied."""
     if profile_name not in PLATFORM_PROFILES:
         raise ConfigError(
-            f"Unknown platform_profile {profile_name!r}; "
-            f"must be one of {sorted(PLATFORM_PROFILES)}"
+            f"Unknown platform_profile {profile_name!r}; must be one of {sorted(PLATFORM_PROFILES)}"
         )
     profile_defaults = PLATFORM_PROFILES[profile_name]
     return replace(cfg, platform_profile=profile_name, **profile_defaults)
@@ -331,7 +345,7 @@ def _apply_overrides(cfg: Config, overrides: Mapping[str, Any], source: str) -> 
     if not overrides:
         return cfg
 
-    coerced: Dict[str, Any] = {}
+    coerced: dict[str, Any] = {}
     for key, value in overrides.items():
         if key not in _VALID_FIELD_NAMES:
             raise ConfigError(f"Unknown configuration key {key!r} in {source}")
