@@ -72,6 +72,15 @@ repos:
         args: [--strict]
 
 # Configuration options
+
+  # Secret scanning — block commits containing API keys, tokens, private keys.
+  # Added by add-gitleaks-hook.sh after the 2026-05-10 secret-sprawl audit.
+  - repo: https://github.com/gitleaks/gitleaks
+    rev: v8.28.0
+    hooks:
+      - id: gitleaks
+        name: Scan for committed secrets (gitleaks)
+
 default_language_version:
   python: python3.12
 
