@@ -9,6 +9,7 @@ shared between the FastMCP server and standalone implementations.
 import json
 import logging
 import re
+import uuid
 from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Any, Dict, List, Optional
@@ -335,7 +336,7 @@ class ConversationMemoryServer:
 
             # Create conversation record
             conversation_id = (
-                f"conv_{date.strftime('%Y%m%d_%H%M%S')}_{hash(content) % 10000:04d}"
+                f"conv_{date.strftime('%Y%m%d_%H%M%S')}_{uuid.uuid4().hex[:8]}"
             )
 
             date_folder = self._get_date_folder(date)
@@ -396,7 +397,7 @@ class ConversationMemoryServer:
                 "message": f"Failed to save conversation: {str(e)}",
             }
 
-    _CONVERSATION_ID_RE = re.compile(r"^conv_(\d{8})_(\d{6})_\d{4}$")
+    _CONVERSATION_ID_RE = re.compile(r"^conv_(\d{8})_(\d{6})_[\w]+$")
 
     def _resolve_conversation_path(self, conversation_id: str) -> Optional[Path]:
         """Resolve a conversation_id to its on-disk JSON path, or None if the
