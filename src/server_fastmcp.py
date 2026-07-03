@@ -6,6 +6,7 @@ This MCP server provides tools for managing and searching Claude conversation hi
 Supports storing conversations locally and retrieving context for current sessions.
 """
 
+import os
 from pathlib import Path
 from typing import List, Optional
 
@@ -133,6 +134,16 @@ class FastMCPConversationMemoryServer(CoreMemoryServer):
                 "ERROR",
             )
             raise ValueError("Storage path cannot contain '..' for security reasons")
+
+        # An explicitly configured CLAUDE_MEMORY_PATH is a deliberate operator
+        # choice (e.g. a separate data drive on Windows), so it bypasses the
+        # home-directory containment check below. Traversal is still rejected
+        # above, which is the check that actually matters for security.
+        if os.environ.get("CLAUDE_MEMORY_PATH", "").strip():
+            self.fastmcp_logger.debug(
+                f"Storage path from explicit CLAUDE_MEMORY_PATH allowed: {storage_path}"
+            )
+            return
 
         # Ensure path is within user's home directory or explicit allowed paths
         home = Path.home().resolve()

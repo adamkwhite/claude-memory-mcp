@@ -545,6 +545,45 @@ class TestFastMCPConfigWiring:
             shutil.rmtree(other, ignore_errors=True)
 
 
+class TestStoragePathValidation:
+    """The security validator on ``_validate_storage_path``."""
+
+    def _bare_validator(self):
+        # Build an instance without running __init__ so we can exercise the
+        # validator in isolation (it only needs a logger attribute).
+        import logging
+
+        inst = object.__new__(server_fastmcp.FastMCPConversationMemoryServer)
+        inst.fastmcp_logger = logging.getLogger("test.validate")
+        return inst
+
+    def test_explicit_env_path_outside_home_is_allowed(self, monkeypatch):
+        """An explicitly set CLAUDE_MEMORY_PATH bypasses the home check."""
+        outside = tempfile.mkdtemp(prefix="outside_home_", dir="/tmp")
+        try:
+            monkeypatch.setenv("CLAUDE_MEMORY_PATH", outside)
+            # Must not raise even though the path is outside $HOME.
+            self._bare_validator()._validate_storage_path(Path(outside).resolve())
+        finally:
+            shutil.rmtree(outside, ignore_errors=True)
+
+    def test_outside_home_rejected_without_env(self, monkeypatch):
+        """Without the explicit env var, out-of-home paths are still rejected."""
+        outside = tempfile.mkdtemp(prefix="outside_home_", dir="/tmp")
+        try:
+            monkeypatch.delenv("CLAUDE_MEMORY_PATH", raising=False)
+            with pytest.raises(ValueError, match="within user's home"):
+                self._bare_validator()._validate_storage_path(Path(outside).resolve())
+        finally:
+            shutil.rmtree(outside, ignore_errors=True)
+
+    def test_traversal_rejected_even_with_env(self, monkeypatch):
+        """The '..' traversal check runs before the explicit-path carve-out."""
+        monkeypatch.setenv("CLAUDE_MEMORY_PATH", "/tmp/whatever")
+        with pytest.raises(ValueError, match="cannot contain"):
+            self._bare_validator()._validate_storage_path(Path("/tmp/a/../b"))
+
+
 if __name__ == "__main__":
     # Run tests with coverage
     pytest.main(
