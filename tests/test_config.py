@@ -152,6 +152,27 @@ class TestEnvOverrides:
         cfg = Config.load(config_file=tmp_path / "no.json", env=env)
         assert cfg.enable_sqlite is expected
 
+    def test_disable_sqlite_off_switch(
+        self, tmp_path: Path, writable_storage: Path
+    ) -> None:
+        env = {
+            "CLAUDE_MEMORY_PATH": str(writable_storage),
+            "CLAUDE_MEMORY_DISABLE_SQLITE": "true",
+        }
+        cfg = Config.load(config_file=tmp_path / "no.json", env=env)
+        assert cfg.enable_sqlite is False
+
+    def test_disable_sqlite_wins_over_enable(
+        self, tmp_path: Path, writable_storage: Path
+    ) -> None:
+        env = {
+            "CLAUDE_MEMORY_PATH": str(writable_storage),
+            "CLAUDE_MCP_ENABLE_SQLITE": "true",
+            "CLAUDE_MEMORY_DISABLE_SQLITE": "true",
+        }
+        cfg = Config.load(config_file=tmp_path / "no.json", env=env)
+        assert cfg.enable_sqlite is False
+
 
 # ---------------------------------------------------------------------------
 # Config file loading

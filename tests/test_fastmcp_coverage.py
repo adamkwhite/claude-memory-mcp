@@ -544,6 +544,29 @@ class TestFastMCPConfigWiring:
         finally:
             shutil.rmtree(other, ignore_errors=True)
 
+    def test_trusted_path_outside_home_is_accepted(self, home_temp_storage):
+        """An explicitly-configured path outside HOME passes validation."""
+        srv = server_fastmcp.FastMCPConversationMemoryServer(
+            storage_path=home_temp_storage
+        )
+        outside = Path(tempfile.mkdtemp(prefix="outside_home_")).resolve()
+        try:
+            # Untrusted (defaulted) path outside HOME is rejected...
+            with pytest.raises(ValueError, match="within user's home"):
+                srv._validate_storage_path(outside, trusted=False)
+            # ...but a trusted (explicitly configured) one is allowed.
+            srv._validate_storage_path(outside, trusted=True)  # no raise
+        finally:
+            shutil.rmtree(outside, ignore_errors=True)
+
+    def test_traversal_guard_applies_even_when_trusted(self, home_temp_storage):
+        """The ``..`` traversal guard is enforced regardless of trust."""
+        srv = server_fastmcp.FastMCPConversationMemoryServer(
+            storage_path=home_temp_storage
+        )
+        with pytest.raises(ValueError, match="cannot contain"):
+            srv._validate_storage_path(Path("/some/../evil"), trusted=True)
+
 
 if __name__ == "__main__":
     # Run tests with coverage
