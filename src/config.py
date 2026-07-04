@@ -215,6 +215,13 @@ class Config:
         }
         cfg = _apply_overrides(cfg, env_overrides, source="environment")
 
+        # Explicit off-switch alias. CLAUDE_MEMORY_DISABLE_SQLITE=true is the
+        # inverse of CLAUDE_MCP_ENABLE_SQLITE and, being the more specific
+        # directive, wins if both are set.
+        disable_sqlite = env_map.get("CLAUDE_MEMORY_DISABLE_SQLITE")
+        if disable_sqlite is not None and disable_sqlite != "":
+            cfg = replace(cfg, enable_sqlite=not _parse_bool(disable_sqlite))
+
         if validate:
             cfg.validate()
         return cfg
