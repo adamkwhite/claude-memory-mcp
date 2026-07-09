@@ -112,3 +112,6 @@ test_*.db
 test_*.db-journal
 **/test_*.json
 .claude/settings.local.json
+
+# Runtime search index — never track (app rewrites it every run)
+data/conversations/search.db
