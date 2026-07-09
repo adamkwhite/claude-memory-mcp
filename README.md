@@ -171,6 +171,20 @@ Override with environment variable:
 export CLAUDE_MEMORY_PATH="/custom/path"
 ```
 
+When `CLAUDE_MEMORY_PATH` is set explicitly, the path may live outside your
+home directory (e.g. a separate data drive on Windows: `D:\claude-memory`).
+Paths that are *not* explicitly configured are still restricted to the home
+or project directory for safety.
+
+### Disabling SQLite
+
+SQLite FTS5 search is enabled by default. On platforms where SQLite/FTS5 is
+unavailable (e.g. some Windows Python builds), disable it to fall back to
+JSON-based linear search:
+```bash
+export CLAUDE_MEMORY_DISABLE_SQLITE=true
+```
+
 ### Logging Configuration
 
 #### Log Format
@@ -254,7 +268,7 @@ search_conversations("terraform azure")
 search_conversations("mcp server setup")
 search_conversations("python debugging")
 
-# Project discussions  
+# Project discussions
 search_conversations("interview preparation")
 search_conversations("product management")
 search_conversations("architecture decisions")
@@ -348,6 +362,6 @@ MIT License - see LICENSE file for details
 
 ---
 
-**Status**: Production ready ✅  
-**Last Updated**: April 2026  
+**Status**: Production ready ✅
+**Last Updated**: April 2026
 **Version**: 2.0.0
