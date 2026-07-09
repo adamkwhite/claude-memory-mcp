@@ -544,44 +544,28 @@ class TestFastMCPConfigWiring:
         finally:
             shutil.rmtree(other, ignore_errors=True)
 
-
-class TestStoragePathValidation:
-    """The security validator on ``_validate_storage_path``."""
-
-    def _bare_validator(self):
-        # Build an instance without running __init__ so we can exercise the
-        # validator in isolation (it only needs a logger attribute).
-        import logging
-
-        inst = object.__new__(server_fastmcp.FastMCPConversationMemoryServer)
-        inst.fastmcp_logger = logging.getLogger("test.validate")
-        return inst
-
-    def test_explicit_env_path_outside_home_is_allowed(self, monkeypatch):
-        """An explicitly set CLAUDE_MEMORY_PATH bypasses the home check."""
-        outside = tempfile.mkdtemp(prefix="outside_home_", dir="/tmp")
+    def test_trusted_path_outside_home_is_accepted(self, home_temp_storage):
+        """An explicitly-configured path outside HOME passes validation."""
+        srv = server_fastmcp.FastMCPConversationMemoryServer(
+            storage_path=home_temp_storage
+        )
+        outside = Path(tempfile.mkdtemp(prefix="outside_home_")).resolve()
         try:
-            monkeypatch.setenv("CLAUDE_MEMORY_PATH", outside)
-            # Must not raise even though the path is outside $HOME.
-            self._bare_validator()._validate_storage_path(Path(outside).resolve())
-        finally:
-            shutil.rmtree(outside, ignore_errors=True)
-
-    def test_outside_home_rejected_without_env(self, monkeypatch):
-        """Without the explicit env var, out-of-home paths are still rejected."""
-        outside = tempfile.mkdtemp(prefix="outside_home_", dir="/tmp")
-        try:
-            monkeypatch.delenv("CLAUDE_MEMORY_PATH", raising=False)
+            # Untrusted (defaulted) path outside HOME is rejected...
             with pytest.raises(ValueError, match="within user's home"):
-                self._bare_validator()._validate_storage_path(Path(outside).resolve())
+                srv._validate_storage_path(outside, trusted=False)
+            # ...but a trusted (explicitly configured) one is allowed.
+            srv._validate_storage_path(outside, trusted=True)  # no raise
         finally:
             shutil.rmtree(outside, ignore_errors=True)
 
-    def test_traversal_rejected_even_with_env(self, monkeypatch):
-        """The '..' traversal check runs before the explicit-path carve-out."""
-        monkeypatch.setenv("CLAUDE_MEMORY_PATH", "/tmp/whatever")
+    def test_traversal_guard_applies_even_when_trusted(self, home_temp_storage):
+        """The ``..`` traversal guard is enforced regardless of trust."""
+        srv = server_fastmcp.FastMCPConversationMemoryServer(
+            storage_path=home_temp_storage
+        )
         with pytest.raises(ValueError, match="cannot contain"):
-            self._bare_validator()._validate_storage_path(Path("/tmp/a/../b"))
+            srv._validate_storage_path(Path("/some/../evil"), trusted=True)
 
 
 if __name__ == "__main__":

@@ -6,7 +6,6 @@ This MCP server provides tools for managing and searching Claude conversation hi
 Supports storing conversations locally and retrieving context for current sessions.
 """
 
-import os
 from pathlib import Path
 from typing import List, Optional
 
@@ -107,9 +106,14 @@ class FastMCPConversationMemoryServer(CoreMemoryServer):
             use_data_dir=use_data_dir,
         )
 
-        # Validate storage path for security
+        # Validate storage path for security. A path the user deliberately
+        # configured (explicit arg, CLAUDE_MEMORY_PATH, or config file) is
+        # trusted for location — the home-directory jail below only applies to
+        # the built-in default. This lets the server run on Windows/WSL where
+        # storage may legitimately live off the home drive or on a UNC path.
+        trusted = str(storage_path) != self._DEFAULT_STORAGE_SENTINEL
         storage_path_obj = Path(storage_path).expanduser().resolve()
-        self._validate_storage_path(storage_path_obj)
+        self._validate_storage_path(storage_path_obj, trusted=trusted)
 
         # Initialize the core memory server with SQLite per Config.
         super().__init__(
@@ -122,8 +126,13 @@ class FastMCPConversationMemoryServer(CoreMemoryServer):
             f"FastMCP Server initialized with SQLite: {self.use_sqlite_search}"
         )
 
-    def _validate_storage_path(self, storage_path: Path):
-        """Validate storage path for security."""
+    def _validate_storage_path(self, storage_path: Path, trusted: bool = False):
+        """Validate storage path for security.
+
+        The ``..`` traversal guard always applies. The home-directory jail is
+        skipped when ``trusted`` is True (the path was explicitly configured
+        rather than defaulted).
+        """
         log_function_call("_validate_storage_path", storage_path=str(storage_path))
 
         # Ensure path doesn't contain traversal attempts
@@ -135,13 +144,10 @@ class FastMCPConversationMemoryServer(CoreMemoryServer):
             )
             raise ValueError("Storage path cannot contain '..' for security reasons")
 
-        # An explicitly configured CLAUDE_MEMORY_PATH is a deliberate operator
-        # choice (e.g. a separate data drive on Windows), so it bypasses the
-        # home-directory containment check below. Traversal is still rejected
-        # above, which is the check that actually matters for security.
-        if os.environ.get("CLAUDE_MEMORY_PATH", "").strip():
+        # An explicitly-configured path is trusted for location.
+        if trusted:
             self.fastmcp_logger.debug(
-                f"Storage path from explicit CLAUDE_MEMORY_PATH allowed: {storage_path}"
+                f"Storage path validation passed (trusted): {storage_path}"
             )
             return
 
