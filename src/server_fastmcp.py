@@ -372,6 +372,16 @@ async def get_search_stats() -> str:
                 f"  - {topic_info['topic']}: {topic_info['count']} conversations\n"
             )
 
+    if stats.get("popular_tags"):
+        response += "\nPopular Tags:\n"
+        for tag_info in stats["popular_tags"][:5]:
+            response += f"  - {tag_info['tag']}: {tag_info['count']} conversations\n"
+
+    if stats.get("conversation_types"):
+        response += "\nConversation Types:\n"
+        for type_info in stats["conversation_types"]:
+            response += f"  - {type_info['type']}: {type_info['count']}\n"
+
     if "sqlite_error" in stats:
         response += f"\nSQLite Error: {stats['sqlite_error']}\n"
 

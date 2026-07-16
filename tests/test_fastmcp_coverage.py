@@ -336,6 +336,50 @@ class TestMCPToolFunctions:
         assert "**1. Z**" in result
 
     @pytest.mark.asyncio
+    async def test_mcp_get_search_stats_tool_surfaces_tags_and_types(self, monkeypatch):
+        """get_search_stats MCP tool renders popular_tags/conversation_types."""
+
+        async def fake_stats():
+            return {
+                "sqlite_available": True,
+                "sqlite_enabled": True,
+                "search_engine": "sqlite_fts",
+                "popular_tags": [{"tag": "starred", "count": 3}],
+                "conversation_types": [{"type": "code", "count": 5}],
+            }
+
+        monkeypatch.setattr(
+            server_fastmcp.memory_server, "get_search_stats", fake_stats
+        )
+
+        result = await server_fastmcp.get_search_stats()
+        assert "Popular Tags:" in result
+        assert "- starred: 3 conversations" in result
+        assert "Conversation Types:" in result
+        assert "- code: 5" in result
+
+    @pytest.mark.asyncio
+    async def test_mcp_get_search_stats_tool_omits_empty_sections(self, monkeypatch):
+        """No tags/conversation_types yet -> no empty section headers."""
+
+        async def fake_stats():
+            return {
+                "sqlite_available": True,
+                "sqlite_enabled": True,
+                "search_engine": "sqlite_fts",
+                "popular_tags": [],
+                "conversation_types": [],
+            }
+
+        monkeypatch.setattr(
+            server_fastmcp.memory_server, "get_search_stats", fake_stats
+        )
+
+        result = await server_fastmcp.get_search_stats()
+        assert "Popular Tags:" not in result
+        assert "Conversation Types:" not in result
+
+    @pytest.mark.asyncio
     async def test_mcp_metadata_tool_renders_error_marker(self, monkeypatch):
         """Error marker from underlying server surfaces in the tool output."""
 
