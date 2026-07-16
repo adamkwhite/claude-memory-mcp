@@ -130,6 +130,22 @@ Generate insights and patterns from recent conversations.
 ### `get_search_stats()`
 View search engine statistics — index size, topic counts, and engine status.
 
+### `update_conversation(conversation_id, content=None, title=None, add_tags=None, remove_tags=None, set_tags=None, conversation_type=None, session_id=None, user_id=None, change_note=None)`
+Update fields on an existing conversation in place. Pass `conversation_id` plus any subset of fields to change; unspecified fields are left alone. The first line of the stored content is rewritten with a self-documenting audit line — `[update <iso-timestamp> — <change_note>]` — chained across repeated updates. If `change_note` is omitted, it's auto-derived from which fields changed.
+
+Tag operations: `set_tags` replaces the full tag list and is mutually exclusive with `add_tags`/`remove_tags` (pass `set_tags=[]` to clear all tags); `add_tags`/`remove_tags` mutate the existing list.
+
+Returns a status string. On success: `Status: success` plus a summary message and the audit line. On failure (malformed ID, conversation not found, no changes provided, conflicting tag ops, or an I/O error): `Status: error` plus a message describing the problem.
+
+### `search_by_tag(tag, limit=10)`
+Find conversations tagged with a specific tag — a universal metadata field populated by importers or set via `update_conversation` (e.g. `starred`, `archived`, `workspace:my-project`). Exact match, case-sensitive. Requires SQLite FTS to be enabled; without it, returns an error message.
+
+### `search_by_session_id(session_id, limit=10)`
+Find all conversations sharing a `session_id`, useful for reconstructing a multi-turn session that spans several stored conversation records (e.g. a Cursor working session, a Claude thread continued across days). Results are sorted chronologically (oldest first). Requires SQLite FTS to be enabled; without it, returns an error message.
+
+### `search_by_conversation_type(conversation_type, limit=10)`
+Find conversations by `conversation_type` (e.g. `chat`, `code`, `analysis`). Exact match, most recent first. Requires SQLite FTS to be enabled; without it, returns an error message.
+
 ## Architecture
 
 ```
@@ -156,25 +172,60 @@ Add to your Claude Desktop MCP config:
   "mcpServers": {
     "claude-memory": {
       "command": "python",
-      "args": ["/path/to/claude-memory-mcp/server_fastmcp.py"]
+      "args": ["/absolute/path/to/claude-memory-mcp/src/server_fastmcp.py"],
+      "cwd": "/absolute/path/to/claude-memory-mcp"
     }
   }
 }
 ```
 
-### Storage Location
+### Configuration Precedence
 
-Default storage: `~/claude-memory/`
+Settings are resolved by `src/config.py`'s `Config.load()`, consulted in this
+order (highest wins):
 
-Override with environment variable:
-```bash
-export CLAUDE_MEMORY_PATH="/custom/path"
-```
+1. **Environment variables** (`CLAUDE_MEMORY_*` / `CLAUDE_MCP_*`)
+2. **Config file** (default `~/.claude-memory/config.json`)
+3. **Platform profile** (`default`, `claude`, `chatgpt`, or `cursor` — selects
+   a partial set of defaults, e.g. `log_format`)
+4. **Built-in defaults**
+
+### Environment Variables
+
+| Variable | Purpose | Default |
+|---|---|---|
+| `CLAUDE_MEMORY_PATH` | Conversation storage directory | `~/claude-memory` |
+| `CLAUDE_MEMORY_DISABLE_SQLITE` | Set `true` to disable SQLite FTS and fall back to JSON linear search. Inverse alias of `CLAUDE_MCP_ENABLE_SQLITE`; wins if both are set. | unset (SQLite enabled) |
+| `CLAUDE_MCP_LOG_FORMAT` | Log output format: `text` or `json` | `text` |
+| `CLAUDE_MCP_LOG_LEVEL` | Log level: `DEBUG`, `INFO`, `WARNING`, `ERROR`, `CRITICAL` | `INFO` |
+| `CLAUDE_MCP_ENABLE_SQLITE` | Enable/disable SQLite FTS search (boolean: `true`/`false`, `1`/`0`, `yes`/`no`, `on`/`off`) | `true` |
+| `CLAUDE_MCP_CONSOLE_OUTPUT` | Echo logs to stdout in addition to the log file (boolean) | `false` |
+| `CLAUDE_MCP_PLATFORM_PROFILE` | Platform profile to apply: `default`, `claude`, `chatgpt`, or `cursor` | `default` |
 
 When `CLAUDE_MEMORY_PATH` is set explicitly, the path may live outside your
 home directory (e.g. a separate data drive on Windows: `D:\claude-memory`).
 Paths that are *not* explicitly configured are still restricted to the home
 or project directory for safety.
+
+### Config File
+
+As an alternative to environment variables, settings can be placed in
+`~/.claude-memory/config.json`. The file is optional — a missing file falls
+back to platform-profile/built-in defaults. Example:
+
+```json
+{
+  "storage_path": "~/claude-memory",
+  "log_format": "json",
+  "log_level": "INFO",
+  "enable_sqlite": true,
+  "console_output": false,
+  "platform_profile": "default"
+}
+```
+
+Unknown keys in the file raise a configuration error rather than being
+silently ignored. Environment variables still override anything set here.
 
 ### Disabling SQLite
 
