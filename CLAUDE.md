@@ -25,9 +25,10 @@
 - ✅ **CI/CD Pipeline**: GitHub Actions with SonarCloud integration fully operational
 
 ### Open architectural follow-ups (see `todos.md` for full list)
-- Wire new metadata fields (`tags`, `session_id`, `conversation_type`) into `src/search_database.py` FTS schema so they're searchable.
 - Round-trip-able ChatGPT export — current exporter emits `mapping` structure but importer expects flat `messages` list (asymmetric).
 - Project-wide mypy hook fix (dual `src.foo` ↔ `foo` import naming).
+
+(Metadata-field FTS indexing — `tags`/`session_id`/`conversation_type` in `src/search_database.py` — was completed in PR #118; this section previously listed it as open in error.)
 
 ## Technology Stack
 
