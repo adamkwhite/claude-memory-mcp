@@ -8,6 +8,7 @@ import json
 import shutil
 import sys
 import tempfile
+import time
 from datetime import datetime
 from pathlib import Path
 
@@ -961,6 +962,36 @@ class TestConversationMemoryServerDirect:
 
         assert "python" in topics
         assert "mcp" in topics
+
+    def test_extract_topics_no_redos_on_capitals_run(self, server):
+        """Regression: a run of capitals followed by a word char must not backtrack.
+
+        The old tech_pattern carried a redundant (?:[A-Z][a-zA-Z]*)* group that
+        made matching exponential. Content like a hex digest or base64 blob
+        triggers it.
+
+        26 chars is chosen deliberately: the old pattern takes ~4s there (so a
+        regression FAILS this assert in seconds), while longer inputs grow 4x
+        per 2 chars -- at 40 chars the old pattern runs ~37 HOURS, which would
+        hang CI instead of failing it. The fixed pattern is linear and needs
+        microseconds, so the 1s bound is not timing sensitive; a normal machine
+        has ~1000x headroom and only an exponential pattern can fail it.
+        """
+        start = time.perf_counter()
+        topics = server._extract_topics("A" * 26 + "1")
+        elapsed = time.perf_counter() - start
+
+        assert elapsed < 1.0, (
+            f"topic extraction took {elapsed:.1f}s -- regex backtracking?"
+        )
+        assert topics == []
+
+    def test_extract_topics_capitalized_words_still_found(self, server):
+        """The de-ambiguated pattern must still match what the old one matched."""
+        topics = server._extract_topics("We used FastMCP and XMLHttpRequest today")
+
+        assert "fastmcp" in topics
+        assert "xmlhttprequest" in topics
 
     def test_extract_topics_edge_cases(self, server):
         """Test topic extraction edge cases"""
