@@ -33,7 +33,7 @@ from __future__ import annotations
 import json
 import os
 from collections.abc import Mapping
-from dataclasses import asdict, dataclass, fields, replace
+from dataclasses import asdict, dataclass, field, fields, replace
 from pathlib import Path
 from typing import Any, ClassVar
 
@@ -137,6 +137,13 @@ class Config:
         platform_profile: Name of a profile from :data:`PLATFORM_PROFILES`
             whose defaults are layered onto the base defaults during
             :meth:`load`.
+        log_sample_rates: Per operation-type log sampling rates, keyed by
+            the ``context["type"]`` value structured log calls attach
+            (e.g. ``"performance"``, ``"file_operation"``). A rate of ``N``
+            means "log 1 out of every N records of that type"; a type
+            missing from the mapping is never sampled (rate 1). Mirrors
+            ``CLAUDE_MCP_LOG_SAMPLE_RATES`` (a JSON object string). WARNING
+            and above are never sampled regardless of this setting.
     """
 
     storage_path: str = DEFAULT_STORAGE_PATH
@@ -145,6 +152,7 @@ class Config:
     enable_sqlite: bool = True
     console_output: bool = False
     platform_profile: str = "default"
+    log_sample_rates: dict[str, int] = field(default_factory=dict)
 
     #: Mapping of dataclass field name -> environment variable name.
     ENV_MAPPING: ClassVar[dict[str, str]] = {
@@ -154,6 +162,7 @@ class Config:
         "enable_sqlite": "CLAUDE_MCP_ENABLE_SQLITE",
         "console_output": "CLAUDE_MCP_CONSOLE_OUTPUT",
         "platform_profile": "CLAUDE_MCP_PLATFORM_PROFILE",
+        "log_sample_rates": "CLAUDE_MCP_LOG_SAMPLE_RATES",
     }
 
     # -- Construction --------------------------------------------------
@@ -247,6 +256,17 @@ class Config:
             raise ConfigError(
                 f"Unknown platform_profile {self.platform_profile!r}; "
                 f"must be one of {sorted(PLATFORM_PROFILES)}"
+            )
+        if not isinstance(self.log_sample_rates, dict) or not all(
+            isinstance(k, str)
+            and isinstance(v, int)
+            and not isinstance(v, bool)
+            and v >= 1
+            for k, v in self.log_sample_rates.items()
+        ):
+            raise ConfigError(
+                f"log_sample_rates must be a dict[str, int] with values >= 1; "
+                f"got {self.log_sample_rates!r}"
             )
         # Normalise log_level to upper-case so downstream consumers don't
         # need to repeat the call.
@@ -360,6 +380,15 @@ def _apply_overrides(cfg: Config, overrides: Mapping[str, Any], source: str) -> 
             coerced[key] = _parse_bool(value)
         elif key == "log_level" and isinstance(value, str):
             coerced[key] = value.upper()
+        elif key == "log_sample_rates" and isinstance(value, str):
+            # Only the environment layer supplies this as a raw string
+            # (a JSON object); the config file already parses to a dict.
+            try:
+                coerced[key] = json.loads(value)
+            except json.JSONDecodeError as exc:
+                raise ConfigError(
+                    f"Invalid JSON for log_sample_rates in {source}: {exc}"
+                ) from exc
         else:
             coerced[key] = value
     return replace(cfg, **coerced)
