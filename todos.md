@@ -27,7 +27,7 @@ This file maintains persistent todos across Claude Code sessions.
 - README / docs: add `~/.claude-memory/config.json` format and the new env vars (`CLAUDE_MCP_LOG_LEVEL`, `CLAUDE_MCP_ENABLE_SQLITE`, `CLAUDE_MCP_PLATFORM_PROFILE`, `CLAUDE_MCP_LOG_FILE` once promoted). (B)
 
 *Searchability (medium):*
-- 5.3.x — search-by-tag, search-by-`session_id`, search-by-`conversation_type` (need MCP tool wiring + SQLite FTS index extension in `src/search_database.py`). The new metadata fields are stored in JSON conversation files but **not yet indexed in SQLite FTS**. (D2)
+- ~~5.3.x — search-by-tag, search-by-`session_id`, search-by-`conversation_type`~~ **DONE via PR #118** (`9e268ea feat(search): index D2 metadata fields (tags/session_id/conversation_type) in SQLite FTS`) — `search_by_tag`/`search_by_session_id`/`search_by_conversation_type` MCP tools exist at `server_fastmcp.py:288-320`. This note was stale (written before PR #118 landed). Still open: 5.3.2 platform-specific search filters, 5.3.3 advanced query syntax (see Underspecified section below), 5.3.4 result grouping by platform/model.
 
 *Bulk import polish (medium):*
 - 2.4.2 progress UX with `tqdm` (currently periodic prints).
@@ -57,6 +57,24 @@ This file maintains persistent todos across Claude Code sessions.
 - Tests directory not linted by mypy/flake8 — pre-existing E501 violations on `tests/test_100_percent_coverage.py:497,814` invisible to CI but tripping legacy local hooks.
 - Local dev hygiene: `tests/` was hidden by overly broad `/*test*/` pattern in `.gitignore`; PR #111 added `!/tests/` to undo it. Consider tightening the original pattern to e.g. `/test_env_*/`.
 - Local dev hygiene: removed broken `.git/hooks/pre-commit.legacy` (chained to a broken system Black install). Local-only; not in repo. Consider documenting the framework hooks as the source of truth.
+
+## Underspecified — Needs a Design Decision
+
+These 4 items are genuinely not done, but shouldn't be picked up as-is — each needs a one-sentence design
+answer before it's buildable. Captured here so they don't get silently implemented wrong or silently dropped.
+
+- **5.2.2 `project_context` field** — Open question: is this a free-text field (like `custom_fields`), or a
+  structured object (repo path + branch + file list, mirroring Cursor's `workspace_path`)? And is it
+  populated automatically by importers, or set by the user via `update_conversation`?
+- **3.1.4 customizable summary generation templates** — Open question: what's actually customizable — a
+  Jinja-style template string, or a choice of a few built-in formats? Who configures it — per-platform via
+  `PLATFORM_PROFILES`, or a global user setting?
+- **8.2.1 interactive import wizard** — Open question: is this still wanted at all, given
+  `bulk_import_enhanced.py --dry-run` already covers the "preview before committing" need this todo seems
+  aimed at? If yes, how interactive — "prompt for file path" or a full TUI?
+- **5.3.3 advanced query syntax for metadata** — Open question: what's the actual syntax (e.g.
+  `tag:foo AND platform:chatgpt`)? No concrete proposal exists anywhere yet. Also needs a decision on
+  whether it's worth the complexity over the current simple OR-joined FTS query.
 
 ## Recent Session (November 24, 2025) ✅ COMPLETED
 
@@ -162,7 +180,7 @@ This file maintains persistent todos across Claude Code sessions.
   - ✅ Found and fixed one real bug surfaced by the audit: `test_get_preview_exception_handling` in `TestCompleteEdgeCaseCoverage` was defined twice in the same class (lines 104 and 429), so Python silently shadowed the first method and the unreadable-file branch never ran. Renamed to `test_get_preview_exception_handling_unreadable_file`; both branches now run (440 → 441 collected tests)
 - [~] Implement centralized configuration management system (in progress)
   - [x] `src/config.py` module with `Config` dataclass, platform profiles, env+file loading, validation (PR: feature/central-config-module)
-  - [ ] Wire `Config.load()` into `server_fastmcp.py` / `logging_config.py` / `path_utils.py` (replace direct `os.getenv` calls) — follow-up
+  - [x] Wire `Config.load()` into `server_fastmcp.py` / `logging_config.py` / `path_utils.py` (replace direct `os.getenv` calls) — PR #116
   - [ ] CLI commands for config management (`get`, `set`, `show`, `init`) — follow-up (todos 3.2.2)
   - [ ] Per-platform topic extraction patterns and date-format handling (todos 3.1.2 / 3.1.3) — follow-up
   - [ ] Document configuration file format in README — follow-up
@@ -375,202 +393,7 @@ This file maintains persistent todos across Claude Code sessions.
   - Updated CI to run all tests instead of just test_100_percent_coverage.py
   - SonarCloud coverage should now match local 93.96% instead of 70.9%
   - Verified that test_100_percent_coverage.py serves unique purpose for edge cases
-- [ ] **Monitor SonarQube quality gate status after latest fixes**
-  - [x] ✅ Verify all quality gates are now passing (COMPLETED)
-  - [x] ✅ Confirm coverage metrics are accurate with archive/scripts exclusions (COMPLETED)
-  - [x] ✅ Check that all recent fixes resolved the "8 Issues > 0" condition (COMPLETED)
-  - [x] ✅ Ensure all PRs trigger SonarQube analysis (COMPLETED)
-  - [x] ✅ Add quality gate status checks that block merging (COMPLETED)
-  - [x] ✅ Set up automatic badge updates after each merge (COMPLETED)
-  - [x] ✅ Configure branch protection rules requiring SonarQube (COMPLETED)
-
-  **Remaining workflow integration tasks:**
-
-  ### 1. Documentation Infrastructure
-
-  **1.1** SonarQube Notification Documentation
-  - [ ] 1.1.1 Document how GitHub displays SonarQube check status in PRs
-  - [ ] 1.1.2 Explain notifications PR authors receive on quality gate failures
-  - [ ] 1.1.3 Document how branch protection blocks merges on failures
-  - [ ] 1.1.4 Create troubleshooting guide for accessing SonarQube reports
-
-  **1.2** Local Development Documentation
-  - [ ] 1.2.1 Create developer setup guide for SonarLint IDE integration
-  - [ ] 1.2.2 Document local SonarQube analysis commands and setup
-  - [ ] 1.2.3 Add IDE-specific SonarLint configuration instructions
-  - [ ] 1.2.4 Document how to interpret local analysis results
-
-  **1.3** Process Documentation
-  - [ ] 1.3.1 Create PR review checklist including SonarQube verification
-  - [ ] 1.3.2 Document standard procedures for quality gate failures
-  - [ ] 1.3.3 Create escalation process for persistent quality issues
-  - [ ] 1.3.4 Document when and how to request quality gate overrides
-
-  ### 2. Pre-commit Hook Implementation
-
-  **2.1** Setup Pre-commit Framework
-  - [ ] 2.1.1 Install pre-commit package (`pip install pre-commit`)
-  - [ ] 2.1.2 Create `.pre-commit-config.yaml` configuration file
-  - [ ] 2.1.3 Initialize pre-commit hooks (`pre-commit install`)
-  - [ ] 2.1.4 Test pre-commit setup with sample commit
-
-  **2.2** Configure Basic Quality Hooks
-  - [ ] 2.2.1 Add Python code formatting (black or autopep8)
-  - [ ] 2.2.2 Add import sorting (isort)
-  - [ ] 2.2.3 Add basic linting (flake8 or pylint)
-  - [ ] 2.2.4 Add trailing whitespace and end-of-file checks
-
-  **2.3** Add Security and Quality Checks
-  - [ ] 2.3.1 Add secrets detection hook (detect-secrets or similar)
-  - [ ] 2.3.2 Add basic security scanning (bandit)
-  - [ ] 2.3.3 Add JSON/YAML syntax validation
-  - [ ] 2.3.4 Add commit message format validation
-
-  **2.4** Test and Documentation
-  - [ ] 2.4.1 Test all hooks with various commit scenarios
-  - [ ] 2.4.2 Document hook bypass procedures for emergencies
-  - [ ] 2.4.3 Add pre-commit setup to developer onboarding guide
-  - [ ] 2.4.4 Create troubleshooting guide for hook failures
-
-  ### 3. Local SonarLint Integration
-
-  **3.1** IDE Integration Setup
-  - [ ] 3.1.1 Create VS Code SonarLint configuration guide
-  - [ ] 3.1.2 Add PyCharm/IntelliJ SonarLint setup instructions
-  - [ ] 3.1.3 Document Vim/Neovim SonarLint plugin setup
-  - [ ] 3.1.4 Create configuration files for common IDEs
-
-  **3.2** SonarLint Configuration
-  - [ ] 3.2.1 Create `.sonarlint/` configuration directory
-  - [ ] 3.2.2 Configure rule sets to match SonarCloud analysis
-  - [ ] 3.2.3 Set up connected mode to sync with SonarCloud project
-  - [ ] 3.2.4 Configure file exclusions to match CI analysis
-
-  **3.3** Developer Workflow Integration
-  - [ ] 3.3.1 Document real-time issue detection in IDE
-  - [ ] 3.3.2 Create guide for fixing SonarLint warnings before commit
-  - [ ] 3.3.3 Add SonarLint check to development workflow documentation
-  - [ ] 3.3.4 Document how to disable rules for false positives
-
-  ### 4. Local SonarQube Analysis
-
-  **4.1** Scanner Setup
-  - [ ] 4.1.1 Document SonarQube Scanner installation methods
-  - [ ] 4.1.2 Create local analysis script (`scripts/run_sonar_analysis.sh`)
-  - [ ] 4.1.3 Configure environment variables for local analysis
-  - [ ] 4.1.4 Set up local SonarQube server (optional, for offline analysis)
-
-  **4.2** Analysis Configuration
-  - [ ] 4.2.1 Create local analysis property files
-  - [ ] 4.2.2 Configure file exclusions to match CI setup
-  - [ ] 4.2.3 Set up local test coverage integration
-  - [ ] 4.2.4 Configure local report generation
-
-  **4.3** Developer Workflow
-  - [ ] 4.3.1 Document when to run local analysis (before PR creation)
-  - [ ] 4.3.2 Create script to compare local vs CI analysis results
-  - [ ] 4.3.3 Add local analysis to development checklist
-  - [ ] 4.3.4 Document troubleshooting common analysis issues
-
-  ### 5. PR Review Process Documentation
-
-  **5.1** Review Checklist Creation
-  - [ ] 5.1.1 Create comprehensive PR review template
-  - [ ] 5.1.2 Add SonarQube status verification to checklist
-  - [ ] 5.1.3 Include coverage impact assessment requirements
-  - [ ] 5.1.4 Add security hotspot review procedures
-
-  **5.2** Reviewer Guidelines
-  - [ ] 5.2.1 Document how to interpret SonarQube reports in PRs
-  - [ ] 5.2.2 Create guidelines for acceptable vs unacceptable issues
-  - [ ] 5.2.3 Document when to request changes vs approve with comments
-  - [ ] 5.2.4 Add escalation procedures for disagreements
-
-  **5.3** Author Guidelines
-  - [ ] 5.3.1 Create PR preparation checklist including SonarQube
-  - [ ] 5.3.2 Document how to address SonarQube feedback
-  - [ ] 5.3.3 Add guidelines for explaining SonarQube suppressions
-  - [ ] 5.3.4 Create template for documenting quality gate bypasses
-
-  ### 6. Quality Gate Failure Procedures
-
-  **6.1** Immediate Response Procedures
-  - [ ] 6.1.1 Create step-by-step failure investigation guide
-  - [ ] 6.1.2 Document common failure types and solutions
-  - [ ] 6.1.3 Add emergency bypass procedures with approval requirements
-  - [ ] 6.1.4 Create rollback procedures for quality regressions
-
-  **6.2** Root Cause Analysis
-  - [ ] 6.2.1 Create template for failure analysis documentation
-  - [ ] 6.2.2 Document process for identifying systemic issues
-  - [ ] 6.2.3 Add procedures for updating quality gates after analysis
-  - [ ] 6.2.4 Create learning documentation from past failures
-
-  **6.3** Prevention Measures
-  - [ ] 6.3.1 Document pre-merge quality verification procedures
-  - [ ] 6.3.2 Create guidelines for incremental quality improvements
-  - [ ] 6.3.3 Add process for proactive rule updates
-  - [ ] 6.3.4 Document team learning sessions for quality issues
-
-  ### 7. Ongoing Monitoring Processes
-
-  **7.1** Weekly Dashboard Reviews
-  - [ ] 7.1.1 Create SonarQube dashboard monitoring checklist
-  - [ ] 7.1.2 Set up automated weekly report generation
-  - [ ] 7.1.3 Document trend analysis procedures
-  - [ ] 7.1.4 Create action item templates for trend issues
-
-  **7.2** Coverage Degradation Monitoring
-  - [ ] 7.2.1 Set up coverage threshold alerts
-  - [ ] 7.2.2 Create coverage trend analysis procedures
-  - [ ] 7.2.3 Document acceptable coverage variance ranges
-  - [ ] 7.2.4 Add coverage recovery action plans
-
-  **7.3** Performance Impact Monitoring
-  - [ ] 7.3.1 Monitor SonarQube analysis execution time trends
-  - [ ] 7.3.2 Track CI/CD pipeline impact of quality gates
-  - [ ] 7.3.3 Document optimization procedures for slow analysis
-  - [ ] 7.3.4 Create performance baseline documentation
-
-  ### 8. Configuration Management
-
-  **8.1** Quality Gate Threshold Management
-  - [ ] 8.1.1 Document current quality gate configuration
-  - [ ] 8.1.2 Create procedure for threshold updates
-  - [ ] 8.1.3 Add approval process for quality standard changes
-  - [ ] 8.1.4 Document rollback procedures for threshold changes
-
-  **8.2** Rule Set Management
-  - [ ] 8.2.1 Create process for adding new SonarQube rules
-  - [ ] 8.2.2 Document rule customization procedures
-  - [ ] 8.2.3 Add team consensus process for rule changes
-  - [ ] 8.2.4 Create documentation for rule exception handling
-
-  **8.3** Project Structure Updates
-  - [ ] 8.3.1 Create process for updating exclusions when structure changes
-  - [ ] 8.3.2 Document impact assessment for structural changes
-  - [ ] 8.3.3 Add validation procedures for exclusion updates
-  - [ ] 8.3.4 Create regression testing for configuration changes
-
-  ### 9. Training and Knowledge Transfer
-
-  **9.1** Developer Onboarding
-  - [ ] 9.1.1 Create SonarQube basics training materials
-  - [ ] 9.1.2 Add hands-on exercises for common scenarios
-  - [ ] 9.1.3 Document best practices for quality-focused development
-  - [ ] 9.1.4 Create mentoring procedures for quality practices
-
-  **9.2** Advanced Training
-  - [ ] 9.2.1 Create advanced SonarQube analysis interpretation guide
-  - [ ] 9.2.2 Document complex rule configuration procedures
-  - [ ] 9.2.3 Add training for custom rule development
-  - [ ] 9.2.4 Create troubleshooting expertise development path
-
-  **9.3** Knowledge Documentation
-  - [ ] 9.3.1 Create searchable knowledge base for common issues
-  - [ ] 9.3.2 Document lessons learned from quality incidents
-  - [ ] 9.3.3 Add FAQ section for developer questions
-  - [ ] 9.3.4 Create video tutorials for complex procedures
+- [x] Monitor SonarQube quality gate status after latest fixes — quality gates are enforced and blocking merges (`.github/workflows/build.yml` runs SonarCloud on every PR + branch protection requires it); the 6 original sub-checks were already complete. *(Removed: ~116 nested sub-items for team training materials, IDE setup guides, and escalation processes — speculative process scaffolding written for a multi-developer team. `git log` shows every commit authored by one person; none of this has been requested or missed in a solo-maintained repo.)*
 - [x] **Improve test coverage to production standards**
   - From 80.2% → 90.75% → 96.2% on SonarCloud ✅ EXCEEDED TARGET
   - Target: 85%+ for better code reliability ✅ ACHIEVED (+11.2 points)
@@ -626,7 +449,7 @@ Transform this project from Claude-specific to universal AI assistant memory sys
 - [x] 2.1.1 Create `format_detector.py` module for automatic format recognition ✅ COMPLETED (June 13, 2025)
 - [x] 2.1.2 Implement JSON schema validation for different platforms ✅ ChatGPT schema completed, tested with real data
 - [x] 2.1.3 Add format-specific parsers in `importers/` directory ✅ Complete framework implemented
-- [ ] 2.1.4 Create standardized internal conversation format **IN PROGRESS** (Base framework complete)
+- [x] 2.1.4 Create standardized internal conversation format
 
 **2.2** Platform-Specific Importers
 - [x] 2.2.1 Create `ChatGPTImporter` class for OpenAI exports ✅ COMPLETED with real export validation
@@ -635,10 +458,10 @@ Transform this project from Claude-specific to universal AI assistant memory sys
 - [x] 2.2.4 Create `GenericImporter` class for custom formats ✅ Flexible parsing for JSON/text/CSV/XML
 
 **2.3** Export Format Support
-- [ ] 2.3.1 Implement export to ChatGPT-compatible format
-- [ ] 2.3.2 Implement export to standard JSON format
-- [ ] 2.3.3 Add export filtering by date range and platform
-- [ ] 2.3.4 Create export validation and verification
+- [x] 2.3.1 Implement export to ChatGPT-compatible format
+- [x] 2.3.2 Implement export to standard JSON format
+- [x] 2.3.3 Add export filtering by date range and platform
+- [x] 2.3.4 Create export validation and verification
 
 **2.4** Bulk Import Enhancement
 - [x] 2.4.1 Update bulk import scripts to detect format automatically — PR #112 (April 18, 2026); also fixed a latent broken import in the script and removed two redundant predecessor scripts in PR #113
@@ -649,16 +472,16 @@ Transform this project from Claude-specific to universal AI assistant memory sys
 ### 3. **Configuration Enhancements (High Priority)**
 
 **3.1** Platform-Specific Configuration
-- [ ] 3.1.1 Create `config.py` module with platform profiles
+- [x] 3.1.1 Create `config.py` module with platform profiles
 - [ ] 3.1.2 Add configuration for topic extraction patterns per platform
 - [ ] 3.1.3 Implement platform-specific date format handling
 - [ ] 3.1.4 Add customizable summary generation templates
 
 **3.2** User Configuration Management
-- [ ] 3.2.1 Create configuration file in user's home directory
+- [x] 3.2.1 Create configuration file in user's home directory
 - [ ] 3.2.2 Add CLI commands for configuration management
-- [ ] 3.2.3 Implement configuration validation and defaults
-- [ ] 3.2.4 Add environment variable override support
+- [x] 3.2.3 Implement configuration validation and defaults
+- [x] 3.2.4 Add environment variable override support
 
 **3.3** Storage Configuration
 - [ ] 3.3.1 Make storage paths configurable per platform
@@ -669,54 +492,52 @@ Transform this project from Claude-specific to universal AI assistant memory sys
 ### 5. **Metadata Fields (High Priority)**
 
 **5.1** Enhanced Conversation Metadata
-- [ ] 5.1.1 Add `platform` field to identify source AI system
-- [ ] 5.1.2 Add `model` field for AI model information
-- [ ] 5.1.3 Add `session_id` for grouping related conversations
-- [ ] 5.1.4 Add `user_id` for multi-user support preparation
+- [x] 5.1.1 Add `platform` field to identify source AI system
+- [x] 5.1.2 Add `model` field for AI model information
+- [x] 5.1.3 Add `session_id` for grouping related conversations
+- [x] 5.1.4 Add `user_id` for multi-user support preparation
 
 **5.2** Platform-Specific Metadata
-- [ ] 5.2.1 Add `tags` array for platform-specific categorization
+- [x] 5.2.1 Add `tags` array for platform-specific categorization
 - [ ] 5.2.2 Add `project_context` for development-focused platforms
-- [ ] 5.2.3 Add `conversation_type` (chat, code, analysis, etc.)
-- [ ] 5.2.4 Add `custom_fields` JSON object for extensibility
+- [x] 5.2.3 Add `conversation_type` (chat, code, analysis, etc.)
+- [x] 5.2.4 Add `custom_fields` JSON object for extensibility
 
 **5.3** Search and Filter Enhancements
-- [ ] 5.3.1 Update search to include metadata filtering
+- [x] 5.3.1 Update search to include metadata filtering — PR #118, MCP tools `search_by_tag`/`search_by_session_id`/`search_by_conversation_type`
 - [ ] 5.3.2 Add platform-specific search filters
 - [ ] 5.3.3 Implement advanced query syntax for metadata
 - [ ] 5.3.4 Add search result grouping by platform/model
 
 **5.4** Metadata Management
 - [ ] 5.4.1 Create metadata validation and sanitization
-- [ ] 5.4.2 Add metadata updating and editing capabilities
-- [ ] 5.4.3 Implement metadata indexing for performance
+- [x] 5.4.2 Add metadata updating and editing capabilities
+- [x] 5.4.3 Implement metadata indexing for performance
 - [ ] 5.4.4 Add metadata export and reporting tools
 
 ### 7. **Testing Updates (Medium Priority)**
 
 **7.1** Platform Compatibility Testing
 - [ ] 7.1.1 Create test data sets for each supported platform
-- [ ] 7.1.2 Add integration tests for format importers
-- [ ] 7.1.3 Test metadata handling across platforms
+- [x] 7.1.2 Add integration tests for format importers
+- [x] 7.1.3 Test metadata handling across platforms
 - [ ] 7.1.4 Add performance tests with multi-platform data
 
 **7.2** Regression Testing
-- [ ] 7.2.1 Ensure existing functionality remains intact
-- [ ] 7.2.2 Test backwards compatibility with existing data
-- [ ] 7.2.3 Validate MCP protocol compliance
-- [ ] 7.2.4 Test configuration changes don't break existing setups
+- [x] 7.2.1 Ensure existing functionality remains intact
+- [x] 7.2.2 Test backwards compatibility with existing data
+- ~~7.2.3 Validate MCP protocol compliance~~ — dropped: JSON-RPC/protocol framing is entirely delegated to the `mcp`/FastMCP SDK dependency; there's no custom protocol implementation in this repo to validate.
+- [x] 7.2.4 Test configuration changes don't break existing setups
 
 ### 8. **Enhanced Import Scripts (Medium Priority)**
 
 **8.1** Platform-Specific Import Scripts
-- [ ] 8.1.1 Create `scripts/import_chatgpt.py`
-- [ ] 8.1.2 Create `scripts/import_cursor.py`
-- [ ] 8.1.3 Refactor existing to `scripts/import_claude.py`
-- [ ] 8.1.4 Create `scripts/import_universal.py` with auto-detection
+- ~~8.1.1 Create `scripts/import_chatgpt.py`~~ / ~~8.1.2 Create `scripts/import_cursor.py`~~ / ~~8.1.3 Refactor existing to `scripts/import_claude.py`~~ — dropped: superseded by the unified `scripts/bulk_import_enhanced.py` (PR #112), which uses `FormatDetector` + `--format` to dispatch per-platform. PR #113 explicitly deleted the predecessor per-script approach in favor of this consolidation; building separate per-platform scripts now would reintroduce the duplication already removed.
+- [x] 8.1.4 Create `scripts/import_universal.py` with auto-detection — satisfied by `scripts/bulk_import_enhanced.py` (FormatDetector-based auto-detect + `--format` flag), not a literally-named `import_universal.py`
 
 **8.2** Import Workflow Improvements
 - [ ] 8.2.1 Add interactive import wizard
-- [ ] 8.2.2 Implement preview mode before importing
+- [x] 8.2.2 Implement preview mode before importing
 - [ ] 8.2.3 Add import scheduling and automation
 - [ ] 8.2.4 Create import validation and cleanup utilities
 
@@ -750,7 +571,7 @@ Transform this project from Claude-specific to universal AI assistant memory sys
 
 **4.2** API Documentation
 - [ ] 4.2.1 Document MCP tools with platform examples
-- [ ] 4.2.2 Create format specification documentation
+- [x] 4.2.2 Create format specification documentation
 - [ ] 4.2.3 Add configuration reference guide
 - [ ] 4.2.4 Create troubleshooting guide for different platforms
 
@@ -763,16 +584,16 @@ Transform this project from Claude-specific to universal AI assistant memory sys
 ### 6. **Backwards Compatibility (Maintained Throughout)**
 
 **6.1** Existing Data Preservation
-- [ ] 6.1.1 Ensure all existing conversations remain accessible
-- [ ] 6.1.2 Automatically add default metadata to existing conversations
-- [ ] 6.1.3 Maintain existing API compatibility
-- [ ] 6.1.4 Preserve existing file structure and naming
+- [x] 6.1.1 Ensure all existing conversations remain accessible
+- [x] 6.1.2 Automatically add default metadata to existing conversations
+- [x] 6.1.3 Maintain existing API compatibility
+- [x] 6.1.4 Preserve existing file structure and naming
 
 **6.2** Configuration Compatibility
-- [ ] 6.2.1 Use existing storage paths as defaults
-- [ ] 6.2.2 Maintain existing MCP tool signatures
-- [ ] 6.2.3 Keep existing import script functionality
-- [ ] 6.2.4 Preserve existing weekly summary format
+- [x] 6.2.1 Use existing storage paths as defaults
+- [x] 6.2.2 Maintain existing MCP tool signatures
+- [x] 6.2.3 Keep existing import script functionality
+- [x] 6.2.4 Preserve existing weekly summary format
 
 ---
 
