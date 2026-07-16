@@ -6,11 +6,13 @@ parameter; when omitted, ``Config.load(validate=False)`` is used so existing
 env-var-driven tests continue to work without modification.
 """
 
+import contextvars
 import json
 import logging
 import logging.handlers
 import os
 import sys
+import uuid
 from pathlib import Path
 from typing import TYPE_CHECKING, Optional
 
@@ -44,6 +46,54 @@ CONTROL_CHAR_PATTERN = r"[\x00-\x08\x0B\x0C\x0E-\x1F\x7F-\x9F]"
 
 # ISO 8601 datetime format for structured logging
 ISO_DATETIME_FORMAT = "%Y-%m-%dT%H:%M:%S"
+
+# Correlation ID for tracing a high-level operation (search, add_conversation,
+# weekly summary, ...) across log lines and await boundaries. A ContextVar
+# (not thread-local) is required because this codebase is async/aiofiles
+# throughout: each asyncio Task gets its own copy of the context, so
+# concurrent operations never see each other's correlation ID, while a single
+# operation's own await chain keeps seeing the value it set.
+_correlation_id: "contextvars.ContextVar[Optional[str]]" = contextvars.ContextVar(
+    "correlation_id", default=None
+)
+
+# Placeholder used in log output when no correlation ID is set for the
+# current context (e.g. logging during startup, before any operation began).
+NO_CORRELATION_ID = "-"
+
+
+def get_correlation_id() -> Optional[str]:
+    """Return the correlation ID for the current context, if any."""
+    return _correlation_id.get()
+
+
+def set_correlation_id(correlation_id: Optional[str] = None) -> str:
+    """Start (or attach to) a correlation ID for the current context.
+
+    Call this once at the top of a high-level operation (a search, an
+    ``add_conversation`` call, a weekly summary run). If ``correlation_id``
+    is omitted, a new UUID4 is generated. Every log record emitted for the
+    rest of this context — including across ``await`` boundaries within the
+    same asyncio Task — carries the returned ID.
+
+    Returns:
+        str: The correlation ID now active for this context.
+    """
+    value = correlation_id or str(uuid.uuid4())
+    _correlation_id.set(value)
+    return value
+
+
+class CorrelationIdFilter(logging.Filter):
+    """Attach the current context's correlation ID to every log record.
+
+    Always returns True (it never drops records) — it exists purely to
+    stamp ``record.correlation_id`` so formatters can include it.
+    """
+
+    def filter(self, record: logging.LogRecord) -> bool:
+        record.correlation_id = get_correlation_id() or NO_CORRELATION_ID
+        return True
 
 
 class JSONFormatter(logging.Formatter):
@@ -84,6 +134,12 @@ class JSONFormatter(logging.Formatter):
             "line": record.lineno,
             "message": record.getMessage(),
         }
+
+        # Add correlation ID if one is active for this context (set via
+        # CorrelationIdFilter, which runs before formatters see the record).
+        correlation_id = getattr(record, "correlation_id", None)
+        if correlation_id and correlation_id != NO_CORRELATION_ID:
+            log_data["correlation_id"] = correlation_id
 
         # Add context if present in the log record
         if hasattr(record, "context"):
@@ -204,8 +260,11 @@ def setup_logging(
     logger = logging.getLogger("claude_memory_mcp")
     logger.setLevel(getattr(logging, log_level.upper()))
 
-    # Clear existing handlers
+    # Clear existing handlers/filters (setup_logging may be called more than
+    # once, e.g. in tests, and filters would otherwise stack).
     logger.handlers = []
+    logger.filters = []
+    logger.addFilter(CorrelationIdFilter())
 
     # Determine log format via Config (env-aware) or the explicit instance.
     log_format = _get_log_format(config)
@@ -221,11 +280,12 @@ def setup_logging(
     else:
         # Use text formatters (default)
         file_formatter = logging.Formatter(
-            "%(asctime)s | %(levelname)-8s | %(name)s:%(lineno)d | %(funcName)s() | %(message)s",
+            "%(asctime)s | %(levelname)-8s | %(name)s:%(lineno)d | %(funcName)s() "
+            "| [%(correlation_id)s] | %(message)s",
             datefmt="%Y-%m-%d %H:%M:%S",
         )
         console_formatter = ColoredFormatter(
-            "%(asctime)s | %(levelname)-8s | %(funcName)s() | %(message)s",
+            "%(asctime)s | %(levelname)-8s | %(funcName)s() | [%(correlation_id)s] | %(message)s",
             datefmt="%H:%M:%S",
         )
 
