@@ -271,8 +271,12 @@ class ConversationMemoryServer:
             if len(term) > 2 and len(term) < 50 and term.lower() not in found_topics:
                 found_topics.append(term.lower())
 
-        # Find capitalized words that might be technologies/frameworks
-        tech_pattern = r"\b[A-Z][a-zA-Z]*(?:[A-Z][a-zA-Z]*)*\b"
+        # Find capitalized words that might be technologies/frameworks.
+        # The trailing (?:[A-Z][a-zA-Z]*)* group this pattern used to carry was
+        # redundant -- [a-zA-Z]* already matches uppercase -- but it made the
+        # two halves ambiguous, so input like "AAAA...1" (a hex digest, base64
+        # blob, or CONST_2) backtracked exponentially. Same matches, linear time.
+        tech_pattern = r"\b[A-Z][a-zA-Z]*\b"
         capitalized_words = re.findall(tech_pattern, content)
         for word in capitalized_words:
             if (
