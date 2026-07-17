@@ -113,17 +113,36 @@ class TestConfigWiring:
         # Never let a malformed config bring down logging setup.
         assert _get_log_sample_rates(_Broken()) == {}
 
-    def test_setup_logging_attaches_sampling_filter(self):
+    def test_setup_logging_attaches_sampling_filter(self, tmp_path):
+        # NOTE: this used to assert the filter lived on `logger.filters`.
+        # That encoded the bug this suite's sibling (test_logging_wiring.py)
+        # exists to catch: a logger's own filters never run for records that
+        # reach its handlers via propagation from a child logger (the
+        # pattern this app actually uses via get_logger()). The fix moves
+        # sampling to per-handler filters, so the assertion now checks the
+        # handlers instead.
         from config import Config
 
         cfg = Config(log_sample_rates={"performance": 7}, console_output=False)
-        logger = setup_logging(config=cfg)
-        sampling_filters = [f for f in logger.filters if isinstance(f, SamplingFilter)]
-        assert len(sampling_filters) == 1
-        assert sampling_filters[0].sample_rates == {"performance": 7}
+        logger = setup_logging(
+            config=cfg, log_file=str(tmp_path / "test.log"), console_output=False
+        )
+        assert logger.filters == []
+        for handler in logger.handlers:
+            sampling_filters = [
+                f for f in handler.filters if isinstance(f, SamplingFilter)
+            ]
+            assert len(sampling_filters) == 1
+            assert sampling_filters[0].sample_rates == {"performance": 7}
 
-    def test_setup_logging_default_config_disables_sampling(self):
-        logger = setup_logging()
-        sampling_filters = [f for f in logger.filters if isinstance(f, SamplingFilter)]
-        assert len(sampling_filters) == 1
-        assert sampling_filters[0].sample_rates == {}
+    def test_setup_logging_default_config_disables_sampling(self, tmp_path):
+        logger = setup_logging(
+            log_file=str(tmp_path / "test.log"), console_output=False
+        )
+        assert logger.filters == []
+        for handler in logger.handlers:
+            sampling_filters = [
+                f for f in handler.filters if isinstance(f, SamplingFilter)
+            ]
+            assert len(sampling_filters) == 1
+            assert sampling_filters[0].sample_rates == {}

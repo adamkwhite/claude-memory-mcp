@@ -89,11 +89,49 @@ class CorrelationIdFilter(logging.Filter):
 
     Always returns True (it never drops records) — it exists purely to
     stamp ``record.correlation_id`` so formatters can include it.
+
+    Not used by ``setup_logging()`` itself (see ``_install_correlation_id_
+    record_factory`` below for why) — kept as a standalone, directly
+    testable unit and for anyone building a logger by hand outside this
+    module's wiring.
     """
 
     def filter(self, record: logging.LogRecord) -> bool:
         record.correlation_id = get_correlation_id() or NO_CORRELATION_ID
         return True
+
+
+# Root fix for correlation IDs: a LogRecord factory, not a filter.
+#
+# A *logger's* filters only run for records emitted through that exact
+# logger — never for records propagating up from a child logger to the
+# parent's handlers (Handler.handle() calls the handler's own filters, but
+# nothing re-runs the ancestor Logger.filter() chain). This app logs
+# through child loggers (get_logger("claude_memory_mcp.server") etc.), so a
+# logger-level CorrelationIdFilter silently never fires for real traffic —
+# that was the bug. A record factory is called by logging.Logger.makeRecord
+# for *every* record, on *every* logger in the process (including
+# third-party ones), so it can't be bypassed by propagation the way a
+# filter can.
+_stdlib_record_factory = logging.getLogRecordFactory()
+
+
+def _correlation_id_record_factory(*args, **kwargs):
+    record = _stdlib_record_factory(*args, **kwargs)
+    record.correlation_id = get_correlation_id() or NO_CORRELATION_ID
+    return record
+
+
+def _install_correlation_id_record_factory() -> None:
+    """Install the correlation-id-stamping record factory, idempotently.
+
+    ``setup_logging()`` may be called many times in a process (tests do
+    this routinely). Re-checking ``is not`` before installing avoids
+    stacking wrapper-of-a-wrapper layers on repeated calls — each call
+    after the first is a no-op.
+    """
+    if logging.getLogRecordFactory() is not _correlation_id_record_factory:
+        logging.setLogRecordFactory(_correlation_id_record_factory)
 
 
 class SamplingFilter(logging.Filter):
@@ -109,6 +147,17 @@ class SamplingFilter(logging.Filter):
     sample away an error. ponytail: a plain per-type counter, not an
     adaptive-sampling engine; upgrade only if a real need for
     frequency-adaptive rates shows up.
+
+    This filter is stateful (the per-type counters), so ``setup_logging()``
+    attaches ONE shared instance to every handler on the logger rather than
+    a filter-per-handler — handler-level filters are required (see the
+    module-level note on ``CorrelationIdFilter``/record factory for why),
+    but a handler's ``Handler.handle()`` calls ``self.filter()``
+    independently for each handler that sees the record. With N handlers,
+    a plain counter would advance N times per record and silently sample
+    at N times the configured rate. The decision is cached on the record
+    itself the first time this instance sees it, so every subsequent
+    handler in the same emit reuses that decision instead of re-counting.
     """
 
     def __init__(self, sample_rates: Optional[dict] = None):
@@ -117,20 +166,29 @@ class SamplingFilter(logging.Filter):
         self._counters: dict = {}
 
     def filter(self, record: logging.LogRecord) -> bool:
+        cached = getattr(record, "_sampling_decision", None)
+        if cached is not None:
+            return cached
+
         if record.levelno >= logging.WARNING:
-            return True
+            decision = True
+        else:
+            context = getattr(record, "context", None)
+            op_type = (
+                context.get("type", "default")
+                if isinstance(context, dict)
+                else "default"
+            )
+            rate = self.sample_rates.get(op_type, 1)
+            if rate <= 1:
+                decision = True
+            else:
+                count = self._counters.get(op_type, 0) + 1
+                self._counters[op_type] = count
+                decision = count % rate == 0
 
-        context = getattr(record, "context", None)
-        op_type = (
-            context.get("type", "default") if isinstance(context, dict) else "default"
-        )
-        rate = self.sample_rates.get(op_type, 1)
-        if rate <= 1:
-            return True
-
-        count = self._counters.get(op_type, 0) + 1
-        self._counters[op_type] = count
-        return count % rate == 0
+        record._sampling_decision = decision
+        return decision
 
 
 class JSONFormatter(logging.Formatter):
@@ -314,8 +372,17 @@ def setup_logging(
     # once, e.g. in tests, and filters would otherwise stack).
     logger.handlers = []
     logger.filters = []
-    logger.addFilter(CorrelationIdFilter())
-    logger.addFilter(SamplingFilter(_get_log_sample_rates(config)))
+
+    # Correlation IDs are stamped via a record factory (see the module-level
+    # note above), not a logger filter — it works for propagated records too.
+    _install_correlation_id_record_factory()
+
+    # Sampling MUST be attached per-handler, not on the logger: this app
+    # logs through child loggers (get_logger("claude_memory_mcp.<name>")),
+    # and a logger's own filters never run for records that reach its
+    # handlers via propagation from a descendant logger. One shared
+    # instance is reused across handlers to avoid double-counting.
+    sampling_filter = SamplingFilter(_get_log_sample_rates(config))
 
     # Determine log format via Config (env-aware) or the explicit instance.
     log_format = _get_log_format(config)
@@ -345,6 +412,7 @@ def setup_logging(
         console_handler = logging.StreamHandler(sys.stdout)
         console_handler.setFormatter(console_formatter)
         console_handler.setLevel(getattr(logging, log_level.upper()))
+        console_handler.addFilter(sampling_filter)
         logger.addHandler(console_handler)
 
     # File handler with rotation
@@ -357,6 +425,7 @@ def setup_logging(
         )
         file_handler.setFormatter(file_formatter)
         file_handler.setLevel(logging.DEBUG)  # Always debug level for files
+        file_handler.addFilter(sampling_filter)
         logger.addHandler(file_handler)
 
     return logger
