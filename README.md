@@ -299,15 +299,27 @@ claude-memory-mcp/
 
 ## Performance
 
-SQLite FTS5 full-text search, benchmarked against 347 indexed conversations:
+`scripts/benchmark_search.py` was broken (unawaited async calls, measuring
+coroutine construction instead of real search time) from October 2025 until
+this was found and fixed. The previous numbers below were never actually
+measured and have been replaced with real ones. Reproduce with:
 
-- **Search Speed**: 0.2–0.5ms per query (4.4x faster than linear JSON scanning)
-- **Topic Search**: 0.3–0.4ms across 574 unique topics
-- **Write Speed**: ~33ms per conversation (includes indexing)
+```bash
+python scripts/generate_test_data.py --conversations 159
+python scripts/benchmark_search.py --storage-path ~/claude-memory-test --iterations 5
+```
+
+Measured on a 159-conversation / 7.7MB local dataset (WSL2, Python 3.12) —
+treat as order-of-magnitude, not a precise SLA, results vary by machine:
+
+- **Search Speed (SQLite FTS5)**: mean 15–18ms, median 10–13ms per query, range 0.5–82ms across 12 query types (was claimed 0.2–0.5ms; that figure was never measured)
+- **Search vs. linear JSON scan**: SQLite FTS5 is ~10x faster (mean 14.7ms vs 154.2ms; median 10.5ms vs 152.0ms) — the old "4.4x" claim had the right direction but was also never actually measured
+- **Topic Search**: mean 3.4ms, median 2.5ms (was claimed 0.3–0.4ms; that figure was never measured)
+- **Write Speed**: mean 14ms, median 14ms per ~49KB conversation, SQLite indexing included (was claimed ~33ms; that figure was never measured)
 - **Capacity**: 371 conversations in production use over 10 months
 - **Test Coverage**: 98.68% (435 tests) — 0 code smells, 0 security hotspots (SonarCloud verified)
 
-*Last benchmarked: April 2026 | [Detailed Report](docs/PERFORMANCE_BENCHMARKS.md)*
+*Last benchmarked: July 2026 | [Detailed Report](docs/PERFORMANCE_BENCHMARKS.md)*
 
 **Note for Developers**: Performance benchmarks create a `~/claude-memory-test` directory for isolated testing. Normal MCP usage only uses `~/claude-memory/`. If you see `~/claude-memory-test`, it can be safely deleted.
 

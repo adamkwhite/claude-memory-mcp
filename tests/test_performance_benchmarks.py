@@ -223,9 +223,9 @@ class TestSearchPerformance:
 
                 # Check against README claim for 159 conversations
                 if dataset_size == 159:
-                    assert (
-                        avg_duration < 5.0
-                    ), f"Search took {avg_duration:.2f}s, README claims < 5s"
+                    assert avg_duration < 5.0, (
+                        f"Search took {avg_duration:.2f}s, README claims < 5s"
+                    )
 
         finally:
             shutil.rmtree(temp_dir, ignore_errors=True)
@@ -392,9 +392,9 @@ class TestWeeklySummaryPerformance:
         )
 
         # Should complete in reasonable time (< 2 seconds)
-        assert (
-            metrics["duration_seconds"] < 2.0
-        ), f"Summary took {metrics['duration_seconds']:.2f}s"
+        assert metrics["duration_seconds"] < 2.0, (
+            f"Summary took {metrics['duration_seconds']:.2f}s"
+        )
 
 
 class TestOverallPerformance:
@@ -402,8 +402,27 @@ class TestOverallPerformance:
 
     @pytest.mark.asyncio
     async def test_readme_claims_validation(self, test_data_path, benchmark_results):
-        """Validate specific README performance claims."""
-        server = ConversationMemoryServer(str(test_data_path))
+        """Validate the README's SQLite-vs-linear-scan search claim.
+
+        A fixed per-query millisecond bound is too flaky for CI - runners
+        vary several-fold in raw speed between runs - and asserting
+        `duration < 5.0` seconds against a README claim of milliseconds (as
+        this test previously did) is 10,000x looser than the claim: a
+        catastrophically slow search would still pass. Instead this asserts
+        the *relative* claim the README actually makes (SQLite FTS is
+        faster than linear JSON scanning on the same data), which
+        self-calibrates to whatever machine runs the test. Measured locally
+        the speedup is ~10x; we assert a conservative 1.5x floor so normal
+        CI noise doesn't flake while a real regression (SQLite no faster
+        than, or slower than, linear) still fails. A generous absolute
+        ceiling is kept as a backstop against a search that hangs outright.
+        """
+        sqlite_server = ConversationMemoryServer(
+            str(test_data_path), enable_sqlite=True
+        )
+        linear_server = ConversationMemoryServer(
+            str(test_data_path), enable_sqlite=False
+        )
 
         # Get dataset stats
         stats_file = test_data_path / "generation_stats.json"
@@ -416,7 +435,6 @@ class TestOverallPerformance:
                 "total_size_bytes": 8.8 * 1024 * 1024,
             }
 
-        # Test the specific README claim: sub-5 second search with 159 conversations
         queries = [
             "python",
             "docker kubernetes",
@@ -424,35 +442,51 @@ class TestOverallPerformance:
             "machine learning ai",
         ]
 
-        max_duration = 0
-        for query in queries:
-            start = time.time()
-            await server.search_conversations(query, limit=10)
-            duration = time.time() - start
-            max_duration = max(max_duration, duration)
+        async def timed_mean_and_max(server):
+            durations = []
+            for query in queries:
+                start = time.time()
+                await server.search_conversations(query, limit=10)
+                durations.append(time.time() - start)
+            return statistics.mean(durations), max(durations)
 
-        # Check against claim
-        readme_claim_met = max_duration < 5.0
+        sqlite_mean, sqlite_max = await timed_mean_and_max(sqlite_server)
+        linear_mean, _ = await timed_mean_and_max(linear_server)
+
+        speedup = linear_mean / sqlite_mean if sqlite_mean > 0 else float("inf")
+        min_speedup = 1.5
+        claim_met = speedup >= min_speedup
 
         benchmark_results.add_result(
             operation="readme_claim_validation",
             dataset_size=stats["total_conversations"],
             metrics={
-                "duration_seconds": max_duration,
+                "duration_seconds": sqlite_max,
                 "memory_delta_mb": 0,
                 "peak_memory_mb": 0,
             },
             additional_info={
-                "claim": "sub-5 second search",
-                "actual_max_duration": max_duration,
-                "claim_met": readme_claim_met,
+                "claim": "SQLite FTS faster than linear JSON scan",
+                "sqlite_mean_seconds": sqlite_mean,
+                "linear_mean_seconds": linear_mean,
+                "speedup": speedup,
+                "claim_met": claim_met,
                 "total_size_mb": stats["total_size_bytes"] / (1024 * 1024),
             },
         )
 
-        assert (
-            readme_claim_met
-        ), f"README claim failed: search took {max_duration:.2f}s (> 5s)"
+        # Absolute backstop: ~100x the ~80-150ms worst case measured
+        # locally, so a search that hangs or regresses catastrophically
+        # still fails even if the relative comparison above somehow passes.
+        assert sqlite_max < 10.0, (
+            f"SQLite search took {sqlite_max:.2f}s (> 10s absolute backstop)"
+        )
+
+        assert claim_met, (
+            f"SQLite FTS was not meaningfully faster than linear scan: "
+            f"{speedup:.2f}x (mean {sqlite_mean * 1000:.1f}ms vs "
+            f"{linear_mean * 1000:.1f}ms), expected >= {min_speedup}x"
+        )
 
 
 @pytest.fixture(scope="session", autouse=True)
