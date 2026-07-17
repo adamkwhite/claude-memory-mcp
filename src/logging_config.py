@@ -14,7 +14,7 @@ import os
 import sys
 import uuid
 from pathlib import Path
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, ClassVar
 
 # Import path utilities for dynamic path resolution
 try:
@@ -246,7 +246,7 @@ class JSONFormatter(logging.Formatter):
                 log_data["context"] = str(log_data["context"])
             try:
                 return json.dumps(log_data)
-            except Exception:
+            except Exception:  # noqa: BLE001 - ultimate JSON-serialization fallback: a Formatter.format() must never raise (breaks the whole logging pipeline)
                 # Ultimate fallback: return basic error message
                 return json.dumps(
                     {
@@ -261,7 +261,7 @@ class JSONFormatter(logging.Formatter):
 class ColoredFormatter(logging.Formatter):
     """Colored log formatter for console output"""
 
-    COLORS = {
+    COLORS: ClassVar[dict[str, str]] = {
         "DEBUG": "\033[36m",  # Cyan
         "INFO": "\033[32m",  # Green
         "WARNING": "\033[33m",  # Yellow
@@ -299,7 +299,7 @@ def _get_log_format(config: "Config | None" = None) -> str:
     try:
         cfg = _resolve_config(config)
         log_format = (cfg.log_format or "text").lower()
-    except Exception:
+    except Exception:  # noqa: BLE001 - defensive: malformed config must never break logging setup (see comment above)
         # Defensive: never let a malformed config bring down logging setup.
         log_format = os.getenv("CLAUDE_MCP_LOG_FORMAT", "text").lower()
 
@@ -326,7 +326,7 @@ def _get_log_sample_rates(config: "Config | None" = None) -> dict:
     try:
         cfg = _resolve_config(config)
         return dict(cfg.log_sample_rates or {})
-    except Exception:
+    except Exception:  # noqa: BLE001 - defensive: malformed config must never break logging setup (see comment above)
         return {}
 
 
@@ -440,7 +440,7 @@ def log_function_call(func_name: str, **kwargs):
             context = {"type": "function_call", "function": func_name, "params": kwargs}
             params = ", ".join(f"{k}={v}" for k, v in kwargs.items() if v is not None)
             logger.debug(f"Calling {func_name}({params})", extra={"context": context})
-    except Exception:
+    except Exception:  # noqa: BLE001 - fail silently to prevent logging from crashing the application (see comment above)
         # Fail silently to prevent logging from crashing the application
         pass
 
@@ -456,7 +456,7 @@ def log_performance(func_name: str, duration: float, **metrics):
             f"Performance: {func_name} completed in {duration:.3f}s | {metric_str}",
             extra={"context": context},
         )
-    except Exception:
+    except Exception:  # noqa: BLE001 - fail silently to prevent logging from crashing the application (see comment above)
         # Fail silently to prevent logging from crashing the application
         pass
 
@@ -505,7 +505,7 @@ def log_security_event(event_type: str, details: str, severity: str = "WARNING")
             f"Security Event: {safe_event_type} | {safe_details}",
             extra={"context": context},
         )
-    except Exception:
+    except Exception:  # noqa: BLE001 - fail silently to prevent logging from crashing the application (see comment above)
         # Fail silently to prevent logging from crashing the application
         pass
 
@@ -538,7 +538,7 @@ def log_validation_failure(field: str, value: str, reason: str):
             f"Validation failed: {safe_field}='{safe_value}' | Reason: {safe_reason}",
             extra={"context": context},
         )
-    except Exception:
+    except Exception:  # noqa: BLE001 - fail silently to prevent logging from crashing the application (see comment above)
         # Fail silently to prevent logging from crashing the application
         pass
 
@@ -583,7 +583,7 @@ def log_file_operation(operation: str, file_path: str, success: bool, **details)
             f"File {operation}: {safe_file_path} | {status} | {detail_str}",
             extra={"context": context},
         )
-    except Exception:
+    except Exception:  # noqa: BLE001 - fail silently to prevent logging from crashing the application (see comment above)
         # Fail silently to prevent logging from crashing the application
         pass
 

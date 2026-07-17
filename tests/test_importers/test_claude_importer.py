@@ -206,8 +206,8 @@ class TestClaudeImporterParsingMethods:
         assert len(result["messages"]) == 1
 
     def test_parse_conversation_invalid_type(self):
-        """Test parsing invalid type raises ValueError."""
-        with pytest.raises(ValueError, match="Claude conversation data must be"):
+        """Test parsing invalid type raises TypeError."""
+        with pytest.raises(TypeError, match="Claude conversation data must be"):
             self.importer.parse_conversation(123)
 
     def test_detect_claude_format_memory(self):

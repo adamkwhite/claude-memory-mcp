@@ -80,7 +80,7 @@ class ConversationMemoryServer:
                 self.search_db = SearchDatabase(str(db_path))
                 self.use_sqlite_search = True
                 self.logger.info("SQLite FTS search enabled")
-            except Exception as e:
+            except Exception as e:  # noqa: BLE001 - optional SQLite init: fall back to linear/JSON search rather than crash server startup
                 self.logger.warning(f"Failed to initialize SQLite search: {e}")
                 self.use_sqlite_search = False
 
@@ -110,12 +110,9 @@ class ConversationMemoryServer:
         if data_conversations.exists():
             return True
 
-        # If conversations exists in root, use legacy structure
-        if legacy_conversations.exists():
-            return False
-
-        # If neither exists, default to new structure for new installations
-        return True
+        # If neither exists, default to new structure for new installations.
+        # Legacy structure only applies when conversations/ exists in root.
+        return not legacy_conversations.exists()
 
     def _init_index_files(self):
         """Initialize index and topics files if they don't exist"""
@@ -433,7 +430,7 @@ class ConversationMemoryServer:
         try:
             file_path.unlink(missing_ok=True)
         except OSError as e:
-            self.logger.error(f"Rollback: failed to remove orphaned file: {e}")
+            self.logger.exception(f"Rollback: failed to remove orphaned file: {e}")
 
         self._remove_index_entry(conversation_id)
         # Reuse the topics-diff helper with an empty new_topics set: every
@@ -455,7 +452,7 @@ class ConversationMemoryServer:
                 json.dump(index_data, f, indent=2)
 
         except (OSError, ValueError, KeyError, TypeError) as e:
-            self.logger.error(f"Rollback: failed to remove index entry: {e}")
+            self.logger.exception(f"Rollback: failed to remove index entry: {e}")
 
     _CONVERSATION_ID_RE = re.compile(r"^conv_(\d{8})_(\d{6})_[\w]+$")
 
@@ -648,7 +645,7 @@ class ConversationMemoryServer:
             with open(file_path, "w", encoding="utf-8") as f:
                 f.write(original_raw)
         except OSError as e:
-            self.logger.error(f"Rollback: failed to restore prior content: {e}")
+            self.logger.exception(f"Rollback: failed to restore prior content: {e}")
 
     def _replace_index_entry(self, conversation_data: dict, file_path: Path):
         """Replace (or insert) the index.json entry for a conversation."""
@@ -687,7 +684,7 @@ class ConversationMemoryServer:
                 json.dump(index_data, f, indent=2)
 
         except (OSError, ValueError, KeyError, TypeError) as e:
-            self.logger.error(f"Error replacing index entry: {e}")
+            self.logger.exception(f"Error replacing index entry: {e}")
 
     def _resync_topics_index(
         self,
@@ -703,7 +700,7 @@ class ConversationMemoryServer:
             with open(self.topics_file) as f:
                 topics_data = json.load(f)
         except (OSError, ValueError) as e:
-            self.logger.error(f"Error loading topics index: {e}")
+            self.logger.exception(f"Error loading topics index: {e}")
             return
 
         topics_index = topics_data.get("topics", {})
@@ -742,7 +739,7 @@ class ConversationMemoryServer:
             with open(self.topics_file, "w") as f:
                 json.dump(topics_data, f, indent=2)
         except OSError as e:
-            self.logger.error(f"Error writing topics index: {e}")
+            self.logger.exception(f"Error writing topics index: {e}")
 
     def _calculate_search_score(
         self,
@@ -799,7 +796,7 @@ class ConversationMemoryServer:
         if self.use_sqlite_search and self.search_db:
             try:
                 return self.search_db.search_conversations(query, limit)
-            except Exception as e:
+            except Exception as e:  # noqa: BLE001 - documented fallback: SQLite search failure falls through to linear search below
                 self.logger.warning(f"SQLite search failed, falling back to linear search: {e}")
                 # Fall through to linear search
 
@@ -904,7 +901,7 @@ class ConversationMemoryServer:
                 json.dump(index_data, f, indent=2)
 
         except (OSError, ValueError, KeyError, TypeError) as e:
-            self.logger.error(f"Error updating index: {e}")
+            self.logger.exception(f"Error updating index: {e}")
 
     def _update_topics_index(self, topics: list[str], conversation_id: str):
         """Update the topics index with new conversation topics"""
@@ -937,7 +934,7 @@ class ConversationMemoryServer:
                 json.dump(topics_data, f, indent=2)
 
         except (OSError, ValueError, KeyError, TypeError) as e:
-            self.logger.error(f"Error updating topics index: {e}")
+            self.logger.exception(f"Error updating topics index: {e}")
 
     async def generate_weekly_summary(self, week_offset: int = 0) -> str:
         """Generate a weekly summary of conversations"""
@@ -1059,7 +1056,7 @@ class ConversationMemoryServer:
             try:
                 db_stats = self.search_db.get_conversation_stats()
                 stats.update(db_stats)
-            except Exception as e:
+            except Exception as e:  # noqa: BLE001 - read-only diagnostics endpoint: report sqlite_error rather than crash the stats call
                 stats["sqlite_error"] = str(e)
 
         return stats
@@ -1085,7 +1082,7 @@ class ConversationMemoryServer:
 
         except ImportError:
             return {"error": "Migration module not available"}
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - MCP tool handler: report migration failure rather than crash the server
             return {"error": f"Migration failed: {str(e)}"}
 
     async def search_by_topic(self, topic: str, limit: int = 10) -> list[dict[str, Any]]:
@@ -1093,7 +1090,7 @@ class ConversationMemoryServer:
         if self.use_sqlite_search and self.search_db:
             try:
                 return self.search_db.search_by_topic(topic, limit)
-            except Exception as e:
+            except Exception as e:  # noqa: BLE001 - documented fallback: SQLite topic search failure falls through to JSON topic search
                 self.logger.warning(f"SQLite topic search failed: {e}")
 
         # Fallback to JSON-based topic search
@@ -1109,7 +1106,7 @@ class ConversationMemoryServer:
         if self.use_sqlite_search and self.search_db:
             try:
                 return self.search_db.search_by_tag(tag, limit)
-            except Exception as e:
+            except Exception as e:  # noqa: BLE001 - MCP tool handler: report tag-search failure rather than crash the server (no JSON fallback exists)
                 self.logger.warning("SQLite tag search failed: %s", e)
                 return [{"error": f"Tag search failed: {e}"}]
 
@@ -1120,7 +1117,7 @@ class ConversationMemoryServer:
         if self.use_sqlite_search and self.search_db:
             try:
                 return self.search_db.search_by_session_id(session_id, limit)
-            except Exception as e:
+            except Exception as e:  # noqa: BLE001 - MCP tool handler: report session-search failure rather than crash the server (no JSON fallback exists)
                 self.logger.warning("SQLite session search failed: %s", e)
                 return [{"error": f"Session search failed: {e}"}]
 
@@ -1133,7 +1130,7 @@ class ConversationMemoryServer:
         if self.use_sqlite_search and self.search_db:
             try:
                 return self.search_db.search_by_conversation_type(conversation_type, limit)
-            except Exception as e:
+            except Exception as e:  # noqa: BLE001 - MCP tool handler: report conversation-type-search failure rather than crash the server (no JSON fallback exists)
                 self.logger.warning("SQLite conversation-type search failed: %s", e)
                 return [{"error": f"Conversation-type search failed: {e}"}]
 
@@ -1184,6 +1181,6 @@ class ConversationMemoryServer:
                     results.append({"error": "Conversation file not found"})
                     continue
                 results.append({"title": conv.get("title", "Unknown")})
-            except Exception as e:
+            except Exception as e:  # noqa: BLE001 - legacy per-item analysis helper: report error per conversation rather than abort the whole batch
                 results.append({"error": str(e)})
         return results

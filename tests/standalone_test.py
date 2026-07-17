@@ -116,7 +116,7 @@ class ConversationMemoryServer:
                         content = f.read().lower()
                         for term in query_terms:
                             score += content.count(term)
-                except BaseException:
+                except BaseException:  # noqa: BLE001 - manual CLI diagnostic script: print/report and continue rather than crash mid-run
                     continue
 
                 if score > 0:
@@ -135,7 +135,7 @@ class ConversationMemoryServer:
             results.sort(key=lambda x: x["score"], reverse=True)
             return results[:limit]
 
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - manual CLI diagnostic script: print/report and continue rather than crash mid-run
             return [{"error": f"Search failed: {str(e)}"}]
 
     def _get_preview(self, file_path: Path, query_terms: list[str]) -> str:
@@ -160,7 +160,7 @@ class ConversationMemoryServer:
             preview = "\n".join(preview_lines[:10])  # Limit preview length
             return preview[:500] + "..." if len(preview) > 500 else preview
 
-        except BaseException:
+        except BaseException:  # noqa: BLE001 - manual CLI diagnostic script: print/report and continue rather than crash mid-run
             return "Preview unavailable"
 
     async def add_conversation(
@@ -204,7 +204,7 @@ class ConversationMemoryServer:
                 "message": f"Conversation saved successfully to {filename}",
             }
 
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - manual CLI diagnostic script: print/report and continue rather than crash mid-run
             return {
                 "status": "error",
                 "message": f"Failed to save conversation: {str(e)}",
@@ -237,7 +237,7 @@ class ConversationMemoryServer:
             # Update topics index
             await self._update_topics_index(topics)
 
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - manual CLI diagnostic script: print/report and continue rather than crash mid-run
             print(f"Failed to update index: {e}")
 
     async def _update_topics_index(self, topics: list[str]):
@@ -257,7 +257,7 @@ class ConversationMemoryServer:
             with open(self.topics_file, "w") as f:
                 json.dump(topics_data, f, indent=2)
 
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - manual CLI diagnostic script: print/report and continue rather than crash mid-run
             print(f"Failed to update topics index: {e}")
 
 

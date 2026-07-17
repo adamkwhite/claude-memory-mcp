@@ -65,8 +65,8 @@ class FormatDetector:
                     PlatformType.UNKNOWN, 0.0, f"Unsupported extension: {extension}"
                 )
 
-        except Exception as e:
-            self.logger.error(f"Error detecting format for {file_path}: {e}")
+        except Exception as e:  # noqa: BLE001 - best-effort platform classification: report UNKNOWN/0.0 rather than crash on arbitrary file content
+            self.logger.exception(f"Error detecting format for {file_path}: {e}")
             return self._create_result(PlatformType.UNKNOWN, 0.0, f"Detection error: {str(e)}")
 
     def _detect_json_format(self, file_path: Path) -> dict[str, Any]:
@@ -107,7 +107,7 @@ class FormatDetector:
 
         except json.JSONDecodeError as e:
             return self._create_result(PlatformType.UNKNOWN, 0.0, f"Invalid JSON: {str(e)}")
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - best-effort platform classification: report UNKNOWN/0.0 rather than crash on arbitrary file content
             return self._create_result(PlatformType.UNKNOWN, 0.0, f"JSON analysis error: {str(e)}")
 
     def _detect_text_format(self, file_path: Path) -> dict[str, Any]:
@@ -132,39 +132,38 @@ class FormatDetector:
 
             return self._create_result(PlatformType.UNKNOWN, 0.0, "Unknown text format")
 
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - best-effort platform classification: report UNKNOWN/0.0 rather than crash on arbitrary file content
             return self._create_result(PlatformType.UNKNOWN, 0.0, f"Text analysis error: {str(e)}")
 
     def _is_chatgpt_format(self, data: Any) -> bool:
         """Check if data matches ChatGPT export format."""
         # ChatGPT exports can be an array of conversations directly
-        if isinstance(data, list):
-            if data and isinstance(data[0], dict):
-                conv = data[0]
-                # Check for ChatGPT-specific structure (title, create_time, mapping)
-                return (
-                    isinstance(conv, dict)
-                    and "title" in conv
-                    and "create_time" in conv
-                    and "mapping" in conv
-                    and isinstance(conv["mapping"], dict)
-                )
+        if isinstance(data, list) and data and isinstance(data[0], dict):
+            conv = data[0]
+            # Check for ChatGPT-specific structure (title, create_time, mapping)
+            return (
+                isinstance(conv, dict)
+                and "title" in conv
+                and "create_time" in conv
+                and "mapping" in conv
+                and isinstance(conv["mapping"], dict)
+            )
 
         # Or wrapped in a 'conversations' key
         if (
             isinstance(data, dict)
             and "conversations" in data
             and isinstance(data["conversations"], list)
+            and data["conversations"]
         ):
             # Check a sample conversation structure
-            if data["conversations"]:
-                conv = data["conversations"][0]
-                return (
-                    isinstance(conv, dict)
-                    and "messages" in conv
-                    and isinstance(conv["messages"], list)
-                    and self._has_role_based_messages(conv["messages"])
-                )
+            conv = data["conversations"][0]
+            return (
+                isinstance(conv, dict)
+                and "messages" in conv
+                and isinstance(conv["messages"], list)
+                and self._has_role_based_messages(conv["messages"])
+            )
 
         return False
 
@@ -195,9 +194,13 @@ class FormatDetector:
         has_required = sum(1 for field in required_fields if field in data)
 
         # Check for our specific ID format
-        if "id" in data and isinstance(data["id"], str):
-            if data["id"].startswith("conv_") and len(data["id"]) > 15:
-                has_required += 1
+        if (
+            "id" in data
+            and isinstance(data["id"], str)
+            and data["id"].startswith("conv_")
+            and len(data["id"]) > 15
+        ):
+            has_required += 1
 
         return has_required >= 5
 

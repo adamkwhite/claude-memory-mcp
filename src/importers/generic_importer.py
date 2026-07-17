@@ -67,7 +67,7 @@ class GenericImporter(BaseImporter):
                 # Try to parse as text by default
                 return self._import_text_format(file_path)
 
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - top-level import boundary: report failure via ImportResult instead of crashing the batch run
             return ImportResult(
                 success=False,
                 conversations_imported=0,
@@ -127,7 +127,7 @@ class GenericImporter(BaseImporter):
 
             return self._save_conversations(conversations, file_path, "generic_text")
 
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - best-effort text parse: report failure via ImportResult instead of crashing
             return ImportResult(
                 success=False,
                 conversations_imported=0,
@@ -187,7 +187,7 @@ class GenericImporter(BaseImporter):
 
             return self._save_conversations(conversations, file_path, "generic_csv")
 
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - best-effort CSV parse: report failure via ImportResult instead of crashing
             return ImportResult(
                 success=False,
                 conversations_imported=0,
@@ -209,7 +209,7 @@ class GenericImporter(BaseImporter):
 
             return self._save_conversations(conversations, file_path, "generic_xml")
 
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - best-effort XML parse: report failure via ImportResult instead of crashing
             return ImportResult(
                 success=False,
                 conversations_imported=0,
@@ -232,7 +232,7 @@ class GenericImporter(BaseImporter):
         elif isinstance(raw_data, list):
             return self._parse_list_as_conversation(raw_data)
         else:
-            raise ValueError("Generic conversation data must be string, dict, or list")
+            raise TypeError("Generic conversation data must be string, dict, or list")
 
     def _parse_json_array(self, data: list[Any]) -> list[dict[str, Any]]:
         """Parse JSON array - could be conversations or messages."""
@@ -245,14 +245,14 @@ class GenericImporter(BaseImporter):
                 try:
                     conv = self.parse_conversation(item)
                     conversations.append(conv)
-                except Exception as e:
+                except Exception as e:  # noqa: BLE001 - resilience: skip unparseable item, keep processing the rest of the batch
                     self.logger.warning(f"Failed to parse conversation item: {e}")
         else:
             # Array of messages or other data - combine into single conversation
             try:
                 combined_conv = self._parse_list_as_conversation(data)
                 conversations.append(combined_conv)
-            except Exception as e:
+            except Exception as e:  # noqa: BLE001 - resilience: skip unparseable item, keep processing the rest of the batch
                 self.logger.warning(f"Failed to combine array into conversation: {e}")
 
         return conversations
@@ -277,7 +277,7 @@ class GenericImporter(BaseImporter):
         try:
             conv = self.parse_conversation(data)
             return [conv]
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - resilience: skip unparseable item, keep processing the rest of the batch
             self.logger.warning("Failed to parse conversation object: %s", e)
             return []
 
@@ -285,7 +285,7 @@ class GenericImporter(BaseImporter):
         """Parse nested conversation arrays within object."""
         conversations = []
 
-        for key, value in data.items():
+        for value in data.values():
             if self._is_valid_conversation_array(value):
                 conversations.extend(self._process_conversation_array(value))
 
@@ -307,7 +307,7 @@ class GenericImporter(BaseImporter):
             try:
                 conv = self.parse_conversation(item)
                 conversations.append(conv)
-            except Exception as e:
+            except Exception as e:  # noqa: BLE001 - resilience: skip unparseable item, keep processing the rest of the batch
                 self.logger.warning("Failed to parse nested conversation: %s", e)
 
         return conversations
@@ -317,7 +317,7 @@ class GenericImporter(BaseImporter):
         try:
             conv = self._parse_dict_as_conversation(data)
             return [conv]
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - resilience: skip unparseable item, keep processing the rest of the batch
             self.logger.warning("Failed to parse object as conversation: %s", e)
             return []
 
@@ -402,7 +402,7 @@ class GenericImporter(BaseImporter):
                 try:
                     conv = self._parse_xml_element_as_conversation(elem)
                     conversations.append(conv)
-                except Exception as e:
+                except Exception as e:  # noqa: BLE001 - resilience: skip unparseable item, keep processing the rest of the batch
                     self.logger.warning("Failed to parse XML conversation: %s", e)
 
         # If no conversations found, parse entire XML as single conversation
@@ -441,10 +441,7 @@ class GenericImporter(BaseImporter):
             r">\s*\w+:\s*",  # "> Speaker: message"
         ]
 
-        for pattern in patterns:
-            if re.search(pattern, content):
-                return True
-        return False
+        return any(re.search(pattern, content) for pattern in patterns)
 
     def _has_message_blocks(self, content: str) -> bool:
         """Check if text has message block structure."""
@@ -834,12 +831,12 @@ class GenericImporter(BaseImporter):
                         f"Invalid conversation format for ID: {conv.get('id', 'unknown')}"
                     )
 
-            except Exception as e:
+            except Exception as e:  # noqa: BLE001 - resilience: skip unsaveable conversation, keep processing the rest of the batch
                 failed_count += 1
                 conv_id = conv.get("id", "unknown")
                 error_msg = f"Failed to save conversation {conv_id}: {str(e)}"
                 errors.append(error_msg)
-                self.logger.error(error_msg)
+                self.logger.exception(error_msg)
 
         return ImportResult(
             success=imported_count > 0,

@@ -49,7 +49,7 @@ async def validate_memory_system():
                             print(f"   📄 Top result: {title}...")
                 else:
                     print(f"⚠️  Search '{query}': No results found")
-            except Exception as e:
+            except Exception as e:  # noqa: BLE001 - manual CLI diagnostic script: print/report and continue rather than crash mid-run
                 print(f"❌ Search '{query}' failed: {e}")
 
         # Test 2: Add a test conversation
@@ -75,7 +75,7 @@ This is a test conversation to validate the memory system is working.
                 print("✅ Add conversation: Success")
             else:
                 print(f"❌ Add conversation failed: {result.get('message', 'Unknown error')}")
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - manual CLI diagnostic script: print/report and continue rather than crash mid-run
             print(f"❌ Add conversation failed: {e}")
 
         # Test 3: Search for the test conversation
@@ -94,7 +94,7 @@ This is a test conversation to validate the memory system is working.
                     print("⚠️  Test conversation not found in search results")
             else:
                 print("⚠️  No search results for test conversation")
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - manual CLI diagnostic script: print/report and continue rather than crash mid-run
             print(f"❌ Search for test conversation failed: {e}")
 
         # Test 4: Weekly summary generation
@@ -113,14 +113,14 @@ This is a test conversation to validate the memory system is working.
                 print(f"   📄 Preview: {preview[:100]}...")
             else:
                 print("⚠️  Weekly summary: No summary generated")
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - manual CLI diagnostic script: print/report and continue rather than crash mid-run
             print(f"❌ Weekly summary failed: {e}")
 
         print("\n🎯 Validation Complete")
         print("=" * 40)
         print("💡 If all tests show ✅, your memory system is working correctly!")
 
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 - manual CLI diagnostic script: print/report and continue rather than crash mid-run
         print(f"❌ Critical error during validation: {e}")
         return False
 
@@ -162,7 +162,7 @@ async def show_system_stats():
                     total_results += count
                     print(f"🏷️  '{term}': {count} conversations")
                 total_searches += 1
-            except Exception:
+            except Exception:  # noqa: BLE001 - manual CLI diagnostic script: print/report and continue rather than crash mid-run
                 pass
 
         if total_searches > 0:
@@ -171,7 +171,7 @@ async def show_system_stats():
 
         print("\n💾 Memory system is operational and searchable!")
 
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 - manual CLI diagnostic script: print/report and continue rather than crash mid-run
         print(f"❌ Error getting system stats: {e}")
 
 
