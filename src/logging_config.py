@@ -96,6 +96,43 @@ class CorrelationIdFilter(logging.Filter):
         return True
 
 
+class SamplingFilter(logging.Filter):
+    """Drop a configurable fraction of high-frequency log records.
+
+    A rate of N means "log 1 out of every N records of that operation
+    type" (type == ``record.context["type"]``, falling back to
+    ``"default"`` for records without structured context). A type absent
+    from ``sample_rates`` — the default, empty-dict case — is never
+    sampled, so this is a no-op until a rate is explicitly configured.
+
+    WARNING and above are ALWAYS logged, regardless of sample rate: never
+    sample away an error. ponytail: a plain per-type counter, not an
+    adaptive-sampling engine; upgrade only if a real need for
+    frequency-adaptive rates shows up.
+    """
+
+    def __init__(self, sample_rates: Optional[dict] = None):
+        super().__init__()
+        self.sample_rates = sample_rates or {}
+        self._counters: dict = {}
+
+    def filter(self, record: logging.LogRecord) -> bool:
+        if record.levelno >= logging.WARNING:
+            return True
+
+        context = getattr(record, "context", None)
+        op_type = (
+            context.get("type", "default") if isinstance(context, dict) else "default"
+        )
+        rate = self.sample_rates.get(op_type, 1)
+        if rate <= 1:
+            return True
+
+        count = self._counters.get(op_type, 0) + 1
+        self._counters[op_type] = count
+        return count % rate == 0
+
+
 class JSONFormatter(logging.Formatter):
     """
     JSON formatter for structured logging output.
@@ -228,6 +265,19 @@ def _get_log_format(config: "Optional[Config]" = None) -> str:
     return log_format
 
 
+def _get_log_sample_rates(config: "Optional[Config]" = None) -> dict:
+    """Get per-operation-type log sample rates, preferring an explicit Config.
+
+    Mirrors :func:`_get_log_format`'s defensive fallback: a malformed config
+    must never break logging setup, so any error just disables sampling.
+    """
+    try:
+        cfg = _resolve_config(config)
+        return dict(cfg.log_sample_rates or {})
+    except Exception:
+        return {}
+
+
 def setup_logging(
     log_level: str = "INFO",
     log_file: Optional[str] = None,
@@ -265,6 +315,7 @@ def setup_logging(
     logger.handlers = []
     logger.filters = []
     logger.addFilter(CorrelationIdFilter())
+    logger.addFilter(SamplingFilter(_get_log_sample_rates(config)))
 
     # Determine log format via Config (env-aware) or the explicit instance.
     log_format = _get_log_format(config)

@@ -342,6 +342,65 @@ class TestValidation:
         with pytest.raises(ConfigError, match="Invalid log_format"):
             cfg.validate()
 
+    def test_log_sample_rates_defaults_to_empty_dict(self) -> None:
+        assert Config().log_sample_rates == {}
+
+    def test_log_sample_rates_non_dict_raises(self, writable_storage: Path) -> None:
+        cfg = Config(storage_path=str(writable_storage), log_sample_rates="nope")  # type: ignore[arg-type]
+        with pytest.raises(ConfigError, match="log_sample_rates must be a dict"):
+            cfg.validate()
+
+    def test_log_sample_rates_non_int_value_raises(
+        self, writable_storage: Path
+    ) -> None:
+        cfg = Config(
+            storage_path=str(writable_storage), log_sample_rates={"search": "ten"}
+        )  # type: ignore[dict-item]
+        with pytest.raises(ConfigError, match="log_sample_rates must be a dict"):
+            cfg.validate()
+
+    def test_log_sample_rates_zero_or_negative_raises(
+        self, writable_storage: Path
+    ) -> None:
+        cfg = Config(storage_path=str(writable_storage), log_sample_rates={"search": 0})
+        with pytest.raises(ConfigError, match="log_sample_rates must be a dict"):
+            cfg.validate()
+
+    def test_log_sample_rates_from_env_json(
+        self, tmp_path: Path, writable_storage: Path
+    ) -> None:
+        env = {
+            "CLAUDE_MEMORY_PATH": str(writable_storage),
+            "CLAUDE_MCP_LOG_SAMPLE_RATES": '{"performance": 10, "file_operation": 50}',
+        }
+        cfg = Config.load(config_file=tmp_path / "no.json", env=env)
+        assert cfg.log_sample_rates == {"performance": 10, "file_operation": 50}
+
+    def test_log_sample_rates_from_env_invalid_json_raises(
+        self, tmp_path: Path, writable_storage: Path
+    ) -> None:
+        env = {
+            "CLAUDE_MEMORY_PATH": str(writable_storage),
+            "CLAUDE_MCP_LOG_SAMPLE_RATES": "{not json",
+        }
+        with pytest.raises(ConfigError, match="Invalid JSON for log_sample_rates"):
+            Config.load(config_file=tmp_path / "no.json", env=env)
+
+    def test_log_sample_rates_from_file(
+        self, tmp_path: Path, writable_storage: Path, empty_env: dict
+    ) -> None:
+        config_file = tmp_path / "config.json"
+        config_file.write_text(
+            json.dumps(
+                {
+                    "storage_path": str(writable_storage),
+                    "log_sample_rates": {"search": 10},
+                }
+            )
+        )
+        cfg = Config.load(config_file=config_file, env=empty_env)
+        assert cfg.log_sample_rates == {"search": 10}
+
     def test_invalid_log_level(self, writable_storage: Path) -> None:
         cfg = Config(storage_path=str(writable_storage), log_level="LOUD")
         with pytest.raises(ConfigError, match="Invalid log_level"):
