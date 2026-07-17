@@ -25,6 +25,7 @@ import pytest
 sys.path.insert(0, str(Path(__file__).parent.parent))
 sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
 
+from conversation_memory import ConversationMemoryServer  # noqa: E402
 from migrate_to_sqlite import ConversationMigrator  # noqa: E402
 
 
@@ -172,3 +173,32 @@ def test_verify_migration_reports_error_on_real_search_failure(temp_storage):
 
     assert "error" in result
     assert "sqlite_count" not in result
+
+
+@pytest.mark.asyncio
+async def test_migrate_to_sqlite_import_is_not_dead(tmp_path):
+    """ConversationMemoryServer.migrate_to_sqlite() must actually import the migrator.
+
+    Regression: the method used a RELATIVE import (``from .migrate_to_sqlite
+    import ConversationMigrator``) inside conversation_memory.py, which is
+    always loaded as a top-level module (``__package__`` is ""). So the import
+    raised ImportError on every call, the method's own ``except ImportError``
+    swallowed it, and the whole migration feature silently returned
+    {"error": "Migration module not available"} forever. #156 converted the
+    module-level imports to the canonical bare style but missed this one
+    because it lives inside a function body.
+
+    This asserts the import path resolves -- i.e. the feature is reachable at
+    all. It fails if anyone reintroduces the relative form.
+    """
+    server = ConversationMemoryServer(str(tmp_path), enable_sqlite=True)
+
+    result = await server.migrate_to_sqlite()
+
+    assert result.get("error") != "Migration module not available", (
+        "migrate_to_sqlite() cannot import ConversationMigrator -- the feature "
+        "is dead. Check for a relative import inside the method body."
+    )
+    # An empty store migrates zero conversations, but it must actually report
+    # stats rather than an import failure.
+    assert "total_found" in result
