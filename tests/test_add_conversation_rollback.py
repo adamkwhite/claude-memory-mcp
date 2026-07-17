@@ -1,12 +1,14 @@
 #!/usr/bin/env python3
-"""Tests for add_conversation's rollback-on-partial-failure behavior
-(todos.md 2.4.3).
+"""Tests for add_conversation/update_conversation rollback-on-partial-failure
+behavior (todos.md 2.4.3).
 
-If the JSON file write succeeds but the SQLite index update fails, the
-file + index.json/topics.json entries used to be left behind while the
-call still reported "success" (the SQLite return value was silently
-discarded). These tests force a *real* SQLite failure (not a mock) and
-assert nothing is left orphaned.
+Both methods call SearchDatabase.add_conversation(), which catches
+sqlite3.Error internally and returns False rather than raising. Both used
+to ignore that return value: add_conversation left an orphaned file +
+index entries behind while still reporting "success"; update_conversation
+left the file overwritten with new content (with no way back) while doing
+the same. These tests force a *real* SQLite failure (not a mock) and
+assert nothing is left inconsistent.
 """
 
 import json
@@ -152,3 +154,66 @@ async def test_rollback_helper_is_best_effort_on_missing_file(server):
         e.get("conversation_id") != "conv_20260101_000000_ffffffff"
         for e in topics.get("python", [])
     )
+
+
+@pytest.mark.asyncio
+async def test_update_conversation_rolls_back_on_real_sqlite_failure(server):
+    """update_conversation had the identical ignored-return-value bug.
+    Unlike add_conversation, there's no new file to unlink -- the record
+    already existed -- so "rollback" here means restoring the file's
+    prior content rather than deleting it. Force a genuine SQLite failure
+    (drop the table) and assert the file, index.json, and topics.json all
+    still reflect the *pre-update* state.
+    """
+    if not server.use_sqlite_search:
+        pytest.skip("SQLite search unavailable")
+
+    created = await server.add_conversation(
+        content="Original notes about python", title="Original Title"
+    )
+    assert created["status"] == "success"
+    conv_id = Path(created["file_path"]).stem
+    file_path = Path(created["file_path"])
+
+    original_raw = file_path.read_text(encoding="utf-8")
+    original_index = _index_conversations(server)
+    original_topics = _topics_index(server)
+
+    with sqlite3.connect(server.search_db.db_path) as conn:
+        conn.execute("DROP TABLE conversations")
+        conn.commit()
+
+    result = await server.update_conversation(
+        conv_id, content="New content about kubernetes and docker"
+    )
+
+    assert result["status"] == "error"
+    assert "restored" in result["message"]
+
+    # File content reverted to exactly what it was before the update.
+    assert file_path.read_text(encoding="utf-8") == original_raw
+    # index.json/topics.json were never touched (SQLite failure short-
+    # circuits before either is called), so they're still the originals.
+    assert _index_conversations(server) == original_index
+    assert _topics_index(server) == original_topics
+
+
+@pytest.mark.asyncio
+async def test_update_conversation_succeeds_normally(server):
+    """Baseline / non-regression: a healthy SQLite index still works."""
+    if not server.use_sqlite_search:
+        pytest.skip("SQLite search unavailable")
+
+    created = await server.add_conversation(
+        content="Original notes about python", title="Original Title"
+    )
+    conv_id = Path(created["file_path"]).stem
+
+    result = await server.update_conversation(conv_id, title="Renamed")
+    assert result["status"] == "success"
+    assert _load_conversation(server, created["file_path"])["title"] == "Renamed"
+
+
+def _load_conversation(server, file_path):
+    with open(file_path, "r", encoding="utf-8") as f:
+        return json.load(f)

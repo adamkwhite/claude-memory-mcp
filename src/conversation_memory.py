@@ -519,7 +519,8 @@ class ConversationMemoryServer:
 
         try:
             async with aiofiles.open(file_path, "r", encoding="utf-8") as f:
-                conversation_data = json.loads(await f.read())
+                original_raw = await f.read()
+                conversation_data = json.loads(original_raw)
         except (OSError, ValueError) as e:
             return {
                 "status": "error",
@@ -597,9 +598,29 @@ class ConversationMemoryServer:
 
         # Resync derived stores. INSERT OR REPLACE on the SQLite row also
         # cascades through the FTS triggers, so the FTS index stays current.
+        #
+        # Its return value was previously ignored -- the same latent defect
+        # fixed in add_conversation. Unlike add_conversation there's no new
+        # file to unlink on failure: update_conversation mutates an
+        # *existing* record, so "rollback" here means restoring the file's
+        # prior content rather than deleting it. index.json/topics.json
+        # haven't been touched yet at this point (the calls below haven't
+        # run), so there's nothing to revert there -- returning early is
+        # enough to keep them consistent with the restored file.
         if self.use_sqlite_search and self.search_db:
             relative_path = str(file_path.relative_to(self.storage_path))
-            self.search_db.add_conversation(conversation_data, relative_path)
+            sqlite_ok = self.search_db.add_conversation(
+                conversation_data, relative_path
+            )
+            if not sqlite_ok:
+                self._rollback_update_conversation(file_path, original_raw)
+                return {
+                    "status": "error",
+                    "message": (
+                        "Failed to update conversation: SQLite index update "
+                        "failed; file content was restored to its prior state"
+                    ),
+                }
 
         self._replace_index_entry(conversation_data, file_path)
         self._resync_topics_index(old_topics, new_topics, conversation_id)
@@ -615,6 +636,24 @@ class ConversationMemoryServer:
                 f"({', '.join(changes) if changes else 'note-only'})"
             ),
         }
+
+    def _rollback_update_conversation(self, file_path: Path, original_raw: str) -> None:
+        """Undo the file write from a failed update_conversation call.
+
+        update_conversation mutates an *existing* record in place, so
+        rollback here means restoring the file's prior on-disk content
+        (captured before the update ran) rather than unlinking it the way
+        _rollback_add_conversation does for a brand-new file -- deleting
+        would destroy a previously-valid conversation. index.json and
+        topics.json are untouched by the time this runs (see call site),
+        so there's nothing to revert there. Best-effort: logged, not
+        raised, since we're already in an error path.
+        """
+        try:
+            with open(file_path, "w", encoding="utf-8") as f:
+                f.write(original_raw)
+        except OSError as e:
+            self.logger.error(f"Rollback: failed to restore prior content: {e}")
 
     def _replace_index_entry(self, conversation_data: Dict, file_path: Path):
         """Replace (or insert) the index.json entry for a conversation."""
