@@ -14,6 +14,7 @@ from mcp.server.fastmcp import FastMCP
 try:
     from .config import Config
     from .conversation_memory import ConversationMemoryServer as CoreMemoryServer
+    from .exceptions import ValidationError
     from .logging_config import (
         get_logger,
         init_default_logging,
@@ -21,16 +22,29 @@ try:
         log_security_event,
         set_correlation_id,
     )
+    from .validators import (
+        validate_conversation_type,
+        validate_session_id,
+        validate_tags,
+        validate_user_id,
+    )
 except ImportError:
     # For direct imports during testing
     from config import Config
     from conversation_memory import ConversationMemoryServer as CoreMemoryServer
+    from exceptions import ValidationError
     from logging_config import (
         get_logger,
         init_default_logging,
         log_function_call,
         log_security_event,
         set_correlation_id,
+    )
+    from validators import (
+        validate_conversation_type,
+        validate_session_id,
+        validate_tags,
+        validate_user_id,
     )
 
 # Constants
@@ -219,9 +233,19 @@ async def add_conversation(
     universal metadata fields introduced in PR #114; when provided, they are
     persisted alongside the conversation and indexed for metadata search
     (``search_by_tag`` / ``search_by_session_id`` /
-    ``search_by_conversation_type``).
+    ``search_by_conversation_type``). All four are validated/sanitized
+    before storage since this data may originate from external imports.
     """
     set_correlation_id()
+
+    try:
+        session_id = validate_session_id(session_id)
+        user_id = validate_user_id(user_id)
+        tags = validate_tags(tags)
+        conversation_type = validate_conversation_type(conversation_type)
+    except ValidationError as e:
+        return f"Status: error\n{e}"
+
     result = await memory_server.add_conversation(
         content,
         title,
@@ -257,7 +281,21 @@ async def update_conversation(
     Tag ops: ``set_tags`` replaces the full list; ``add_tags`` and
     ``remove_tags`` mutate it. ``set_tags`` is mutually exclusive with the
     other two; pass ``set_tags=[]`` to clear all tags.
+
+    Metadata fields (tags, conversation_type, session_id, user_id) are
+    validated/sanitized before storage since this data may originate from
+    external imports.
     """
+    try:
+        add_tags = validate_tags(add_tags)
+        remove_tags = validate_tags(remove_tags)
+        set_tags = validate_tags(set_tags)
+        conversation_type = validate_conversation_type(conversation_type)
+        session_id = validate_session_id(session_id)
+        user_id = validate_user_id(user_id)
+    except ValidationError as e:
+        return f"Status: error\n{e}"
+
     result = await memory_server.update_conversation(
         conversation_id,
         content=content,

@@ -1,13 +1,15 @@
 """Input validation for Claude Memory MCP system"""
 
+import json
 import re
 from datetime import datetime
-from typing import Optional
+from typing import Any, Dict, List, Optional
 
 try:
     from .exceptions import (
         ContentValidationError,
         DateValidationError,
+        MetadataValidationError,
         QueryValidationError,
         TitleValidationError,
         ValidationError,
@@ -17,6 +19,7 @@ except ImportError:
     from exceptions import (
         ContentValidationError,
         DateValidationError,
+        MetadataValidationError,
         QueryValidationError,
         TitleValidationError,
         ValidationError,
@@ -27,6 +30,22 @@ MAX_TITLE_LENGTH = 200
 MAX_CONTENT_LENGTH = 1_000_000  # 1MB limit
 MAX_QUERY_LENGTH = 500
 MIN_CONTENT_LENGTH = 1
+
+# Universal metadata field bounds (tags/session_id/user_id/conversation_type/
+# custom_fields — see PR #114). Chosen generously against real importer
+# output (src/importers/*.py: short slug-style tags like "workspace:foo" or
+# "gizmo:xxxx", UUID-ish session/user ids, a handful of scalar/list entries
+# in custom_fields such as "files_involved") so legitimate ChatGPT/Cursor
+# imports are never rejected, while still bounding what an external export
+# can push into JSON files + the SQLite FTS index.
+MAX_TAG_LENGTH = 100
+MAX_TAGS_COUNT = 50
+MAX_SESSION_ID_LENGTH = 256
+MAX_USER_ID_LENGTH = 256
+MAX_CONVERSATION_TYPE_LENGTH = 100
+MAX_CUSTOM_FIELDS_KEYS = 100
+MAX_CUSTOM_FIELDS_DEPTH = 5
+MAX_CUSTOM_FIELDS_BYTES = 100_000  # 100KB serialized (well under content's 1MB)
 
 # Dangerous patterns to prevent security issues
 PATH_TRAVERSAL_PATTERN = re.compile(r"\.{2}[/\\]|[/\\]\.{2}")
@@ -219,3 +238,175 @@ def validate_limit(limit: int) -> int:
         return 100
 
     return limit
+
+
+def _strip_control_chars(value: str) -> str:
+    """Remove control chars (keeping safe whitespace), matching validate_title."""
+    return "".join(
+        char
+        for char in value
+        if char in SAFE_CONTROL_CHARS or not CONTROL_CHAR_PATTERN.match(char)
+    ).strip()
+
+
+def _validate_identifier(
+    value: Optional[str], field_name: str, max_length: int
+) -> Optional[str]:
+    """Shared validation for single-string metadata fields (session_id,
+    user_id, conversation_type). Returns None for missing/blank-after-clean
+    input so "not provided" round-trips as None rather than an empty string.
+    """
+    if value is None:
+        return None
+
+    if not isinstance(value, str):
+        raise MetadataValidationError(f"{field_name} must be a string")
+
+    if len(value) > max_length:
+        raise MetadataValidationError(
+            f"{field_name} too long: {len(value)} characters (max {max_length})"
+        )
+
+    if NULL_BYTE_PATTERN.search(value):
+        raise MetadataValidationError(f"{field_name} contains null bytes")
+
+    cleaned = _strip_control_chars(value)
+    return cleaned or None
+
+
+def validate_session_id(session_id: Optional[str]) -> Optional[str]:
+    """Validate the universal ``session_id`` metadata field.
+
+    Raises:
+        MetadataValidationError: If session_id is invalid
+    """
+    return _validate_identifier(session_id, "session_id", MAX_SESSION_ID_LENGTH)
+
+
+def validate_user_id(user_id: Optional[str]) -> Optional[str]:
+    """Validate the universal ``user_id`` metadata field.
+
+    Raises:
+        MetadataValidationError: If user_id is invalid
+    """
+    return _validate_identifier(user_id, "user_id", MAX_USER_ID_LENGTH)
+
+
+def validate_conversation_type(conversation_type: Optional[str]) -> Optional[str]:
+    """Validate the universal ``conversation_type`` metadata field.
+
+    Raises:
+        MetadataValidationError: If conversation_type is invalid
+    """
+    return _validate_identifier(
+        conversation_type, "conversation_type", MAX_CONVERSATION_TYPE_LENGTH
+    )
+
+
+def validate_tags(tags: Optional[List[str]]) -> Optional[List[str]]:
+    """Validate the universal ``tags`` metadata field.
+
+    ``None`` is returned unchanged (distinguishes "not provided" from an
+    explicit empty list, which callers such as ``update_conversation``'s
+    ``set_tags`` use to mean "clear all tags").
+
+    Raises:
+        MetadataValidationError: If tags is invalid
+    """
+    if tags is None:
+        return None
+
+    if not isinstance(tags, list):
+        raise MetadataValidationError("Tags must be a list of strings")
+
+    if len(tags) > MAX_TAGS_COUNT:
+        raise MetadataValidationError(
+            f"Too many tags: {len(tags)} (max {MAX_TAGS_COUNT})"
+        )
+
+    cleaned_tags: List[str] = []
+    for tag in tags:
+        if not isinstance(tag, str):
+            raise MetadataValidationError(
+                f"Tag must be a string, got {type(tag).__name__}"
+            )
+
+        if not tag:
+            continue
+
+        if len(tag) > MAX_TAG_LENGTH:
+            raise MetadataValidationError(
+                f"Tag too long: {len(tag)} characters (max {MAX_TAG_LENGTH})"
+            )
+
+        if NULL_BYTE_PATTERN.search(tag):
+            raise MetadataValidationError("Tag contains null bytes")
+
+        cleaned_tag = _strip_control_chars(tag)
+        if cleaned_tag:
+            cleaned_tags.append(cleaned_tag)
+
+    return cleaned_tags
+
+
+def _check_custom_fields_depth(value: Any, current_depth: int = 0) -> None:
+    """Recursively walk a custom_fields value, rejecting excessive nesting."""
+    if current_depth > MAX_CUSTOM_FIELDS_DEPTH:
+        raise MetadataValidationError(
+            f"custom_fields nesting too deep (max {MAX_CUSTOM_FIELDS_DEPTH} levels)"
+        )
+    if isinstance(value, dict):
+        for nested in value.values():
+            _check_custom_fields_depth(nested, current_depth + 1)
+    elif isinstance(value, list):
+        for nested in value:
+            _check_custom_fields_depth(nested, current_depth + 1)
+
+
+def validate_custom_fields(
+    custom_fields: Optional[Dict[str, Any]],
+) -> Dict[str, Any]:
+    """Validate the universal ``custom_fields`` metadata field.
+
+    Bounds: key count, nesting depth, and total serialized size. Values are
+    otherwise left as-is (custom_fields is an open extensibility bucket) as
+    long as they're JSON-serializable, matching how it's persisted (JSON
+    file + ``custom_fields_json`` SQLite column).
+
+    Raises:
+        MetadataValidationError: If custom_fields is invalid
+    """
+    if not custom_fields:
+        return {}
+
+    if not isinstance(custom_fields, dict):
+        raise MetadataValidationError("custom_fields must be a dictionary")
+
+    if len(custom_fields) > MAX_CUSTOM_FIELDS_KEYS:
+        raise MetadataValidationError(
+            f"custom_fields has too many keys: {len(custom_fields)} "
+            f"(max {MAX_CUSTOM_FIELDS_KEYS})"
+        )
+
+    _check_custom_fields_depth(custom_fields)
+
+    try:
+        serialized = json.dumps(custom_fields)
+    except (TypeError, ValueError) as e:
+        raise MetadataValidationError(f"custom_fields must be JSON-serializable: {e}")
+
+    # json.dumps escapes null bytes as a backslash-u0000 sequence rather
+    # than emitting a raw null byte, so NULL_BYTE_PATTERN (which matches a
+    # raw null byte) never fires on the serialized form -- check both.
+    null_byte_escape = "\\u0000"
+    if NULL_BYTE_PATTERN.search(serialized) or null_byte_escape in serialized:
+        raise MetadataValidationError("custom_fields contains null bytes")
+
+    serialized_bytes = len(serialized.encode("utf-8"))
+    if serialized_bytes > MAX_CUSTOM_FIELDS_BYTES:
+        raise MetadataValidationError(
+            f"custom_fields too large: {serialized_bytes} bytes "
+            f"(max {MAX_CUSTOM_FIELDS_BYTES})"
+        )
+
+    return custom_fields
