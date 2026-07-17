@@ -157,7 +157,12 @@ jobs:
     - name: Run baseline performance (main branch)
       run: |
         git checkout main
-        python scripts/generate_test_data.py --conversations 159 --clean --storage-path ~/baseline-test
+        # NOTE: test_data_path fixture in test_performance_benchmarks.py is
+        # hardcoded to ~/claude-memory-test (not configurable) - the dataset
+        # must be generated there, not a custom --storage-path, or the test
+        # searches an empty auto-created directory and "passes" comparing
+        # ~0s against ~0s regardless of real performance.
+        python scripts/generate_test_data.py --conversations 159 --clean
         PYTHONPATH=. python -m pytest tests/test_performance_benchmarks.py::TestOverallPerformance::test_readme_claims_validation -v --tb=short
         # Rename results
         mkdir -p baseline_results
@@ -166,7 +171,7 @@ jobs:
     - name: Run current performance (PR branch)
       run: |
         git checkout ${{ github.event.pull_request.head.sha }}
-        python scripts/generate_test_data.py --conversations 159 --clean --storage-path ~/current-test
+        python scripts/generate_test_data.py --conversations 159 --clean
         PYTHONPATH=. python -m pytest tests/test_performance_benchmarks.py::TestOverallPerformance::test_readme_claims_validation -v --tb=short
 
     - name: Compare performance
