@@ -21,7 +21,7 @@
 - ✅ **SonarCloud Quality Gates**: All code quality issues resolved, 80%+ coverage on new code
 - ✅ **Universal Memory Framework**: Complete architecture for multi-platform support
 - ✅ **ChatGPT Integration**: Production-ready with real export validation and jsonschema validation
-- ✅ **SQLite FTS Search**: 4.4x performance improvement over linear search
+- ✅ **SQLite FTS Search**: ~10x faster than linear JSON scan (measured, see README Performance section; the previously-claimed 4.4x was never actually measured — `scripts/benchmark_search.py` had unawaited async calls that silently timed coroutine construction instead of search, fixed in `fix/performance-truth`)
 - ✅ **CI/CD Pipeline**: GitHub Actions with SonarCloud integration fully operational
 
 ### Open architectural follow-ups (see `todos.md` for full list)
@@ -366,7 +366,7 @@ The system uses a pluggable importer architecture where each AI platform has a d
 - **Backward Compatibility**: Existing Claude conversations remain fully functional
 - **Privacy-First Development**: Tools for sanitizing real export data for testing
 - **Extensible Architecture**: Easy addition of new AI platforms
-- **Performance-Optimized**: SQLite FTS5 for sub-3ms search times
+- **Performance-Optimized**: SQLite FTS5 search, measured ~10-20ms typical per query (see README Performance section) — not sub-3ms as previously claimed
 
 ## Next Steps
 
@@ -527,7 +527,7 @@ The system uses a pluggable importer architecture where each AI platform has a d
 
 ### **Search Optimization Implementation ✅ MAJOR PERFORMANCE IMPROVEMENT**
 - **Achievement**: Implemented SQLite FTS5 full-text search replacing linear search
-- **Performance**: 4.4x faster search with 77.5% performance improvement
+- **Performance**: claimed 4.4x faster / 77.5% improvement at the time — never actually measured (benchmark script had unawaited async calls); re-measured July 2026 at ~10x faster than linear scan, see README Performance section
 - **Features**:
   - SQLite FTS5 database with full-text search and relevance scoring
   - Automatic migration from JSON to SQLite with verification
@@ -547,11 +547,11 @@ The system uses a pluggable importer architecture where each AI platform has a d
 - **Branch**: `feature/search-optimization-analysis`
 - **Test Coverage**: 98.68% (industry-leading)
 - **Code Quality**: 0 code smells, 0 security hotspots
-- **Search Performance**: SQLite FTS5 enabled (4.4x faster than linear)
+- **Search Performance**: SQLite FTS5 enabled, ~10x faster than linear (measured July 2026; the original 4.4x figure was never actually measured)
 - **Production Ready**: High-performance search with SQLite optimization
 
 ### **Completed Major Features**
-1. ✅ **SQLite FTS Search** - 4.4x performance improvement with full-text search
+1. ✅ **SQLite FTS Search** - full-text search, ~10x faster than linear scan (measured July 2026; superseded the unverified 4.4x figure)
 2. ✅ **Path Portability** - Universal deployment support (PRs #36, #37, #38)
 3. ✅ **Test Coverage** - 98.68% with comprehensive edge case testing
 4. ✅ **Input Validation** - Security-focused validation preventing attacks
@@ -564,7 +564,7 @@ The system uses a pluggable importer architecture where each AI platform has a d
 4. **Multi-user Support** - Architecture for supporting multiple users/sessions
 
 ### **Technical Excellence Achieved**
-- **Search Performance**: Sub-3ms search times vs 10ms+ linear search
+- **Search Performance**: ~10-20ms typical search times vs ~150ms+ linear search (measured July 2026; not sub-3ms as previously claimed, see README Performance section)
 - **Scalability**: Efficient indexing handles large conversation datasets
 - **Reliability**: Dual storage (JSON + SQLite) with automatic fallback
 - **Security**: Comprehensive input validation and path security

@@ -272,8 +272,11 @@ class SearchBenchmark:
         """Analyze file I/O overhead in current search implementation"""
         print("Analyzing file I/O overhead...")
 
-        # Count total conversation files
-        conversations_path = self.storage_path / "conversations"
+        # Count total conversation files. Use the server's own resolved path
+        # rather than assuming legacy layout - it auto-detects the new
+        # data/conversations structure vs legacy conversations/ (see
+        # ConversationMemoryServer._detect_data_directory_structure).
+        conversations_path = self.server.conversations_path
         file_count = 0
         total_size = 0
 
@@ -343,7 +346,7 @@ async def main():
         # Create dataset if requested or if it doesn't exist
         if (
             args.create_dataset
-            or not (benchmark.storage_path / "conversations" / "index.json").exists()
+            or not (benchmark.server.conversations_path / "index.json").exists()
         ):
             dataset_info = await benchmark.create_test_dataset(args.dataset)
             print(f"Created dataset: {dataset_info}")
