@@ -3,8 +3,13 @@
 
 version: 2
 updates:
-  # Python dependencies (pyproject.toml)
-  - package-ecosystem: "pip"
+  # Python dependencies. Must be "uv", not "pip": CI installs via
+  # `uv sync --locked` (#171), so a bump that touches pyproject.toml WITHOUT
+  # regenerating uv.lock fails the lockfile-drift guard and the PR can never
+  # go green. The pip ecosystem does not know about uv.lock; the uv ecosystem
+  # updates pyproject.toml and uv.lock together. (#173/#174 both failed this
+  # way -- the guard was right, the config was wrong.)
+  - package-ecosystem: "uv"
     directory: "/"
     schedule:
       interval: "weekly"
@@ -35,9 +40,9 @@ updates:
       dev-dependencies:
         patterns:
           - "pytest*"
-          - "black*"
-          - "flake8*"
+          - "ruff*"
           - "mypy*"
+          - "types-*"
         update-types:
           - "minor"
           - "patch"
