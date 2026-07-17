@@ -101,7 +101,6 @@ benchmark_data/
 /test_*_*/
 /claude_memory_test_*/
 /*_test_*/
-/None/
 /test_*/
 /*test*/
 # Re-include the canonical tests directory (overrides /*test*/ above)

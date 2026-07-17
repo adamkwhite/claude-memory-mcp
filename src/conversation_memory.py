@@ -28,6 +28,11 @@ try:
 except ImportError:
     SQLITE_AVAILABLE = False
 
+# Plain absolute import, matching the ``search_database`` import above and
+# validators.py's own header comment: ``src/`` is always a direct sys.path
+# entry, so no relative-import fallback is needed here.
+from validators import validate_storage_path
+
 
 class ConversationMemoryServer:
     def __init__(
@@ -36,6 +41,13 @@ class ConversationMemoryServer:
         use_data_dir: Optional[bool] = None,
         enable_sqlite: bool = True,
     ):
+        # Reject malformed storage_path values (empty, null bytes, the
+        # stringified-None sentinel, relative paths) before they're used to
+        # build any Path or create any directory. See validators.py for the
+        # full rationale -- this is the single choke point both this class
+        # and FastMCPConversationMemoryServer (which calls super().__init__)
+        # go through.
+        validate_storage_path(storage_path)
         self.storage_path = Path(storage_path).expanduser()
 
         # Auto-detect directory structure if not specified

@@ -3,7 +3,8 @@
 import json
 import re
 from datetime import datetime
-from typing import Any, Dict, List, Optional
+from pathlib import Path
+from typing import Any, Dict, List, Optional, Union
 
 # Plain absolute import, matching server_fastmcp.py/conversation_memory.py:
 # ``src/`` is always a direct sys.path entry, and server_fastmcp.py imports
@@ -232,6 +233,81 @@ def validate_limit(limit: int) -> int:
         return 100
 
     return limit
+
+
+def validate_storage_path(storage_path: Union[str, "Path", None]) -> str:
+    """Validate a ``storage_path`` before it is used to create directories.
+
+    This is the shared choke point for ``ConversationMemoryServer.__init__``
+    (and, by inheritance, ``FastMCPConversationMemoryServer``): it rejects
+    malformed values that would otherwise silently create bogus directories
+    relative to the current working directory -- e.g. ``""`` -> ``./data/``,
+    the stringified-None bug -> ``./None/``, or a bare relative string like
+    ``"evil-relative"`` -> ``./evil-relative/``.
+
+    This intentionally does NOT enforce location policy (``..`` traversal,
+    the home-directory jail). That's a separate, caller-specific concern
+    already handled by
+    ``FastMCPConversationMemoryServer._validate_storage_path`` -- duplicating
+    it here would mean two places to keep in sync.
+
+    Args:
+        storage_path: The raw storage_path value as passed to the
+            constructor (before ``~`` expansion).
+
+    Returns:
+        The original ``storage_path`` string, unchanged, once it passes
+        validation.
+
+    Raises:
+        MetadataValidationError: If storage_path is missing, not a
+            string/Path, empty/whitespace-only, contains a null byte, is a
+            stringified None/null/nil sentinel, or is not absolute once
+            ``~`` is expanded.
+    """
+    if storage_path is None:
+        raise MetadataValidationError("storage_path cannot be None")
+
+    if not isinstance(storage_path, (str, Path)):
+        raise MetadataValidationError(
+            f"storage_path must be a string or Path, got {type(storage_path).__name__}"
+        )
+
+    text = str(storage_path)
+
+    if not text.strip():
+        raise MetadataValidationError("storage_path cannot be empty or whitespace-only")
+
+    if NULL_BYTE_PATTERN.search(text):
+        raise MetadataValidationError("storage_path contains null bytes")
+
+    # Defense-in-depth: reject literal Python-sentinel strings. These almost
+    # always indicate an upstream bug where str(None) (or a similarly
+    # stringified null) was used to build the path -- without this guard the
+    # value passes every other check and happily creates a ./None/ (or
+    # ./null/) directory next to the cwd.
+    if text.strip().lower() in {"none", "null", "nil"}:
+        raise MetadataValidationError(
+            f"storage_path is the literal sentinel string {text!r} -- "
+            "likely an upstream bug where a None/null value was "
+            "stringified into the path."
+        )
+
+    # Relative paths are the actual harm here: they silently create
+    # directory trees relative to whatever the current working directory
+    # happens to be at import time, rather than the location the caller
+    # meant. Every legitimate caller in this codebase (tests via
+    # tempfile.mkdtemp, scripts via os.path.expanduser, the "~/claude-memory"
+    # default) already produces an absolute path, so this is a deliberate,
+    # non-breaking restriction -- not an accident.
+    if not Path(text).expanduser().is_absolute():
+        raise MetadataValidationError(
+            f"storage_path must be an absolute path (after ~ expansion); "
+            f"got {text!r}. Relative paths silently create directories "
+            "relative to the current working directory."
+        )
+
+    return text
 
 
 def _strip_control_chars(value: str) -> str:
