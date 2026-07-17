@@ -32,8 +32,8 @@ dev = [
 # which is how an isort pass silently relocated a `# type: ignore` comment and
 # broke a mypy fix (#156). Pinned for the same S8544 reason as dev.
 lint = [
-    "ruff==0.15.0",
-    "mypy==1.16.0",
+    "ruff==0.15.22",
+    "mypy==2.3.0",
     # mypy needs the same stubs the pre-commit hook installs, or the CI type
     # check fails on `Library stubs not installed for "aiofiles"` even though
     # it passes in a dev venv that happens to have them via the dev extra.
