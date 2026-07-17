@@ -419,3 +419,5 @@ MIT License - see LICENSE file for details
 **Status**: Production ready ✅
 **Last Updated**: April 2026
 **Version**: 2.0.0
+
+<!-- gate probe: temporary, will be removed -->
