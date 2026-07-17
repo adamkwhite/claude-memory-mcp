@@ -12,6 +12,8 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
+from validators import validate_import_file_path
+
 from .base_importer import BaseImporter, ImportResult
 
 logger = logging.getLogger(__name__)
@@ -47,6 +49,8 @@ class GenericImporter(BaseImporter):
                     imported_ids=[],
                     metadata={},
                 )
+
+            file_path = validate_import_file_path(file_path)
 
             # Determine format based on file extension
             extension = file_path.suffix.lower()

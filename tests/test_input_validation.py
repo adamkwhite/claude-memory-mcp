@@ -1,11 +1,13 @@
 """Test input validation for security and data integrity"""
 
+from pathlib import Path
 
 import pytest
 
 from exceptions import (
     ContentValidationError,
     DateValidationError,
+    MetadataValidationError,
     QueryValidationError,
     TitleValidationError,
     ValidationError,
@@ -13,6 +15,7 @@ from exceptions import (
 from validators import (
     validate_content,
     validate_date,
+    validate_import_file_path,
     validate_limit,
     validate_search_query,
     validate_title,
@@ -59,9 +62,12 @@ class TestTitleValidation:
 
     def test_dangerous_characters_removed(self):
         """Test dangerous file characters are sanitized"""
-        assert validate_title('test<script>alert("xss")</script>') == "testscriptalert(xss)/script"
-        assert validate_title('file:name|test') == "filenametest"
-        assert validate_title('test*file?name') == "testfilename"
+        assert (
+            validate_title('test<script>alert("xss")</script>')
+            == "testscriptalert(xss)/script"
+        )
+        assert validate_title("file:name|test") == "filenametest"
+        assert validate_title("test*file?name") == "testfilename"
 
     def test_control_characters_removed(self):
         """Test control characters are removed except safe ones"""
@@ -71,7 +77,7 @@ class TestTitleValidation:
 
         # Other control chars should be removed
         assert validate_title("test\x01\x02\x03") == "test"
-        assert validate_title("test\x7F") == "test"
+        assert validate_title("test\x7f") == "test"
 
 
 class TestContentValidation:
@@ -258,3 +264,69 @@ class TestValidatorEdgeCases:
         # Should be valid since it's not empty (length > 0) and passes all checks
         result = validate_content(whitespace_content)
         assert result == whitespace_content  # Should return as-is
+
+
+class TestImportFilePathValidation:
+    """Test validate_import_file_path -- the choke point importers and
+    FormatDetector route through before opening a file (SonarCloud
+    pythonsecurity:S8707)."""
+
+    def test_valid_existing_file(self, tmp_path):
+        target = tmp_path / "export.json"
+        target.write_text("{}")
+
+        result = validate_import_file_path(target)
+
+        assert result == target.resolve()
+        assert isinstance(result, Path)
+
+    def test_valid_existing_file_as_string(self, tmp_path):
+        target = tmp_path / "export.json"
+        target.write_text("{}")
+
+        result = validate_import_file_path(str(target))
+
+        assert result == target.resolve()
+
+    def test_none_rejected(self):
+        with pytest.raises(MetadataValidationError, match="cannot be None"):
+            validate_import_file_path(None)
+
+    def test_wrong_type_rejected(self):
+        with pytest.raises(MetadataValidationError, match="must be a string or Path"):
+            validate_import_file_path(12345)
+
+    def test_empty_string_rejected(self):
+        with pytest.raises(MetadataValidationError, match="empty or whitespace-only"):
+            validate_import_file_path("")
+
+    def test_whitespace_only_rejected(self):
+        with pytest.raises(MetadataValidationError, match="empty or whitespace-only"):
+            validate_import_file_path("   ")
+
+    def test_null_byte_rejected(self):
+        with pytest.raises(MetadataValidationError, match="null bytes"):
+            validate_import_file_path("evil\x00path.json")
+
+    def test_nonexistent_path_rejected(self, tmp_path):
+        missing = tmp_path / "does-not-exist.json"
+        with pytest.raises(MetadataValidationError, match="does not exist"):
+            validate_import_file_path(missing)
+
+    def test_directory_rejected(self, tmp_path):
+        with pytest.raises(MetadataValidationError, match="not a regular file"):
+            validate_import_file_path(tmp_path)
+
+    def test_relative_and_traversal_paths_not_blocked(self, tmp_path, monkeypatch):
+        # Deliberate design choice (see validate_import_file_path docstring):
+        # these importers are only reachable from a local CLI script run by
+        # a human against their own files, so relative/`..` paths are not a
+        # privilege-escalation vector here and are intentionally allowed.
+        target = tmp_path / "sub" / "export.json"
+        target.parent.mkdir()
+        target.write_text("{}")
+        monkeypatch.chdir(tmp_path)
+
+        result = validate_import_file_path("sub/../sub/export.json")
+
+        assert result == target.resolve()
