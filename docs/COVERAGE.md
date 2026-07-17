@@ -17,7 +17,6 @@ Test coverage has been set up for the Claude Memory MCP Server using pytest and 
 | Component | Coverage | Status |
 |-----------|----------|---------|
 | `server_fastmcp.py` | 2.92% | ⚠️ Low coverage - FastMCP integration testing needed |
-| `tests/standalone_test.py` | 85%+ | ✅ Well tested via pytest suite |
 
 ### Test Results
 

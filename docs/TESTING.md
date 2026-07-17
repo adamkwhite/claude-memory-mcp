@@ -18,7 +18,6 @@
 #### Validation and Integration
 - **test_server.py** - Integration testing and system validation
 - **validate_system.py** - Post-import system validation
-- **standalone_test.py** - Alternative implementation for testing without MCP dependencies
 
 #### Utilities
 - **analyze_json.py** - JSON structure analysis utility
