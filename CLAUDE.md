@@ -8,8 +8,8 @@
 
 **Branch**: `main`
 **Recent Work**: Universal Memory MCP parallel push — 8 PRs merged in one session (#109-#116)
-**Test Coverage**: ~589 tests passing (was 435; +218 across 5 PRs); ≥80% coverage on every new code path
-**Code Quality**: 0 code smells, 0 security hotspots, all SonarCloud quality gates green
+**Test Coverage**: 803 passed, 1 skipped (local suite, verified `pytest -q` July 2026); 88.1% overall coverage (SonarCloud, verified via API); ≥80% coverage required on new code
+**Code Quality**: 9 code smells, 0 security hotspots (SonarCloud, verified via API); quality gate status OK
 **Architecture**: Importer/Exporter mirror pattern (`src/importers/` ↔ `src/exporters/`); `src/config.py` is the single source of configuration truth (env > file > profile > default)
 
 ### Recent Major Implementations
@@ -33,12 +33,12 @@
 ## Technology Stack
 
 **Core Technologies:**
-- **Python 3.11+**: Primary development language
+- **Python 3.10+**: Primary development language (`requires-python` floor; CI runs 3.14 — see Python Version Management)
 - **FastMCP**: Model Context Protocol server implementation
 - **aiofiles**: Async file I/O operations for proper async/await compliance
 - **SQLite FTS5**: Full-text search with relevance scoring
 - **JSON Schema**: Platform format validation with jsonschema library
-- **pytest**: Comprehensive testing framework with 435 test cases
+- **pytest**: Comprehensive testing framework with 803 test cases (803 passed, 1 skipped, verified `pytest -q` July 2026)
 
 **AI Platform Support:**
 - **ChatGPT**: Complete OpenAI export format support
@@ -49,7 +49,7 @@
 **Quality Assurance:**
 - **SonarCloud**: Code quality analysis with public dashboard visibility
 - **GitHub Actions**: CI/CD with quality gate enforcement
-- **98.68% Test Coverage**: Industry-leading reliability standards
+- **88.1% Test Coverage**: verified via SonarCloud API, July 2026
 
 ## Project Structure
 
@@ -61,7 +61,7 @@ claude-memory-mcp/
 │   ├── conversations/       # Local conversation storage
 │   ├── summaries/          # Weekly summary storage
 │   └── config/             # Project configuration files
-├── pyproject.toml          # Symlink to data/config/pyproject.toml
+├── pyproject.toml          # Regular file (no longer a symlink)
 ├── pytest.ini             # Symlink to data/config/pytest.ini
 ├── src/                    # Source code
 ├── tests/                  # Test suite
@@ -74,35 +74,31 @@ claude-memory-mcp/
 
 ## Python Version Management
 
-This project uses **Python 3.11** to match the CI environment, but the local system defaults to Python 3.8.10.
+CI (`.github/workflows/build.yml`, `performance.yml`) runs **Python 3.14** — that's the authoritative version code must pass on. `pyproject.toml` sets `requires-python = ">=3.10"` as the package's supported floor (verified: `src/` uses no 3.11+-only stdlib features, e.g. no `tomllib`, `datetime.UTC`). `.python-version` is pinned to `3.14` to match CI.
 
-### Available Python Versions
-- `python3` → Python 3.8.10 (system default)
-- `python3.11` → Python 3.11.12 (preferred for this project)
+Locally, use whatever venv you have — this repo's checked-in venvs (`.venv/`, `claude-memory-mcp-venv/`) currently run Python 3.12.3. Local exact-version matching isn't required; CI is the gate. If you need to reproduce a CI-only failure, install and use 3.14 directly.
 
 ### Recommended Commands
 
-Always use `python3.11` explicitly for consistency with CI:
-
 ```bash
 # Run tests
-python3.11 -m pytest tests/test_100_percent_coverage.py --cov=src --cov-report=xml
+python -m pytest tests/test_100_percent_coverage.py --cov=src --cov-report=xml
 
 # Install dependencies
-python3.11 -m pip install -r requirements.txt
+python -m pip install -r requirements.txt
 
 # Run server
-python3.11 src/server_fastmcp.py
+python src/server_fastmcp.py
 
-# Create virtual environment with Python 3.11
-python3.11 -m venv .venv
+# Create a virtual environment
+python3.12 -m venv .venv   # or any interpreter satisfying >=3.10
 source .venv/bin/activate
 ```
 
 ### SonarCloud Quality Gate
 
 Recent fixes applied to resolve code quality issues:
-- ✅ Replaced bare except clauses with specific exception types
+- ✅ Replaced bare `except:` clauses (E722: 0 remaining, verified via `ruff check --select E722`) — note this doesn't mean specific exception types throughout: `ruff check --select BLE` still finds 79 `except Exception:` (blind-except) hits repo-wide
 - ✅ Removed unused import statements
 - ✅ Extracted magic numbers to named constants
 - ✅ Broke down complex methods (generate_weekly_summary)
@@ -119,13 +115,11 @@ Recent fixes applied to resolve code quality issues:
 - Dashboard: https://sonarcloud.io/summary/overall?id=adamkwhite_claude-memory-mcp
 - Exclusions: `tests/**,**/*test*.py,**/test_*.py,**/*benchmark*.py,**/*performance*.py,scripts/**,**/__pycache__/**,htmlcov/**,archive/**,examples/**,docs/generated/**,benchmark_results/**`
 
-**Current Test Coverage: 98.68%** | Duplications: **7%**
+**Current Test Coverage: 88.1%** | Duplications: **1.1%** (SonarCloud, verified via API July 2026 — local `--cov` runs undercount because they don't exercise every test file in one pass; trust the SonarCloud dashboard over a local `.coverage` file)
 
-**Coverage Milestones Achieved:**
+**Coverage Milestones Achieved (historical, at time of writing):**
 - ✅ **conversation_memory.py**: 100% coverage
 - ✅ **exceptions.py**: 100% coverage
-- 🎯 **Total Project**: 98.68% coverage (11 lines remaining)
-- 📈 **Progress**: Achieved near-perfect coverage
 
 **SonarCloud Exclusion Workflow:**
 When creating new files, automatically check if they need SonarCloud coverage analysis:
@@ -154,8 +148,8 @@ When adding exclusions, also update these workflow files:
 ### Environment Setup
 
 ```bash
-# Use Python 3.11 for this project
-python3.11 -m venv .venv
+# Create a virtual environment (>=3.10 required; CI runs 3.14)
+python3 -m venv .venv
 source .venv/bin/activate
 pip install -e .
 pip install pytest pytest-cov pytest-asyncio
@@ -298,8 +292,8 @@ This prevents back-and-forth in PRs due to test failures.
   ```bash
   source claude-memory-mcp-venv/bin/activate && python -m pytest tests/ --ignore=tests/standalone_test.py --cov=src --cov-report=term -v
   ```
-- [ ] **2. Verify All Tests Pass** (expect 417+ passing tests)
-- [ ] **3. Check Coverage Baseline** (expect ≥76% coverage)
+- [ ] **2. Verify All Tests Pass** (expect 803+ passing tests, 1 skipped — verified July 2026)
+- [ ] **3. Check Coverage Baseline** (expect ≥88% coverage per SonarCloud, not local `.coverage`)
 - [ ] **4. Test Supporting Scripts** (if modified any scripts/ files)
 - [ ] **5. Validate Async Compatibility** (if modified async methods)
 - [ ] **6. Run SonarCloud Analysis** (triggered automatically on PR)
@@ -323,9 +317,9 @@ This prevents back-and-forth in PRs due to test failures.
 
 ## 100% Test Coverage Initiative
 
-**Current Status: 98.68% coverage (SUFFICIENT - no longer pursuing 100%)**
+**Current Status: 88.1% coverage (SonarCloud, verified via API July 2026 — SUFFICIENT, not pursuing 100%)**
 
-### Coverage Breakdown by Module
+### Coverage Breakdown by Module (historical snapshot from this initiative; see SonarCloud dashboard for current per-file numbers)
 - `conversation_memory.py`: **100%** ✅ (237 lines, 0 missing)
 - `exceptions.py`: **100%** ✅ (10 lines, 0 missing)
 - `server_fastmcp.py`: **99.01%** (405 lines, 4 missing)
