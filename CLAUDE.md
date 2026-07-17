@@ -26,9 +26,8 @@
 
 ### Open architectural follow-ups (see `todos.md` for full list)
 - Round-trip-able ChatGPT export — current exporter emits `mapping` structure but importer expects flat `messages` list (asymmetric).
-- Project-wide mypy hook fix (dual `src.foo` ↔ `foo` import naming).
 
-(Metadata-field FTS indexing — `tags`/`session_id`/`conversation_type` in `src/search_database.py` — was completed in PR #118; this section previously listed it as open in error.)
+(Metadata-field FTS indexing — `tags`/`session_id`/`conversation_type` in `src/search_database.py` — was completed in PR #118. The project-wide mypy hook fix, dual `src.foo` ↔ `foo` import naming, was completed in PRs #156/#175 — the canonical bare-import migration; the hook now passes across all 68 files. Both previously listed here as open.)
 
 ## Technology Stack
 
