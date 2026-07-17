@@ -1070,7 +1070,7 @@ class ConversationMemoryServer:
             return {"error": "SQLite search not enabled"}
 
         try:
-            from .migrate_to_sqlite import ConversationMigrator
+            from migrate_to_sqlite import ConversationMigrator
 
             # Determine directory structure
             use_data_dir = self.conversations_path.parent.name == "data"
