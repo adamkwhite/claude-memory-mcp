@@ -251,9 +251,7 @@ class TestCursorImporterParsing:
         """Test parsing invalid conversation data."""
         data = "not a dictionary"
 
-        with pytest.raises(
-            ValueError, match="Cursor session data must be a dictionary"
-        ):
+        with pytest.raises(ValueError, match="Cursor session data must be a dictionary"):
             self.importer.parse_conversation(data)
 
     def test_parse_conversation_missing_interactions(self):
@@ -299,9 +297,7 @@ class TestCursorImporterHelperMethods:
     def test_add_session_header(self):
         """Test _add_session_header method."""
         content_parts = []
-        self.importer._add_session_header(
-            content_parts, "/my/project", "claude-3", "session-123"
-        )
+        self.importer._add_session_header(content_parts, "/my/project", "claude-3", "session-123")
 
         assert "# Cursor AI Session" in content_parts
         assert "**Workspace**: /my/project" in content_parts
@@ -454,7 +450,7 @@ class TestCursorImporterSaveConversation:
         assert file_path.name.endswith(".json")
 
         # Verify content
-        with open(file_path, "r") as f:
+        with open(file_path) as f:
             saved_data = json.load(f)
 
         assert saved_data["id"] == conversation["id"]
@@ -523,14 +519,12 @@ class TestCursorImporterIntegration:
 
         # Verify conversation file was created (exclude source file)
         conversation_files = [
-            f
-            for f in self.storage_path.rglob("*.json")
-            if f.name != "complete_session.json"
+            f for f in self.storage_path.rglob("*.json") if f.name != "complete_session.json"
         ]
         assert len(conversation_files) == 1
 
         # Verify conversation content
-        with open(conversation_files[0], "r") as f:
+        with open(conversation_files[0]) as f:
             saved_conversation = json.load(f)
 
         assert saved_conversation["platform"] == "cursor"
@@ -577,11 +571,9 @@ class TestCursorImporterIntegration:
 
         # Verify complex interactions were processed (exclude source file)
         conversation_files = [
-            f
-            for f in self.storage_path.rglob("*.json")
-            if f.name != "complex_session.json"
+            f for f in self.storage_path.rglob("*.json") if f.name != "complex_session.json"
         ]
-        with open(conversation_files[0], "r") as f:
+        with open(conversation_files[0]) as f:
             conversation = json.load(f)
 
         assert "messages" in conversation
@@ -656,9 +648,7 @@ class TestCursorUniversalMetadata:
         assert "has-file-changes" in conv["tags"]
 
     def test_tags_explicit_appended(self):
-        conv = self.importer.parse_conversation(
-            self._base_session(tags=["sprint-7", "urgent"])
-        )
+        conv = self.importer.parse_conversation(self._base_session(tags=["sprint-7", "urgent"]))
         assert "sprint-7" in conv["tags"]
         assert "urgent" in conv["tags"]
 
@@ -668,9 +658,7 @@ class TestCursorUniversalMetadata:
         assert conv["conversation_type"] == "code"
 
     def test_conversation_type_explicit_overrides(self):
-        conv = self.importer.parse_conversation(
-            self._base_session(conversation_type="analysis")
-        )
+        conv = self.importer.parse_conversation(self._base_session(conversation_type="analysis"))
         assert conv["conversation_type"] == "analysis"
 
     def test_custom_fields_capture_workspace_and_files(self):
@@ -681,9 +669,7 @@ class TestCursorUniversalMetadata:
     def test_custom_fields_caller_overrides_merged(self):
         """Caller-supplied custom_fields are merged on top of defaults."""
         conv = self.importer.parse_conversation(
-            self._base_session(
-                custom_fields={"experiment": "beta", "workspace_path": "override"}
-            )
+            self._base_session(custom_fields={"experiment": "beta", "workspace_path": "override"})
         )
         assert conv["custom_fields"]["experiment"] == "beta"
         # Caller wins on key collision

@@ -7,7 +7,7 @@ import json
 import sys
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 import pytest  # type: ignore[import-not-found]
 
@@ -23,7 +23,6 @@ from exporters.base_exporter import (  # type: ignore[import-not-found]  # noqa:
     Filters,
 )
 
-
 # --------------------------------------------------------------------------- #
 # Helpers
 # --------------------------------------------------------------------------- #
@@ -35,7 +34,7 @@ class _ConcreteExporter(BaseExporter):
     def export(
         self,
         output_path: Path,
-        filters: Optional[Filters] = None,
+        filters: Filters | None = None,
     ) -> ExportResult:
         items = self.apply_filters(self.load_conversations(), filters)
         self.write_json(output_path, {"conversations": items})
@@ -47,7 +46,7 @@ class _ConcreteExporter(BaseExporter):
             output_path=str(output_path),
         )
 
-    def validate(self, output_path: Path) -> Dict[str, Any]:
+    def validate(self, output_path: Path) -> dict[str, Any]:
         return {
             "valid": output_path.exists(),
             "errors": [],
@@ -58,14 +57,12 @@ class _ConcreteExporter(BaseExporter):
 
 def _build_storage(
     tmp_path: Path,
-    conversations: List[Dict[str, Any]],
+    conversations: list[dict[str, Any]],
     *,
     use_data_layout: bool = True,
 ) -> Path:
     """Create a fake storage tree with index.json + per-conversation files."""
-    convs_root = tmp_path / (
-        "data/conversations" if use_data_layout else "conversations"
-    )
+    convs_root = tmp_path / ("data/conversations" if use_data_layout else "conversations")
     convs_root.mkdir(parents=True, exist_ok=True)
 
     index_entries = []
@@ -76,9 +73,7 @@ def _build_storage(
         except ValueError:
             parsed = datetime.now()
         month_dir = (
-            convs_root
-            / str(parsed.year)
-            / f"{parsed.month:02d}-{parsed.strftime('%B').lower()}"
+            convs_root / str(parsed.year) / f"{parsed.month:02d}-{parsed.strftime('%B').lower()}"
         )
         month_dir.mkdir(parents=True, exist_ok=True)
         file_path = month_dir / f"{conv['id']}.json"
@@ -107,8 +102,8 @@ def _legacy_conversation(
     date: str = "2025-10-10T12:00:00",
     title: str = "Legacy Conversation",
     content: str = "Hello world content",
-    topics: Optional[List[str]] = None,
-) -> Dict[str, Any]:
+    topics: list[str] | None = None,
+) -> dict[str, Any]:
     """Simulate the legacy on-disk shape used by ConversationMemoryServer."""
     return {
         "id": conv_id,
@@ -126,7 +121,7 @@ def _universal_conversation(
     date: str = "2025-10-10T12:00:00",
     platform: str = "chatgpt",
     title: str = "Universal Convo",
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """Simulate a universal-format conversation produced by importers."""
     msgs = [
         {
@@ -365,9 +360,7 @@ class TestApplyFilters:
 
     def test_date_filter_handles_tz_aware_conversation(self):
         exp = _ConcreteExporter(Path("/tmp"))
-        items = [
-            _universal_conversation(conv_id="tz", date="2025-06-01T00:00:00+00:00")
-        ]
+        items = [_universal_conversation(conv_id="tz", date="2025-06-01T00:00:00+00:00")]
         # Naive filter compared against tz-aware conversation should still
         # work without raising.
         result = exp.apply_filters(
@@ -416,15 +409,9 @@ class TestApplyFilters:
     def test_combined_filters(self):
         exp = _ConcreteExporter(Path("/tmp"))
         items = [
-            _universal_conversation(
-                conv_id="a", platform="chatgpt", date="2025-01-01T00:00:00"
-            ),
-            _universal_conversation(
-                conv_id="b", platform="chatgpt", date="2025-06-01T00:00:00"
-            ),
-            _universal_conversation(
-                conv_id="c", platform="claude", date="2025-06-01T00:00:00"
-            ),
+            _universal_conversation(conv_id="a", platform="chatgpt", date="2025-01-01T00:00:00"),
+            _universal_conversation(conv_id="b", platform="chatgpt", date="2025-06-01T00:00:00"),
+            _universal_conversation(conv_id="c", platform="claude", date="2025-06-01T00:00:00"),
         ]
         result = exp.apply_filters(
             items,

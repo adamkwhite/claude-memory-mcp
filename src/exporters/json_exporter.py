@@ -27,7 +27,7 @@ import json
 import logging
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from .base_exporter import (
     UNIVERSAL_REQUIRED_FIELDS,
@@ -49,7 +49,7 @@ class JsonExporter(BaseExporter):
     def export(
         self,
         output_path: Path,
-        filters: Optional[Filters] = None,
+        filters: Filters | None = None,
     ) -> ExportResult:
         """Write all (filtered) conversations to ``output_path`` as JSON."""
         output_path = Path(output_path)
@@ -95,7 +95,7 @@ class JsonExporter(BaseExporter):
             },
         )
 
-    def validate(self, output_path: Path) -> Dict[str, Any]:
+    def validate(self, output_path: Path) -> dict[str, Any]:
         """Re-parse exported file and verify universal-format compliance."""
         output_path = Path(output_path)
         if not output_path.exists():
@@ -107,7 +107,7 @@ class JsonExporter(BaseExporter):
             }
 
         try:
-            with open(output_path, "r", encoding="utf-8") as f:
+            with open(output_path, encoding="utf-8") as f:
                 payload = json.load(f)
         except (OSError, json.JSONDecodeError) as exc:
             return {
@@ -117,8 +117,8 @@ class JsonExporter(BaseExporter):
                 "conversation_count": 0,
             }
 
-        errors: List[str] = []
-        warnings: List[str] = []
+        errors: list[str] = []
+        warnings: list[str] = []
 
         if not isinstance(payload, dict):
             return {
@@ -130,8 +130,7 @@ class JsonExporter(BaseExporter):
 
         if payload.get("format") != "universal":
             warnings.append(
-                f"Unexpected format field: {payload.get('format')!r} "
-                "(expected 'universal')"
+                f"Unexpected format field: {payload.get('format')!r} (expected 'universal')"
             )
 
         conversations = payload.get("conversations")
@@ -150,9 +149,7 @@ class JsonExporter(BaseExporter):
                 continue
             for field_name in UNIVERSAL_REQUIRED_FIELDS:
                 if field_name not in conv:
-                    errors.append(
-                        f"Conversation {idx} missing required field '{field_name}'"
-                    )
+                    errors.append(f"Conversation {idx} missing required field '{field_name}'")
             if "messages" in conv and not isinstance(conv["messages"], list):
                 errors.append(f"Conversation {idx} 'messages' must be a list")
 
@@ -169,9 +166,9 @@ class JsonExporter(BaseExporter):
 
     def _build_envelope(
         self,
-        conversations: List[Dict[str, Any]],
-        filters: Optional[Filters],
-    ) -> Dict[str, Any]:
+        conversations: list[dict[str, Any]],
+        filters: Filters | None,
+    ) -> dict[str, Any]:
         return {
             "format": "universal",
             "format_version": JSON_EXPORT_FORMAT_VERSION,
@@ -183,7 +180,7 @@ class JsonExporter(BaseExporter):
         }
 
 
-def _serialize_filters(filters: Optional[Filters]) -> Dict[str, Any]:
+def _serialize_filters(filters: Filters | None) -> dict[str, Any]:
     """Serialize a Filters dataclass into JSON-safe dict."""
     if filters is None or filters.is_empty():
         return {}

@@ -38,7 +38,7 @@ class MockFastMCP:
 # runtime, so mypy can't know it has a FastMCP attribute — setattr keeps the
 # stub injection honest without a blanket type: ignore.
 _fastmcp_stub = type(sys)("mcp.server.fastmcp")
-setattr(_fastmcp_stub, "FastMCP", MockFastMCP)
+setattr(_fastmcp_stub, "FastMCP", MockFastMCP)  # noqa: B010 - direct attr would break mypy, see comment above
 sys.modules["mcp.server.fastmcp"] = _fastmcp_stub
 
 # Add the project root and src directory to path using dynamic resolution
@@ -160,9 +160,7 @@ class TestCompleteEdgeCaseCoverage:
             fake_path.touch()
 
             # This calls _update_index internally which should handle the exception
-            await server.add_conversation(
-                "Test content", test_title, test_date.isoformat()
-            )
+            await server.add_conversation("Test content", test_title, test_date.isoformat())
 
         finally:
             # Restore permissions
@@ -325,9 +323,7 @@ class TestCompleteEdgeCaseCoverage:
 
         # Verify summary structure and content
         assert len(summary) > 100
-        assert (
-            "Weekly Summary" in summary or "## " in summary or "API Design" in summary
-        )
+        assert "Weekly Summary" in summary or "## " in summary or "API Design" in summary
 
     @pytest.mark.asyncio
     async def test_weekly_summary_file_saving_and_path(self, server, temp_storage):
@@ -352,7 +348,7 @@ class TestCompleteEdgeCaseCoverage:
 
         # Verify file contains the summary content
         latest_file = max(summary_files, key=lambda x: x.stat().st_mtime)
-        with open(latest_file, "r") as f:
+        with open(latest_file) as f:
             file_content = f.read()
 
         assert "File Save Test" in file_content
@@ -370,7 +366,7 @@ class TestCompleteEdgeCaseCoverage:
         # Get the conversation ID from the index
         import json
 
-        with open(server.index_file, "r") as f:
+        with open(server.index_file) as f:
             index_data = json.load(f)
 
         conversation_id = index_data["conversations"][-1]["id"]
@@ -385,14 +381,12 @@ class TestCompleteEdgeCaseCoverage:
         """Test get_preview truncation for long content (line 248)"""
         # Create long content (>500 chars)
         long_content = "A" * 600
-        await server.add_conversation(
-            long_content, "Long Content Test", "2025-06-02T10:00:00Z"
-        )
+        await server.add_conversation(long_content, "Long Content Test", "2025-06-02T10:00:00Z")
 
         # Get conversation ID
         import json
 
-        with open(server.index_file, "r") as f:
+        with open(server.index_file) as f:
             index_data = json.load(f)
 
         conversation_id = index_data["conversations"][-1]["id"]
@@ -459,14 +453,12 @@ class TestCompleteEdgeCaseCoverage:
             'We discussed "unique concept" and "special methodology" '
             'and "custom framework" in our project'
         )
-        await server.add_conversation(
-            content, "Quoted Terms Test", "2025-06-02T10:00:00Z"
-        )
+        await server.add_conversation(content, "Quoted Terms Test", "2025-06-02T10:00:00Z")
 
         # Check that quoted terms were extracted properly
         import json
 
-        with open(server.index_file, "r") as f:
+        with open(server.index_file) as f:
             index_data = json.load(f)
 
         topics = index_data["conversations"][-1]["topics"]
@@ -508,7 +500,7 @@ class TestCompleteEdgeCaseCoverage:
         # Check that title was auto-generated and truncated
         import json
 
-        with open(server.index_file, "r") as f:
+        with open(server.index_file) as f:
             index_data = json.load(f)
 
         title = index_data["conversations"][-1]["title"]
@@ -525,9 +517,7 @@ Line 3: More context
 Line 4: Additional info
 Line 5: Final line"""
 
-        result = await server.add_conversation(
-            test_content, "Preview Test", "2025-06-02T10:00:00Z"
-        )
+        result = await server.add_conversation(test_content, "Preview Test", "2025-06-02T10:00:00Z")
         file_path = Path(result["file_path"])
 
         # Test _get_preview method directly
@@ -746,7 +736,7 @@ class TestMCPToolWrapperFunctions:
         # Manually add many topics to trigger line 343
         import json
 
-        with open(server.index_file, "r") as f:
+        with open(server.index_file) as f:
             index_data = json.load(f)
 
         # Update both the conversation file and index to have more than 3 topics
@@ -755,7 +745,7 @@ class TestMCPToolWrapperFunctions:
             conv_file_path = server.storage_path / conv_info["file_path"]
 
             # Update the actual conversation file
-            with open(conv_file_path, "r") as f:
+            with open(conv_file_path) as f:
                 conv_data = json.load(f)
             conv_data["topics"] = [
                 "topic1",
@@ -830,12 +820,12 @@ class TestConversationMemoryServerDirect:
     def test_init_index_files(self, server):
         """Test index file initialization"""
         # Index files should already exist from initialization
-        with open(server.index_file, "r") as f:
+        with open(server.index_file) as f:
             index_data = json.load(f)
         assert "conversations" in index_data
         assert "last_updated" in index_data
 
-        with open(server.topics_file, "r") as f:
+        with open(server.topics_file) as f:
             topics_data = json.load(f)
         assert "topics" in topics_data
         assert "last_updated" in topics_data
@@ -858,7 +848,7 @@ class TestConversationMemoryServerDirect:
             json.dump(conv_data, f)
 
         # Index should be empty before sync
-        with open(server.index_file, "r") as f:
+        with open(server.index_file) as f:
             before = json.load(f)
         assert len(before["conversations"]) == 0
 
@@ -866,7 +856,7 @@ class TestConversationMemoryServerDirect:
         server._sync_index_from_files()
 
         # Index should now have the conversation
-        with open(server.index_file, "r") as f:
+        with open(server.index_file) as f:
             after = json.load(f)
         assert len(after["conversations"]) == 1
         assert after["conversations"][0]["id"] == "conv_20250115_100000_1234"
@@ -890,14 +880,14 @@ class TestConversationMemoryServerDirect:
 
         server._sync_index_from_files()
 
-        with open(server.index_file, "r") as f:
+        with open(server.index_file) as f:
             first_sync = json.load(f)
         count_after_first = len(first_sync["conversations"])
 
         # Run sync again — should not duplicate
         server._sync_index_from_files()
 
-        with open(server.index_file, "r") as f:
+        with open(server.index_file) as f:
             second_sync = json.load(f)
         assert len(second_sync["conversations"]) == count_after_first
 
@@ -912,7 +902,7 @@ class TestConversationMemoryServerDirect:
         # Should not raise
         server._sync_index_from_files()
 
-        with open(server.index_file, "r") as f:
+        with open(server.index_file) as f:
             index_data = json.load(f)
         # Corrupt file should be skipped
         ids = [c["id"] for c in index_data["conversations"]]
@@ -945,7 +935,7 @@ class TestConversationMemoryServerDirect:
         # Sync should recover and rebuild
         server._sync_index_from_files()
 
-        with open(server.index_file, "r") as f:
+        with open(server.index_file) as f:
             index_data = json.load(f)
         assert len(index_data["conversations"]) == 1
 
@@ -984,9 +974,7 @@ class TestConversationMemoryServerDirect:
         topics = server._extract_topics("A" * 26 + "1")
         elapsed = time.perf_counter() - start
 
-        assert elapsed < 1.0, (
-            f"topic extraction took {elapsed:.1f}s -- regex backtracking?"
-        )
+        assert elapsed < 1.0, f"topic extraction took {elapsed:.1f}s -- regex backtracking?"
         assert topics == []
 
     def test_extract_topics_capitalized_words_still_found(self, server):
@@ -1095,9 +1083,7 @@ class TestConversationMemoryServerDirect:
     async def test_search_conversations_missing_file(self, server, temp_storage):
         """Test search when conversation file is missing"""
         # Add conversation
-        result = await server.add_conversation(
-            "Test content", "Test Title", "2025-01-15T10:30:00"
-        )
+        result = await server.add_conversation("Test content", "Test Title", "2025-01-15T10:30:00")
 
         # Remove the file but keep index entry
         file_path = Path(result["file_path"])
@@ -1153,7 +1139,7 @@ Line 4: More content"""
         server._update_index(conversation_data, fake_path)
 
         # Check index was updated
-        with open(server.index_file, "r") as f:
+        with open(server.index_file) as f:
             index_data = json.load(f)
 
         assert len(index_data["conversations"]) > 0
@@ -1168,7 +1154,7 @@ Line 4: More content"""
 
         server._update_topics_index(test_topics, "test_conv_123")
 
-        with open(server.topics_file, "r") as f:
+        with open(server.topics_file) as f:
             topics_data = json.load(f)
 
         assert "python" in topics_data["topics"]
@@ -1248,9 +1234,7 @@ Line 4: More content"""
     async def test_add_conversation_error_handling(self, server):
         """Test add conversation error handling"""
         # Test with invalid date
-        result = await server.add_conversation(
-            "Test content", "Error Test", "invalid-date-format"
-        )
+        result = await server.add_conversation("Test content", "Error Test", "invalid-date-format")
 
         # Should handle gracefully
         assert "status" in result

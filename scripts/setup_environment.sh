@@ -65,7 +65,7 @@ python3 -c "from mcp.server.fastmcp import FastMCP; print('✅ MCP import succes
 echo "📂 Checking data files..."
 if [ -d "data" ]; then
     echo "✅ Data directory found"
-    
+
     # Show file sizes
     echo "📊 Data files:"
     for file in data/*.json; do
@@ -75,7 +75,7 @@ if [ -d "data" ]; then
             echo "   • $(basename "$file"): ${size:,} bytes (${size_mb} MB)"
         fi
     done
-    
+
     # Check for conversations.json specifically
     if [ -f "data/conversations.json" ]; then
         conv_size=$(stat -c%s "data/conversations.json" 2>/dev/null || stat -f%z "data/conversations.json" 2>/dev/null)
@@ -113,7 +113,7 @@ echo "🎯 Environment Setup Complete!"
 echo "==============================="
 echo ""
 echo "✅ Virtual environment: activated"
-echo "✅ Dependencies: installed"  
+echo "✅ Dependencies: installed"
 echo "✅ MCP: working"
 echo "✅ Memory server: ready"
 echo ""

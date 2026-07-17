@@ -99,9 +99,7 @@ class TestJsonExporterFilters:
                 _universal_conversation(
                     conv_id="b", platform="chatgpt", date="2025-08-01T00:00:00"
                 ),
-                _universal_conversation(
-                    conv_id="c", platform="claude", date="2025-08-01T00:00:00"
-                ),
+                _universal_conversation(conv_id="c", platform="claude", date="2025-08-01T00:00:00"),
             ],
         )
         out = tmp_path / "out.json"
@@ -359,15 +357,9 @@ class TestJsonExporterRoundTrip:
 )
 def test_filter_combinations(tmp_path, filter_kwargs, expected_count):
     convs = [
-        _universal_conversation(
-            conv_id="a", platform="chatgpt", date="2025-01-01T00:00:00"
-        ),
-        _universal_conversation(
-            conv_id="b", platform="chatgpt", date="2025-12-01T00:00:00"
-        ),
-        _universal_conversation(
-            conv_id="c", platform="claude", date="2025-02-01T00:00:00"
-        ),
+        _universal_conversation(conv_id="a", platform="chatgpt", date="2025-01-01T00:00:00"),
+        _universal_conversation(conv_id="b", platform="chatgpt", date="2025-12-01T00:00:00"),
+        _universal_conversation(conv_id="c", platform="claude", date="2025-02-01T00:00:00"),
     ]
     _build_storage(tmp_path, convs)
     out = tmp_path / "out.json"

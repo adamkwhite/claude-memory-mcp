@@ -14,7 +14,7 @@ import tempfile
 import time
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, Optional
+from typing import Any
 
 import psutil
 import pytest
@@ -38,7 +38,7 @@ class PerformanceMetrics:
         self.start_time = time.time()
         self.start_memory = self.process.memory_info().rss / 1024 / 1024  # MB
 
-    def stop(self) -> Dict[str, float]:
+    def stop(self) -> dict[str, float]:
         """Stop timing and return metrics."""
         duration = time.time() - self.start_time
         end_memory = self.process.memory_info().rss / 1024 / 1024  # MB
@@ -61,8 +61,8 @@ class BenchmarkResults:
         self,
         operation: str,
         dataset_size: int,
-        metrics: Dict[str, float],
-        additional_info: Optional[Dict] = None,
+        metrics: dict[str, float],
+        additional_info: dict | None = None,
     ):
         """Add a benchmark result."""
         result = {
@@ -77,12 +77,12 @@ class BenchmarkResults:
             result.update(additional_info)
         self.results.append(result)
 
-    def get_summary(self) -> Dict:
+    def get_summary(self) -> dict:
         """Get summary statistics for all results."""
-        summary: Dict[str, Any] = {}
+        summary: dict[str, Any] = {}
 
         # Group by operation and dataset size
-        operations: Dict[Any, Any] = {}
+        operations: dict[Any, Any] = {}
         for result in self.results:
             op = result["operation"]
             size = result["dataset_size"]
@@ -224,9 +224,7 @@ class TestSearchPerformance:
                     },
                     additional_info={
                         "query": query,
-                        "result_count": (
-                            len(results) if isinstance(results, list) else 0
-                        ),
+                        "result_count": (len(results) if isinstance(results, list) else 0),
                     },
                 )
 
@@ -310,7 +308,7 @@ class TestSearchPerformance:
         copied = 0
         index_path = conversations_dst / "index.json"
         if index_path.exists():
-            with open(index_path, "r") as f:
+            with open(index_path) as f:
                 index_data = json.load(f)
 
             # Keep only first 'count' conversations
@@ -337,9 +335,7 @@ class TestWritePerformance:
     """Test write operation performance."""
 
     @pytest.mark.asyncio
-    async def test_add_conversation_performance(
-        self, benchmark_results, performance_metrics
-    ):
+    async def test_add_conversation_performance(self, benchmark_results, performance_metrics):
         """Test performance of adding conversations."""
         temp_dir = tempfile.mkdtemp(prefix="write_perf_test_")
 
@@ -424,9 +420,7 @@ class TestWeeklySummaryPerformance:
         )
 
         # Should complete in reasonable time (< 2 seconds)
-        assert metrics["duration_seconds"] < 2.0, (
-            f"Summary took {metrics['duration_seconds']:.2f}s"
-        )
+        assert metrics["duration_seconds"] < 2.0, f"Summary took {metrics['duration_seconds']:.2f}s"
 
 
 class TestOverallPerformance:
@@ -449,17 +443,13 @@ class TestOverallPerformance:
         than, or slower than, linear) still fails. A generous absolute
         ceiling is kept as a backstop against a search that hangs outright.
         """
-        sqlite_server = ConversationMemoryServer(
-            str(test_data_path), enable_sqlite=True
-        )
-        linear_server = ConversationMemoryServer(
-            str(test_data_path), enable_sqlite=False
-        )
+        sqlite_server = ConversationMemoryServer(str(test_data_path), enable_sqlite=True)
+        linear_server = ConversationMemoryServer(str(test_data_path), enable_sqlite=False)
 
         # Get dataset stats
         stats_file = test_data_path / "generation_stats.json"
         if stats_file.exists():
-            with open(stats_file, "r") as f:
+            with open(stats_file) as f:
                 stats = json.load(f)
         else:
             stats = {
@@ -510,9 +500,7 @@ class TestOverallPerformance:
         # Absolute backstop: ~100x the ~80-150ms worst case measured
         # locally, so a search that hangs or regresses catastrophically
         # still fails even if the relative comparison above somehow passes.
-        assert sqlite_max < 10.0, (
-            f"SQLite search took {sqlite_max:.2f}s (> 10s absolute backstop)"
-        )
+        assert sqlite_max < 10.0, f"SQLite search took {sqlite_max:.2f}s (> 10s absolute backstop)"
 
         assert claim_met, (
             f"SQLite FTS was not meaningfully faster than linear scan: "

@@ -12,13 +12,13 @@ behaviour continue to work unchanged.
 
 import os
 from pathlib import Path
-from typing import TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:  # pragma: no cover - type-only import
     from config import Config
 
 
-def _resolve_config(config: "Optional[Config]") -> "Config":
+def _resolve_config(config: "Config | None") -> "Config":
     """Return ``config`` when supplied, otherwise build one from env+file.
 
     ``validate=False`` is used because the path helpers are called from many
@@ -66,7 +66,7 @@ def get_project_root() -> Path:
     raise RuntimeError("Could not determine project root directory")
 
 
-def get_data_directory(config: "Optional[Config]" = None) -> Path:
+def get_data_directory(config: "Config | None" = None) -> Path:
     """Get the data directory for storing conversations.
 
     The directory is determined by the following priority:
@@ -86,7 +86,7 @@ def get_data_directory(config: "Optional[Config]" = None) -> Path:
     return cfg.resolved_storage_path()
 
 
-def get_log_directory(config: "Optional[Config]" = None) -> Path:
+def get_log_directory(config: "Config | None" = None) -> Path:
     """Get the log directory for storing application logs.
 
     The directory is determined by:
@@ -117,7 +117,7 @@ def get_log_directory(config: "Optional[Config]" = None) -> Path:
     return Path.home() / ".claude-memory" / "logs"
 
 
-def get_default_log_file(config: "Optional[Config]" = None) -> Path:
+def get_default_log_file(config: "Config | None" = None) -> Path:
     """Get the default log file path.
 
     Args:
@@ -159,7 +159,7 @@ def ensure_directory_exists(path: Path) -> None:
     path.mkdir(parents=True, exist_ok=True)
 
 
-def get_uv_command() -> Optional[str]:
+def get_uv_command() -> str | None:
     """Find the uv command in PATH or common locations.
 
     Returns:

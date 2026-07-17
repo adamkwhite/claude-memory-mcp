@@ -15,7 +15,6 @@ sys.path.insert(0, str(project_root / "src"))
 
 from conversation_memory import ConversationMemoryServer  # noqa: E402
 
-
 SAMPLE_CONTENT = "# Test\n\nDiscussion of python MCP server setup with docker."
 
 
@@ -49,7 +48,7 @@ async def _seed(server, **kwargs):
 
 
 def _load(file_path):
-    with open(file_path, "r", encoding="utf-8") as f:
+    with open(file_path, encoding="utf-8") as f:
         return json.load(f)
 
 
@@ -129,10 +128,7 @@ async def test_set_tags_conflicts_with_add_tags(server):
 async def test_malformed_id_returns_error(server):
     result = await server.update_conversation("not-a-real-id", title="x")
     assert result["status"] == "error"
-    assert (
-        "not found" in result["message"].lower()
-        or "invalid" in result["message"].lower()
-    )
+    assert "not found" in result["message"].lower() or "invalid" in result["message"].lower()
 
 
 @pytest.mark.asyncio
@@ -178,7 +174,7 @@ async def test_index_entry_replaced_not_duplicated(server):
     conv_id, _ = await _seed(server)
     await server.update_conversation(conv_id, title="Renamed in index")
 
-    with open(server.index_file, "r", encoding="utf-8") as f:
+    with open(server.index_file, encoding="utf-8") as f:
         index = json.load(f)
     matching = [c for c in index["conversations"] if c["id"] == conv_id]
     assert len(matching) == 1
@@ -189,11 +185,9 @@ async def test_index_entry_replaced_not_duplicated(server):
 async def test_topics_index_drops_obsolete_topics(server):
     conv_id, _ = await _seed(server)
     # Replace content so old topics (python, mcp, docker) are gone
-    await server.update_conversation(
-        conv_id, content="Notes on react and javascript only"
-    )
+    await server.update_conversation(conv_id, content="Notes on react and javascript only")
 
-    with open(server.topics_file, "r", encoding="utf-8") as f:
+    with open(server.topics_file, encoding="utf-8") as f:
         topics_data = json.load(f)
     topics = topics_data.get("topics", {})
     # python should no longer reference this conversation
@@ -209,9 +203,7 @@ async def test_sqlite_search_reflects_updated_content(server):
     if not server.use_sqlite_search:
         pytest.skip("SQLite search unavailable")
     conv_id, _ = await _seed(server)
-    await server.update_conversation(
-        conv_id, content="Brand new keyword: zebracorn appears here"
-    )
+    await server.update_conversation(conv_id, content="Brand new keyword: zebracorn appears here")
     results = await server.search_conversations("zebracorn", limit=5)
     assert any(r.get("id") == conv_id for r in results)
 

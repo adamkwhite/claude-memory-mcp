@@ -11,7 +11,7 @@ import logging
 import re
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from validators import validate_import_file_path
 
@@ -27,7 +27,7 @@ class ClaudeImporter(BaseImporter):
         super().__init__(storage_path, "claude")
         self.logger = logging.getLogger(f"{__name__}.ClaudeImporter")
 
-    def get_supported_formats(self) -> List[str]:
+    def get_supported_formats(self) -> list[str]:
         """Return list of supported file formats."""
         return [".json", ".md", ".txt"]
 
@@ -83,7 +83,7 @@ class ClaudeImporter(BaseImporter):
     def _import_json_format(self, file_path: Path) -> ImportResult:
         """Import JSON format Claude files."""
         try:
-            with open(file_path, "r", encoding="utf-8") as f:
+            with open(file_path, encoding="utf-8") as f:
                 data = json.load(f)
 
             # Detect specific Claude JSON format
@@ -108,7 +108,7 @@ class ClaudeImporter(BaseImporter):
     def _import_text_format(self, file_path: Path) -> ImportResult:
         """Import text/markdown format Claude files."""
         try:
-            with open(file_path, "r", encoding="utf-8") as f:
+            with open(file_path, encoding="utf-8") as f:
                 content = f.read()
 
             # Parse markdown conversation
@@ -149,9 +149,7 @@ class ClaudeImporter(BaseImporter):
                 metadata={},
             )
 
-    def _import_claude_memory_format(
-        self, file_path: Path, data: Dict[str, Any]
-    ) -> ImportResult:
+    def _import_claude_memory_format(self, file_path: Path, data: dict[str, Any]) -> ImportResult:
         """Import existing Claude Memory format - already in universal format."""
         try:
             # This is already our format, but we may want to update it
@@ -190,9 +188,7 @@ class ClaudeImporter(BaseImporter):
                 metadata={},
             )
 
-    def _import_claude_desktop_format(
-        self, file_path: Path, data: Dict[str, Any]
-    ) -> ImportResult:
+    def _import_claude_desktop_format(self, file_path: Path, data: dict[str, Any]) -> ImportResult:
         """Import Claude Desktop MCP format."""
         try:
             universal_conv = self.parse_conversation(data)
@@ -232,9 +228,7 @@ class ClaudeImporter(BaseImporter):
                 metadata={},
             )
 
-    def _import_generic_claude_json(
-        self, file_path: Path, data: Dict[str, Any]
-    ) -> ImportResult:
+    def _import_generic_claude_json(self, file_path: Path, data: dict[str, Any]) -> ImportResult:
         """Import generic Claude JSON format."""
         try:
             universal_conv = self.parse_conversation(data)
@@ -274,7 +268,7 @@ class ClaudeImporter(BaseImporter):
                 metadata={},
             )
 
-    def parse_conversation(self, raw_data: Any) -> Dict[str, Any]:
+    def parse_conversation(self, raw_data: Any) -> dict[str, Any]:
         """
         Parse raw Claude conversation data into universal format.
 
@@ -292,7 +286,7 @@ class ClaudeImporter(BaseImporter):
         else:
             raise ValueError("Claude conversation data must be string or dictionary")
 
-    def _parse_claude_json(self, data: Dict[str, Any]) -> Dict[str, Any]:
+    def _parse_claude_json(self, data: dict[str, Any]) -> dict[str, Any]:
         """Parse Claude JSON conversation data."""
         # Extract basic information
         platform_id = data.get("id", "")
@@ -324,9 +318,7 @@ class ClaudeImporter(BaseImporter):
         }
 
         # Universal metadata extraction.
-        session_id = (
-            data.get("session_id") or data.get("conversation_id") or platform_id or None
-        )
+        session_id = data.get("session_id") or data.get("conversation_id") or platform_id or None
         user_id = data.get("user_id") or data.get("account_id") or None
         tags = self._extract_claude_tags(data, session_context["claude_variant"])
         conversation_type = self._classify_claude_conversation_type(data, content)
@@ -352,11 +344,9 @@ class ClaudeImporter(BaseImporter):
             custom_fields=custom_fields,
         )
 
-    def _extract_claude_tags(
-        self, data: Dict[str, Any], claude_variant: str
-    ) -> List[str]:
+    def _extract_claude_tags(self, data: dict[str, Any], claude_variant: str) -> list[str]:
         """Build tag list for a Claude conversation (variant + caller-supplied)."""
-        tags: List[str] = []
+        tags: list[str] = []
         if claude_variant:
             tags.append(f"variant:{claude_variant}")
         explicit = data.get("tags")
@@ -364,9 +354,7 @@ class ClaudeImporter(BaseImporter):
             tags.extend(str(t) for t in explicit if t)
         return tags
 
-    def _classify_claude_conversation_type(
-        self, data: Dict[str, Any], content: str
-    ) -> str:
+    def _classify_claude_conversation_type(self, data: dict[str, Any], content: str) -> str:
         """Classify a Claude conversation as chat/code/analysis/etc."""
         explicit = data.get("conversation_type")
         if isinstance(explicit, str) and explicit:
@@ -375,9 +363,9 @@ class ClaudeImporter(BaseImporter):
             return "code"
         return "chat"
 
-    def _extract_claude_custom_fields(self, data: Dict[str, Any]) -> Dict[str, Any]:
+    def _extract_claude_custom_fields(self, data: dict[str, Any]) -> dict[str, Any]:
         """Capture optional Claude extras into custom_fields."""
-        custom: Dict[str, Any] = {}
+        custom: dict[str, Any] = {}
         for key in ("project_id", "organization_id", "workspace_id"):
             value = data.get(key)
             if value is not None:
@@ -388,8 +376,8 @@ class ClaudeImporter(BaseImporter):
         return custom
 
     def _parse_markdown_conversation(
-        self, content: str, file_path: Optional[Path] = None
-    ) -> Dict[str, Any]:
+        self, content: str, file_path: Path | None = None
+    ) -> dict[str, Any]:
         """Parse markdown format Claude conversation."""
         # Extract title from first line or filename
         lines = content.strip().split("\n")
@@ -425,7 +413,7 @@ class ClaudeImporter(BaseImporter):
             metadata={"source_type": "markdown", "line_count": len(lines)},
         )
 
-    def _extract_messages_from_markdown(self, content: str) -> List[Dict[str, Any]]:
+    def _extract_messages_from_markdown(self, content: str) -> list[dict[str, Any]]:
         """Extract individual messages from markdown conversation."""
         messages = []
 
@@ -464,12 +452,12 @@ class ClaudeImporter(BaseImporter):
         # Sort messages by their position in the text
         return messages
 
-    def _extract_messages_from_content(self, content: str) -> List[Dict[str, Any]]:
+    def _extract_messages_from_content(self, content: str) -> list[dict[str, Any]]:
         """Extract messages from a combined content string."""
         # Similar to markdown extraction but more flexible
         return self._extract_messages_from_markdown(content)
 
-    def _is_claude_memory_format(self, data: Dict[str, Any]) -> bool:
+    def _is_claude_memory_format(self, data: dict[str, Any]) -> bool:
         """Check if data is in Claude Memory format."""
         required_fields = ["id", "title", "content", "date", "topics", "created_at"]
         has_required = sum(1 for field in required_fields if field in data)
@@ -481,15 +469,13 @@ class ClaudeImporter(BaseImporter):
 
         return has_required >= 5
 
-    def _is_claude_desktop_format(self, data: Dict[str, Any]) -> bool:
+    def _is_claude_desktop_format(self, data: dict[str, Any]) -> bool:
         """Check if data is in Claude Desktop MCP format."""
         # Look for MCP-specific indicators
         content_str = json.dumps(data).lower()
         mcp_indicators = ["mcp", "desktop", "anthropic"]
 
-        indicator_count = sum(
-            1 for indicator in mcp_indicators if indicator in content_str
-        )
+        indicator_count = sum(1 for indicator in mcp_indicators if indicator in content_str)
 
         # Also check for conversation structure
         if self._has_conversation_structure(data):
@@ -497,7 +483,7 @@ class ClaudeImporter(BaseImporter):
 
         return indicator_count >= 2
 
-    def _has_conversation_structure(self, data: Dict[str, Any]) -> bool:
+    def _has_conversation_structure(self, data: dict[str, Any]) -> bool:
         """Check if data has general conversation structure."""
         conversation_fields = [
             "messages",
@@ -513,7 +499,7 @@ class ClaudeImporter(BaseImporter):
 
         return has_conversation or has_text
 
-    def _detect_claude_variant(self, data: Dict[str, Any]) -> str:
+    def _detect_claude_variant(self, data: dict[str, Any]) -> str:
         """Detect which Claude variant this conversation came from."""
         content_str = json.dumps(data).lower()
 
@@ -526,7 +512,7 @@ class ClaudeImporter(BaseImporter):
         else:
             return "claude_generic"
 
-    def _save_conversation(self, conversation: Dict[str, Any]) -> Path:
+    def _save_conversation(self, conversation: dict[str, Any]) -> Path:
         """Save a conversation to the storage directory."""
         # Create date-based subdirectory
         date = datetime.fromisoformat(conversation["date"].replace("Z", "+00:00"))
@@ -544,7 +530,7 @@ class ClaudeImporter(BaseImporter):
         self.logger.info("Saved Claude conversation to: %s", file_path)
         return file_path
 
-    def _extract_topics(self, content: str) -> List[str]:
+    def _extract_topics(self, content: str) -> list[str]:
         """Override base topic extraction for Claude-specific patterns."""
         topics = super()._extract_topics(content)
 

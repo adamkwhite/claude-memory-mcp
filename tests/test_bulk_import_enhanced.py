@@ -46,9 +46,7 @@ PlatformType = bulk_import_enhanced.PlatformType
 def fake_memory_server():
     """Async memory server stub returning success."""
     server = MagicMock()
-    server.add_conversation = AsyncMock(
-        return_value={"status": "success", "message": "ok"}
-    )
+    server.add_conversation = AsyncMock(return_value={"status": "success", "message": "ok"})
     return server
 
 
@@ -89,16 +87,12 @@ class TestResolvePlatform:
             assert fallback is False
 
     def test_auto_dispatches_to_chatgpt(self):
-        label, fallback = self.importer._resolve_platform(
-            "auto", PlatformType.CHATGPT.value, 0.95
-        )
+        label, fallback = self.importer._resolve_platform("auto", PlatformType.CHATGPT.value, 0.95)
         assert label == "chatgpt"
         assert fallback is False
 
     def test_auto_dispatches_to_cursor(self):
-        label, fallback = self.importer._resolve_platform(
-            "auto", PlatformType.CURSOR.value, 0.95
-        )
+        label, fallback = self.importer._resolve_platform("auto", PlatformType.CURSOR.value, 0.95)
         assert label == "cursor"
         assert fallback is False
 
@@ -123,16 +117,12 @@ class TestResolvePlatform:
         assert fallback is False
 
     def test_low_confidence_falls_back_to_legacy(self):
-        label, fallback = self.importer._resolve_platform(
-            "auto", PlatformType.CHATGPT.value, 0.1
-        )
+        label, fallback = self.importer._resolve_platform("auto", PlatformType.CHATGPT.value, 0.1)
         assert label == "legacy"
         assert fallback is True
 
     def test_unknown_platform_falls_back_to_legacy(self):
-        label, fallback = self.importer._resolve_platform(
-            "auto", PlatformType.UNKNOWN.value, 0.99
-        )
+        label, fallback = self.importer._resolve_platform("auto", PlatformType.UNKNOWN.value, 0.99)
         assert label == "legacy"
         assert fallback is True
 
@@ -142,9 +132,7 @@ class TestResolvePlatform:
 # ---------------------------------------------------------------------------
 class TestRunDispatch:
     @pytest.mark.asyncio
-    async def test_auto_detect_uses_chatgpt_importer(
-        self, tmp_path, fake_memory_server
-    ):
+    async def test_auto_detect_uses_chatgpt_importer(self, tmp_path, fake_memory_server):
         # ChatGPT-shaped data so that even if the detector mock is bypassed
         # the parser succeeds.
         chatgpt_payload = {
@@ -186,9 +174,7 @@ class TestRunDispatch:
         fake_memory_server.add_conversation.assert_awaited()
 
     @pytest.mark.asyncio
-    async def test_explicit_format_overrides_detection(
-        self, tmp_path, fake_memory_server
-    ):
+    async def test_explicit_format_overrides_detection(self, tmp_path, fake_memory_server):
         chatgpt_payload = {
             "conversations": [
                 {
@@ -227,9 +213,7 @@ class TestRunDispatch:
         assert importer.imported_count >= 1
 
     @pytest.mark.asyncio
-    async def test_low_confidence_falls_back_to_legacy(
-        self, tmp_path, fake_memory_server
-    ):
+    async def test_low_confidence_falls_back_to_legacy(self, tmp_path, fake_memory_server):
         # Legacy-shaped Claude export (list of conversations with content).
         legacy_payload = [
             {
@@ -253,9 +237,7 @@ class TestRunDispatch:
         assert importer.platform_counts == {"legacy": 1}
 
     @pytest.mark.asyncio
-    async def test_dry_run_does_not_invoke_memory_server(
-        self, tmp_path, fake_memory_server
-    ):
+    async def test_dry_run_does_not_invoke_memory_server(self, tmp_path, fake_memory_server):
         legacy_payload = [
             {
                 "title": "Dry chat",
@@ -289,9 +271,7 @@ class TestRunDispatch:
         assert any("does not exist" in err for err in importer.errors)
 
     @pytest.mark.asyncio
-    async def test_malformed_json_falls_back_and_records_error(
-        self, tmp_path, fake_memory_server
-    ):
+    async def test_malformed_json_falls_back_and_records_error(self, tmp_path, fake_memory_server):
         bad = tmp_path / "bad.json"
         bad.write_text("{this is not json", encoding="utf-8")
 
@@ -308,9 +288,7 @@ class TestRunDispatch:
         assert any("Error reading JSON" in err for err in importer.errors)
 
     @pytest.mark.asyncio
-    async def test_empty_conversations_list_reports_no_work(
-        self, tmp_path, fake_memory_server
-    ):
+    async def test_empty_conversations_list_reports_no_work(self, tmp_path, fake_memory_server):
         export = _write_json(tmp_path / "empty.json", [])
 
         importer = EnhancedBulkImporter(
@@ -416,9 +394,7 @@ class TestSaveAndReport:
     @pytest.mark.asyncio
     async def test_save_conversation_records_failure(self, tmp_path):
         memory = MagicMock()
-        memory.add_conversation = AsyncMock(
-            return_value={"status": "error", "message": "boom"}
-        )
+        memory.add_conversation = AsyncMock(return_value={"status": "error", "message": "boom"})
         importer = EnhancedBulkImporter(
             dry_run=False,
             memory_server=memory,
@@ -590,9 +566,7 @@ class TestSaveAndReport:
 # ---------------------------------------------------------------------------
 class TestStagingFallback:
     @pytest.mark.asyncio
-    async def test_importer_with_no_output_falls_back_to_legacy(
-        self, tmp_path, fake_memory_server
-    ):
+    async def test_importer_with_no_output_falls_back_to_legacy(self, tmp_path, fake_memory_server):
         """If the importer parses nothing, we fall back to the legacy extractor."""
         # ChatGPT importer requires "conversations" key. Provide a payload that
         # is valid Claude-legacy (list of dicts with content) but NOT valid
@@ -628,9 +602,7 @@ class TestStagingFallback:
 class TestMain:
     @pytest.mark.asyncio
     async def test_main_dry_run_returns_zero(self, tmp_path, monkeypatch):
-        legacy_payload = [
-            {"title": "Main test", "content": "main body", "date": "2025-01-01"}
-        ]
+        legacy_payload = [{"title": "Main test", "content": "main body", "date": "2025-01-01"}]
         export = _write_json(tmp_path / "main.json", legacy_payload)
 
         monkeypatch.setattr(

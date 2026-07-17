@@ -70,7 +70,7 @@
       "problemMatcher": []
     },
     {
-      "label": "Generate Help Documentation from Latest PRD", 
+      "label": "Generate Help Documentation from Latest PRD",
       "type": "shell",
       "command": "powershell",
       "args": [
@@ -88,7 +88,7 @@
     },
     {
       "label": "Custom Project - Generate Tasks",
-      "type": "shell", 
+      "type": "shell",
       "command": "powershell",
       "args": [
         "-Command",
@@ -97,7 +97,7 @@
       "group": "build",
       "presentation": {
         "echo": true,
-        "reveal": "always", 
+        "reveal": "always",
         "focus": false,
         "panel": "shared"
       },

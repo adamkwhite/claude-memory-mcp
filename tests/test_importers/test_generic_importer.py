@@ -573,9 +573,7 @@ class TestGenericImporterHelperMethods:
         messages = []
         content_parts = []
 
-        self.importer._process_speaker_change(
-            "Human", ["Hello", "there"], messages, content_parts
-        )
+        self.importer._process_speaker_change("Human", ["Hello", "there"], messages, content_parts)
 
         assert len(messages) == 1
         assert len(content_parts) == 1
@@ -596,9 +594,7 @@ class TestGenericImporterHelperMethods:
     def test_continue_current_message(self):
         """Test continuing current message."""
         current_message = ["Hello"]
-        result = self.importer._continue_current_message(
-            "Human", current_message, "there"
-        )
+        result = self.importer._continue_current_message("Human", current_message, "there")
 
         assert result == ["Hello", "there"]
 
@@ -643,7 +639,7 @@ class TestGenericImporterSaveConversation:
         assert file_path.name.endswith(".json")
 
         # Verify content
-        with open(file_path, "r") as f:
+        with open(file_path) as f:
             saved_data = json.load(f)
 
         assert saved_data["id"] == conversation["id"]
@@ -675,9 +671,7 @@ class TestGenericImporterSaveConversation:
         ]
 
         file_path = self.storage_path / "test.json"
-        result = self.importer._save_conversations(
-            conversations, file_path, "test_format"
-        )
+        result = self.importer._save_conversations(conversations, file_path, "test_format")
 
         assert result.success is True
         assert result.conversations_imported == 2
@@ -704,9 +698,7 @@ class TestGenericImporterSaveConversation:
         ]
 
         file_path = self.storage_path / "test.json"
-        result = self.importer._save_conversations(
-            conversations, file_path, "test_format"
-        )
+        result = self.importer._save_conversations(conversations, file_path, "test_format")
 
         assert result.success is True  # At least one succeeded
         assert result.conversations_imported == 1
@@ -767,7 +759,7 @@ class TestGenericImporterIntegration:
         assert len(conversation_files) == 1
 
         # Verify conversation content
-        with open(conversation_files[0], "r") as f:
+        with open(conversation_files[0]) as f:
             saved_conversation = json.load(f)
 
         assert saved_conversation["platform"] == "generic"
@@ -822,14 +814,12 @@ For most applications, I'd recommend starting with SQLite FTS as it provides exc
 
         # Verify conversation file was created (excludes source file)
         conversation_files = [
-            f
-            for f in self.storage_path.rglob("*.json")
-            if f.name != "conversation_log.md"
+            f for f in self.storage_path.rglob("*.json") if f.name != "conversation_log.md"
         ]
         assert len(conversation_files) == 1
 
         # Verify conversation content
-        with open(conversation_files[0], "r") as f:
+        with open(conversation_files[0]) as f:
             saved_conversation = json.load(f)
 
         assert saved_conversation["platform"] == "generic"
@@ -873,9 +863,7 @@ class TestGenericUniversalMetadata:
         return data
 
     def test_session_id_from_session_id_key(self):
-        conv = self.importer._parse_dict_as_conversation(
-            self._base_dict(session_id="gen-sess-1")
-        )
+        conv = self.importer._parse_dict_as_conversation(self._base_dict(session_id="gen-sess-1"))
         assert conv["session_id"] == "gen-sess-1"
 
     def test_session_id_from_conversation_id_alias(self):
@@ -890,16 +878,12 @@ class TestGenericUniversalMetadata:
 
     def test_user_id_from_owner_id_alias(self):
         """user_id pulls from common synonyms (user_id/account_id/owner_id)."""
-        conv = self.importer._parse_dict_as_conversation(
-            self._base_dict(owner_id="owner-9")
-        )
+        conv = self.importer._parse_dict_as_conversation(self._base_dict(owner_id="owner-9"))
         assert conv["user_id"] == "owner-9"
 
     def test_tags_from_labels_alias(self):
         """tags pulls from 'tags' or 'labels'."""
-        conv = self.importer._parse_dict_as_conversation(
-            self._base_dict(labels=["alpha", "beta"])
-        )
+        conv = self.importer._parse_dict_as_conversation(self._base_dict(labels=["alpha", "beta"]))
         assert "alpha" in conv["tags"]
         assert "beta" in conv["tags"]
 
@@ -909,9 +893,7 @@ class TestGenericUniversalMetadata:
 
     def test_conversation_type_from_type_alias(self):
         """conversation_type pulls from 'conversation_type'/'type'/'category'."""
-        conv = self.importer._parse_dict_as_conversation(
-            self._base_dict(type="support")
-        )
+        conv = self.importer._parse_dict_as_conversation(self._base_dict(type="support"))
         assert conv["conversation_type"] == "support"
 
     def test_conversation_type_default_none(self):
@@ -920,9 +902,7 @@ class TestGenericUniversalMetadata:
 
     def test_custom_fields_from_extras_alias(self):
         """custom_fields pulls from 'custom_fields'/'extra'/'extras'."""
-        conv = self.importer._parse_dict_as_conversation(
-            self._base_dict(extras={"k": "v"})
-        )
+        conv = self.importer._parse_dict_as_conversation(self._base_dict(extras={"k": "v"}))
         assert conv["custom_fields"] == {"k": "v"}
 
     def test_custom_fields_default_empty(self):
@@ -931,14 +911,10 @@ class TestGenericUniversalMetadata:
 
     def test_non_string_session_id_ignored(self):
         """Non-string session_id values default to None (type safety)."""
-        conv = self.importer._parse_dict_as_conversation(
-            self._base_dict(session_id=12345)
-        )
+        conv = self.importer._parse_dict_as_conversation(self._base_dict(session_id=12345))
         assert conv["session_id"] is None
 
     def test_non_list_tags_ignored(self):
         """Non-list tags values default to empty list."""
-        conv = self.importer._parse_dict_as_conversation(
-            self._base_dict(tags="not-a-list")
-        )
+        conv = self.importer._parse_dict_as_conversation(self._base_dict(tags="not-a-list"))
         assert conv["tags"] == []

@@ -12,7 +12,7 @@ import logging
 import sys
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, Optional
+from typing import Any
 
 from search_database import SearchDatabase
 
@@ -27,7 +27,7 @@ sys.path.append(str(Path(__file__).parent))
 class ConversationMigrator:
     """Migrates JSON conversations to SQLite database."""
 
-    def __init__(self, storage_path: str, use_data_dir: Optional[bool] = None):
+    def __init__(self, storage_path: str, use_data_dir: bool | None = None):
         """Initialize migrator with storage path."""
         self.storage_path = Path(storage_path).expanduser()
 
@@ -60,11 +60,11 @@ class ConversationMigrator:
             return False
         return True
 
-    def migrate_all_conversations(self) -> Dict[str, Any]:
+    def migrate_all_conversations(self) -> dict[str, Any]:
         """Migrate all conversations from JSON to SQLite."""
         self.logger.info("Starting migration of conversations to SQLite...")
 
-        stats: Dict[str, Any] = {
+        stats: dict[str, Any] = {
             "total_found": 0,
             "successfully_migrated": 0,
             "failed_migrations": 0,
@@ -77,7 +77,7 @@ class ConversationMigrator:
                 self.logger.warning(f"Index file not found: {self.index_file}")
                 return self._migrate_without_index()
 
-            with open(self.index_file, "r") as f:
+            with open(self.index_file) as f:
                 index_data = json.load(f)
 
             conversations = index_data.get("conversations", [])
@@ -102,7 +102,7 @@ class ConversationMigrator:
             stats["error"] = str(e)
             return stats
 
-    def _migrate_without_index(self) -> Dict[str, int]:
+    def _migrate_without_index(self) -> dict[str, int]:
         """Migrate by scanning directory structure when index is missing."""
         self.logger.info("Index file missing, scanning directory structure...")
 
@@ -118,9 +118,7 @@ class ConversationMigrator:
 
         # Filter out index and topics files
         conversation_files = [
-            f
-            for f in json_files
-            if f.name not in [INDEX_JSON_FILENAME, TOPICS_JSON_FILENAME]
+            f for f in json_files if f.name not in [INDEX_JSON_FILENAME, TOPICS_JSON_FILENAME]
         ]
 
         stats["total_found"] = len(conversation_files)
@@ -138,7 +136,7 @@ class ConversationMigrator:
         self.logger.info(f"Directory scan migration completed: {stats}")
         return stats
 
-    def _migrate_single_conversation(self, conv_info: Dict) -> bool:
+    def _migrate_single_conversation(self, conv_info: dict) -> bool:
         """Migrate a single conversation from index entry."""
         try:
             file_path = self.storage_path / conv_info["file_path"]
@@ -147,7 +145,7 @@ class ConversationMigrator:
                 self.logger.warning(f"Conversation file not found: {file_path}")
                 return False
 
-            with open(file_path, "r", encoding="utf-8") as f:
+            with open(file_path, encoding="utf-8") as f:
                 conv_data = json.load(f)
 
             # Add conversation to search database
@@ -155,9 +153,7 @@ class ConversationMigrator:
             success = self.search_db.add_conversation(conv_data, relative_path)
 
             if success:
-                self.logger.debug(
-                    f"Migrated conversation: {conv_data.get('id', 'unknown')}"
-                )
+                self.logger.debug(f"Migrated conversation: {conv_data.get('id', 'unknown')}")
             else:
                 self.logger.error(
                     f"Failed to migrate conversation: {conv_data.get('id', 'unknown')}"
@@ -166,15 +162,13 @@ class ConversationMigrator:
             return success
 
         except Exception as e:
-            self.logger.error(
-                f"Error migrating conversation {conv_info.get('id', 'unknown')}: {e}"
-            )
+            self.logger.error(f"Error migrating conversation {conv_info.get('id', 'unknown')}: {e}")
             return False
 
     def _migrate_json_file(self, file_path: Path) -> bool:
         """Migrate a single JSON file."""
         try:
-            with open(file_path, "r", encoding="utf-8") as f:
+            with open(file_path, encoding="utf-8") as f:
                 conv_data = json.load(f)
 
             # Validate required fields
@@ -202,7 +196,7 @@ class ConversationMigrator:
             self.logger.error(f"Error migrating file {file_path}: {e}")
             return False
 
-    def verify_migration(self) -> Dict[str, Any]:
+    def verify_migration(self) -> dict[str, Any]:
         """Verify migration by comparing counts and testing search."""
         self.logger.info("Verifying migration...")
 
@@ -213,9 +207,7 @@ class ConversationMigrator:
             # Count JSON files
             json_files = list(self.conversations_path.rglob("*.json"))
             conversation_files = [
-                f
-                for f in json_files
-                if f.name not in [INDEX_JSON_FILENAME, TOPICS_JSON_FILENAME]
+                f for f in json_files if f.name not in [INDEX_JSON_FILENAME, TOPICS_JSON_FILENAME]
             ]
             json_count = len(conversation_files)
 
@@ -247,9 +239,7 @@ class ConversationMigrator:
 
 def main():
     """Main migration function."""
-    parser = argparse.ArgumentParser(
-        description="Migrate conversations from JSON to SQLite FTS"
-    )
+    parser = argparse.ArgumentParser(description="Migrate conversations from JSON to SQLite FTS")
     parser.add_argument(
         "--storage-path",
         default="~/claude-memory",

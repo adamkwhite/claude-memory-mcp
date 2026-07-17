@@ -38,11 +38,11 @@ class ConversationMemoryServer:
     def __init__(self, storage_path):
         self.storage_path = Path(storage_path).expanduser()
         # Initialize directory structure
-        
+
     async def search_conversations(self, query, limit=5):
         # Search through stored conversations
         # Return relevance-scored results
-        
+
     async def add_conversation(self, content, title=None):
         # Store conversation with metadata
         # Update indexes
@@ -68,12 +68,12 @@ class ConversationMemoryServer:
        for term in query_terms:
            if term in conversation['topics']:
                score += 3
-       
+
        # Content matches
        content = load_conversation_content(conversation['file_path'])
        for term in query_terms:
            score += content.lower().count(term)
-       
+
        return score
    ```
 
@@ -153,7 +153,7 @@ This gives you a structured way to review your progress and identify patterns in
 - Implement conversation storage
 - Basic file organization
 
-**Phase 2 (25 min)**: Search Functionality  
+**Phase 2 (25 min)**: Search Functionality
 - Build search algorithm
 - Create relevance scoring
 - Test with sample data

@@ -13,10 +13,11 @@ from __future__ import annotations
 import json
 import logging
 from abc import ABC, abstractmethod
+from collections.abc import Iterable
 from dataclasses import dataclass, field
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, Iterable, List, Optional
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -40,9 +41,9 @@ class ExportResult:
     success: bool
     conversations_exported: int
     conversations_failed: int
-    errors: List[str]
-    output_path: Optional[str]
-    metadata: Dict[str, Any] = field(default_factory=dict)
+    errors: list[str]
+    output_path: str | None
+    metadata: dict[str, Any] = field(default_factory=dict)
 
     @property
     def total_processed(self) -> int:
@@ -70,10 +71,10 @@ class Filters:
             unlimited.
     """
 
-    date_from: Optional[datetime] = None
-    date_to: Optional[datetime] = None
-    platforms: Optional[List[str]] = None
-    limit: Optional[int] = None
+    date_from: datetime | None = None
+    date_to: datetime | None = None
+    platforms: list[str] | None = None
+    limit: int | None = None
 
     def is_empty(self) -> bool:
         """Return True if no filters are configured."""
@@ -113,7 +114,7 @@ class BaseExporter(ABC):
     def export(
         self,
         output_path: Path,
-        filters: Optional[Filters] = None,
+        filters: Filters | None = None,
     ) -> ExportResult:
         """Export conversations to ``output_path``.
 
@@ -128,7 +129,7 @@ class BaseExporter(ABC):
         """
 
     @abstractmethod
-    def validate(self, output_path: Path) -> Dict[str, Any]:
+    def validate(self, output_path: Path) -> dict[str, Any]:
         """Validate a previously exported file.
 
         Returns:
@@ -140,7 +141,7 @@ class BaseExporter(ABC):
     # Shared helpers
     # ------------------------------------------------------------------
 
-    def load_conversations(self) -> List[Dict[str, Any]]:
+    def load_conversations(self) -> list[dict[str, Any]]:
         """Load all on-disk conversations and normalize to universal format.
 
         Returns:
@@ -157,13 +158,13 @@ class BaseExporter(ABC):
             return []
 
         try:
-            with open(index_file, "r", encoding="utf-8") as f:
+            with open(index_file, encoding="utf-8") as f:
                 index_data = json.load(f)
         except (OSError, json.JSONDecodeError) as exc:
             self.logger.error("Failed to read index.json: %s", exc)
             return []
 
-        loaded: List[Dict[str, Any]] = []
+        loaded: list[dict[str, Any]] = []
         for conv_info in index_data.get("conversations", []):
             rel_path = conv_info.get("file_path")
             if not rel_path:
@@ -173,7 +174,7 @@ class BaseExporter(ABC):
                 self.logger.debug("Skipping missing file: %s", file_path)
                 continue
             try:
-                with open(file_path, "r", encoding="utf-8") as f:
+                with open(file_path, encoding="utf-8") as f:
                     conv = json.load(f)
             except (OSError, json.JSONDecodeError) as exc:
                 self.logger.warning("Failed to load %s: %s", file_path, exc)
@@ -184,9 +185,9 @@ class BaseExporter(ABC):
 
     def apply_filters(
         self,
-        conversations: Iterable[Dict[str, Any]],
-        filters: Optional[Filters],
-    ) -> List[Dict[str, Any]]:
+        conversations: Iterable[dict[str, Any]],
+        filters: Filters | None,
+    ) -> list[dict[str, Any]]:
         """Apply filtering options to a list of conversations.
 
         Args:
@@ -200,11 +201,11 @@ class BaseExporter(ABC):
         if filters is None or filters.is_empty():
             return items
 
-        normalized_platforms: Optional[List[str]] = None
+        normalized_platforms: list[str] | None = None
         if filters.platforms:
             normalized_platforms = [p.lower() for p in filters.platforms]
 
-        result: List[Dict[str, Any]] = []
+        result: list[dict[str, Any]] = []
         for conv in items:
             if not self._matches_date_range(conv, filters.date_from, filters.date_to):
                 continue
@@ -249,8 +250,8 @@ class BaseExporter(ABC):
 
     @staticmethod
     def _normalize_to_universal(
-        conversation: Dict[str, Any],
-    ) -> Dict[str, Any]:
+        conversation: dict[str, Any],
+    ) -> dict[str, Any]:
         """Upgrade a legacy conversation into universal format if needed.
 
         Universal-format conversations are returned untouched (other than
@@ -286,7 +287,7 @@ class BaseExporter(ABC):
         return conv
 
     @staticmethod
-    def _parse_iso(date_str: str) -> Optional[datetime]:
+    def _parse_iso(date_str: str) -> datetime | None:
         """Parse an ISO date string, returning None on failure."""
         if not date_str:
             return None
@@ -298,9 +299,9 @@ class BaseExporter(ABC):
     @classmethod
     def _matches_date_range(
         cls,
-        conversation: Dict[str, Any],
-        date_from: Optional[datetime],
-        date_to: Optional[datetime],
+        conversation: dict[str, Any],
+        date_from: datetime | None,
+        date_to: datetime | None,
     ) -> bool:
         """Return True if conversation's date is inside [from, to]."""
         if date_from is None and date_to is None:
@@ -333,7 +334,7 @@ class BaseExporter(ABC):
         return target
 
     @staticmethod
-    def _matches_platform(conversation: Dict[str, Any], platforms: List[str]) -> bool:
+    def _matches_platform(conversation: dict[str, Any], platforms: list[str]) -> bool:
         """Return True if conversation's platform matches one of ``platforms``."""
         platform = str(conversation.get("platform", "unknown")).lower()
         return platform in platforms

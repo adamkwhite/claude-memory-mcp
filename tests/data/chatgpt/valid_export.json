@@ -13,14 +13,14 @@
           "create_time": "2025-01-15T10:30:00Z"
         },
         {
-          "id": "msg-123e4567-e89b-12d3-a456-426614174002", 
+          "id": "msg-123e4567-e89b-12d3-a456-426614174002",
           "role": "assistant",
           "content": "You can create a list in Python using square brackets. For example: my_list = [1, 2, 3, 'hello']",
           "create_time": "2025-01-15T10:32:00Z"
         },
         {
           "id": "msg-123e4567-e89b-12d3-a456-426614174003",
-          "role": "user", 
+          "role": "user",
           "content": "Can you show me how to add items to a list?",
           "create_time": "2025-01-15T10:35:00Z"
         },
@@ -35,7 +35,7 @@
     {
       "id": "conv-234e5678-f90c-23d4-b567-537725285111",
       "title": "Machine Learning Basics",
-      "create_time": "2025-01-14T14:20:00Z", 
+      "create_time": "2025-01-14T14:20:00Z",
       "update_time": "2025-01-14T15:00:00Z",
       "messages": [
         {
@@ -46,7 +46,7 @@
         },
         {
           "id": "msg-234e5678-f90c-23d4-b567-537725285113",
-          "role": "assistant", 
+          "role": "assistant",
           "content": "Machine learning is a subset of artificial intelligence that enables computers to learn and make decisions from data without being explicitly programmed for every scenario.",
           "create_time": "2025-01-14T14:22:00Z"
         }

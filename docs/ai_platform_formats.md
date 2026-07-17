@@ -41,7 +41,7 @@ This document analyzes export formats from different AI platforms to design univ
         },
         {
           "id": "message-uuid",
-          "role": "assistant", 
+          "role": "assistant",
           "content": "Hi there!",
           "create_time": "2025-01-01T12:00:30"
         }
@@ -164,7 +164,7 @@ Based on analysis, our universal format needs:
 ## Implementation Strategy
 
 1. **Phase 1**: Format detection and ChatGPT import
-2. **Phase 2**: Cursor and code-focused imports  
+2. **Phase 2**: Cursor and code-focused imports
 3. **Phase 3**: Generic markdown/text import
 4. **Phase 4**: Real-time platform integrations
 

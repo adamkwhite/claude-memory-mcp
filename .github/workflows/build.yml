@@ -34,23 +34,24 @@ jobs:
           uv sync --locked --no-build --no-install-project --extra lint
           echo "$PWD/.venv/bin" >> "$GITHUB_PATH"
 
-      - name: Check code formatting (Black)
+      # Ruff is the single owner of linting, formatting, and import sorting
+      # (replaces black/isort/flake8, which pre-commit had already dropped in
+      # favor of ruff — this step used to run a second, conflicting set of
+      # tools against the same files). See pyproject.toml [tool.ruff].
+      - name: Lint code (Ruff)
         run: |
-          black --check src/ || (echo "❌ Code formatting issues found. Run 'black src/' to fix." && exit 1)
+          ruff check .
 
-      - name: Check import sorting (isort)
+      - name: Check code formatting (Ruff)
         run: |
-          isort --check-only src/ || (echo "❌ Import sorting issues found. Run 'isort src/' to fix." && exit 1)
+          ruff format --check .
 
-      - name: Lint code (Flake8)
-        if: github.head_ref != 'feature/sonarcloud-migration'
-        run: |
-          flake8 src/ --max-line-length=100 --extend-ignore=E203,W503
-
+      # Re-enabled: the "separate PR" this was waiting on is #163, which made
+      # mypy clean across src/, tests/ and scripts/ (68 files). Uses the project
+      # config so CI and the pre-commit hook check the same thing.
       - name: Type checking (Mypy)
-        if: false  # Temporarily disabled - type errors to be addressed in separate PR
         run: |
-          mypy src --ignore-missing-imports
+          mypy --config-file=pyproject.toml src
 
   # Stage 2: Tests and SonarQube analysis (2-3 minutes)
   sonarqube:

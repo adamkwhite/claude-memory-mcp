@@ -142,10 +142,7 @@ class TestValidateConversationType:
 
     def test_document_transcription_type_passes(self):
         # Real value used in tests/test_update_conversation.py
-        assert (
-            validate_conversation_type("document-transcription")
-            == "document-transcription"
-        )
+        assert validate_conversation_type("document-transcription") == "document-transcription"
 
 
 class TestValidateCustomFields:

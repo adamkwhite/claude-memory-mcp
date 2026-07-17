@@ -10,7 +10,7 @@ import json
 import logging
 import sqlite3
 from pathlib import Path
-from typing import Any, Dict, List
+from typing import Any
 
 
 class SearchDatabase:
@@ -108,9 +108,7 @@ class SearchDatabase:
                 conn.execute(
                     "CREATE INDEX IF NOT EXISTS idx_topics_topic ON conversation_topics(topic)"
                 )
-                conn.execute(
-                    "CREATE INDEX IF NOT EXISTS idx_tags_tag ON conversation_tags(tag)"
-                )
+                conn.execute("CREATE INDEX IF NOT EXISTS idx_tags_tag ON conversation_tags(tag)")
                 conn.execute(
                     "CREATE INDEX IF NOT EXISTS idx_conversations_session_id "
                     "ON conversations(session_id)"
@@ -168,18 +166,14 @@ class SearchDatabase:
         for column_name, column_type in self._METADATA_COLUMNS.items():
             if column_name in existing:
                 continue
-            conn.execute(
-                f"ALTER TABLE conversations ADD COLUMN {column_name} {column_type}"
-            )
+            conn.execute(f"ALTER TABLE conversations ADD COLUMN {column_name} {column_type}")
             self.logger.info(
                 "Migrated conversations table: added column %s %s",
                 column_name,
                 column_type,
             )
 
-    def add_conversation(
-        self, conversation_data: Dict[str, Any], file_path: str
-    ) -> bool:
+    def add_conversation(self, conversation_data: dict[str, Any], file_path: str) -> bool:
         """Add a conversation to the search database."""
         try:
             topics = conversation_data.get("topics", []) or []
@@ -259,7 +253,7 @@ class SearchDatabase:
             self.logger.error("Failed to add conversation: %s", e)
             return False
 
-    def search_conversations(self, query: str, limit: int = 10) -> List[Dict[str, Any]]:
+    def search_conversations(self, query: str, limit: int = 10) -> list[dict[str, Any]]:
         """Search conversations using FTS5."""
         try:
             # Sanitize query for FTS5
@@ -289,9 +283,7 @@ class SearchDatabase:
                         "id": row["id"],
                         "title": row["title"],
                         "date": row["date"],
-                        "topics": (
-                            json.loads(row["topics_json"]) if row["topics_json"] else []
-                        ),
+                        "topics": (json.loads(row["topics_json"]) if row["topics_json"] else []),
                         "score": float(row["score"]),
                         "preview": row["preview"],
                         "file_path": row["file_path"],
@@ -304,7 +296,7 @@ class SearchDatabase:
             self.logger.error(f"Search failed: {e}")
             return [{"error": f"Search failed: {str(e)}"}]
 
-    def search_by_topic(self, topic: str, limit: int = 10) -> List[Dict[str, Any]]:
+    def search_by_topic(self, topic: str, limit: int = 10) -> list[dict[str, Any]]:
         """Search conversations by specific topic."""
         try:
             with sqlite3.connect(self.db_path) as conn:
@@ -328,9 +320,7 @@ class SearchDatabase:
                         "id": row["id"],
                         "title": row["title"],
                         "date": row["date"],
-                        "topics": (
-                            json.loads(row["topics_json"]) if row["topics_json"] else []
-                        ),
+                        "topics": (json.loads(row["topics_json"]) if row["topics_json"] else []),
                         "file_path": row["file_path"],
                     }
                     results.append(result)
@@ -341,7 +331,7 @@ class SearchDatabase:
             self.logger.error(f"Topic search failed: {e}")
             return []
 
-    def search_by_tag(self, tag: str, limit: int = 10) -> List[Dict[str, Any]]:
+    def search_by_tag(self, tag: str, limit: int = 10) -> list[dict[str, Any]]:
         """Search conversations by a specific tag (exact match, case-sensitive)."""
         try:
             with sqlite3.connect(self.db_path) as conn:
@@ -366,9 +356,7 @@ class SearchDatabase:
             self.logger.error(f"Tag search failed: {e}")
             return []
 
-    def search_by_session_id(
-        self, session_id: str, limit: int = 10
-    ) -> List[Dict[str, Any]]:
+    def search_by_session_id(self, session_id: str, limit: int = 10) -> list[dict[str, Any]]:
         """Search conversations by session_id (exact match)."""
         try:
             with sqlite3.connect(self.db_path) as conn:
@@ -394,7 +382,7 @@ class SearchDatabase:
 
     def search_by_conversation_type(
         self, conversation_type: str, limit: int = 10
-    ) -> List[Dict[str, Any]]:
+    ) -> list[dict[str, Any]]:
         """Search conversations by conversation_type (exact match)."""
         try:
             with sqlite3.connect(self.db_path) as conn:
@@ -419,7 +407,7 @@ class SearchDatabase:
             return []
 
     @staticmethod
-    def _row_to_metadata_result(row: sqlite3.Row) -> Dict[str, Any]:
+    def _row_to_metadata_result(row: sqlite3.Row) -> dict[str, Any]:
         """Convert a metadata-query row into the standard result dict."""
         return {
             "id": row["id"],
@@ -431,16 +419,14 @@ class SearchDatabase:
             "conversation_type": row["conversation_type"],
         }
 
-    def get_conversation_stats(self) -> Dict[str, Any]:
+    def get_conversation_stats(self) -> dict[str, Any]:
         """Get database statistics."""
         try:
             with sqlite3.connect(self.db_path) as conn:
                 cursor = conn.execute("SELECT COUNT(*) FROM conversations")
                 total_conversations = cursor.fetchone()[0]
 
-                cursor = conn.execute(
-                    "SELECT COUNT(DISTINCT topic) FROM conversation_topics"
-                )
+                cursor = conn.execute("SELECT COUNT(DISTINCT topic) FROM conversation_topics")
                 unique_topics = cursor.fetchone()[0]
 
                 cursor = conn.execute("""
@@ -452,9 +438,7 @@ class SearchDatabase:
                 """)
                 popular_topics = [{"topic": row[0], "count": row[1]} for row in cursor]
 
-                cursor = conn.execute(
-                    "SELECT COUNT(DISTINCT tag) FROM conversation_tags"
-                )
+                cursor = conn.execute("SELECT COUNT(DISTINCT tag) FROM conversation_tags")
                 unique_tags = cursor.fetchone()[0]
 
                 cursor = conn.execute("""
@@ -477,9 +461,7 @@ class SearchDatabase:
                     "WHERE conversation_type IS NOT NULL "
                     "GROUP BY conversation_type ORDER BY count DESC"
                 )
-                conversation_types = [
-                    {"type": row[0], "count": row[1]} for row in cursor
-                ]
+                conversation_types = [{"type": row[0], "count": row[1]} for row in cursor]
 
                 return {
                     "total_conversations": total_conversations,
@@ -520,9 +502,7 @@ class SearchDatabase:
         """Rebuild the FTS5 index (useful after bulk imports)."""
         try:
             with sqlite3.connect(self.db_path) as conn:
-                conn.execute(
-                    "INSERT INTO conversations_fts(conversations_fts) VALUES('rebuild')"
-                )
+                conn.execute("INSERT INTO conversations_fts(conversations_fts) VALUES('rebuild')")
                 conn.commit()
 
         except sqlite3.Error as e:

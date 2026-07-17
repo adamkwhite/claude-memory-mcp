@@ -9,7 +9,7 @@ import json
 import re
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 
 class ConversationMemoryServer:
@@ -32,9 +32,7 @@ class ConversationMemoryServer:
         """Initialize index and topics files if they don't exist"""
         if not self.index_file.exists():
             with open(self.index_file, "w") as f:
-                json.dump(
-                    {"conversations": [], "last_updated": datetime.now().isoformat()}, f
-                )
+                json.dump({"conversations": [], "last_updated": datetime.now().isoformat()}, f)
 
         if not self.topics_file.exists():
             with open(self.topics_file, "w") as f:
@@ -47,7 +45,7 @@ class ConversationMemoryServer:
         month_folder.mkdir(parents=True, exist_ok=True)
         return month_folder
 
-    def _extract_topics(self, content: str) -> List[str]:
+    def _extract_topics(self, content: str) -> list[str]:
         """Extract topics from conversation content using simple keyword extraction"""
         common_tech_terms = [
             "python",
@@ -91,12 +89,10 @@ class ConversationMemoryServer:
 
         return list(set(topics))  # Remove duplicates
 
-    async def search_conversations(
-        self, query: str, limit: int = 5
-    ) -> List[Dict[str, Any]]:
+    async def search_conversations(self, query: str, limit: int = 5) -> list[dict[str, Any]]:
         """Search conversations for relevant content"""
         try:
-            with open(self.index_file, "r") as f:
+            with open(self.index_file) as f:
                 index_data = json.load(f)
 
             results = []
@@ -116,7 +112,7 @@ class ConversationMemoryServer:
 
                 # Check content match
                 try:
-                    with open(file_path, "r", encoding="utf-8") as f:
+                    with open(file_path, encoding="utf-8") as f:
                         content = f.read().lower()
                         for term in query_terms:
                             score += content.count(term)
@@ -142,10 +138,10 @@ class ConversationMemoryServer:
         except Exception as e:
             return [{"error": f"Search failed: {str(e)}"}]
 
-    def _get_preview(self, file_path: Path, query_terms: List[str]) -> str:
+    def _get_preview(self, file_path: Path, query_terms: list[str]) -> str:
         """Get a preview of the conversation around the search terms"""
         try:
-            with open(file_path, "r", encoding="utf-8") as f:
+            with open(file_path, encoding="utf-8") as f:
                 content = f.read()
 
             lines = content.split("\n")
@@ -168,8 +164,8 @@ class ConversationMemoryServer:
             return "Preview unavailable"
 
     async def add_conversation(
-        self, content: str, title: Optional[str] = None, date: Optional[str] = None
-    ) -> Dict[str, Any]:
+        self, content: str, title: str | None = None, date: str | None = None
+    ) -> dict[str, Any]:
         """Add a new conversation to the memory system"""
         try:
             # Parse date or use current date
@@ -215,11 +211,11 @@ class ConversationMemoryServer:
             }
 
     async def _update_index(
-        self, file_path: Path, date: datetime, topics: List[str], title: Optional[str]
+        self, file_path: Path, date: datetime, topics: list[str], title: str | None
     ):
         """Update the conversation index"""
         try:
-            with open(self.index_file, "r") as f:
+            with open(self.index_file) as f:
                 index_data = json.load(f)
 
             # Add conversation to index
@@ -244,10 +240,10 @@ class ConversationMemoryServer:
         except Exception as e:
             print(f"Failed to update index: {e}")
 
-    async def _update_topics_index(self, topics: List[str]):
+    async def _update_topics_index(self, topics: list[str]):
         """Update the topics index"""
         try:
-            with open(self.topics_file, "r") as f:
+            with open(self.topics_file) as f:
                 topics_data = json.load(f)
 
             for topic in topics:

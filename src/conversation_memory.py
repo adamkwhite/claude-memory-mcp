@@ -12,7 +12,7 @@ import re
 import uuid
 from datetime import datetime, timedelta
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 import aiofiles
 
@@ -38,7 +38,7 @@ class ConversationMemoryServer:
     def __init__(
         self,
         storage_path: str = "~/claude-memory",
-        use_data_dir: Optional[bool] = None,
+        use_data_dir: bool | None = None,
         enable_sqlite: bool = True,
     ):
         # Reject malformed storage_path values (empty, null bytes, the
@@ -139,7 +139,7 @@ class ConversationMemoryServer:
     def _sync_index_from_files(self):
         """Rebuild index.json from conversation files on disk if out of sync."""
         try:
-            with open(self.index_file, "r") as f:
+            with open(self.index_file) as f:
                 index_data = json.load(f)
             indexed_ids = {c["id"] for c in index_data.get("conversations", [])}
         except (OSError, ValueError, KeyError, TypeError):
@@ -157,7 +157,7 @@ class ConversationMemoryServer:
         added = 0
         for conv_file in conv_files:
             try:
-                with open(conv_file, "r", encoding="utf-8") as f:
+                with open(conv_file, encoding="utf-8") as f:
                     conv_data = json.load(f)
                 conv_id = conv_data.get("id", "")
                 if conv_id and conv_id not in indexed_ids:
@@ -169,9 +169,7 @@ class ConversationMemoryServer:
                             "date": conv_data.get("date", ""),
                             "topics": conv_data.get("topics", []),
                             "file_path": str(relative_path),
-                            "added_at": conv_data.get(
-                                "created_at", datetime.now().isoformat()
-                            ),
+                            "added_at": conv_data.get("created_at", datetime.now().isoformat()),
                         }
                     )
                     indexed_ids.add(conv_id)
@@ -184,8 +182,7 @@ class ConversationMemoryServer:
             with open(self.index_file, "w") as f:
                 json.dump(index_data, f, indent=2)
             self.logger.info(
-                f"Synced index.json: added {added} conversations "
-                f"({len(indexed_ids)} total)"
+                f"Synced index.json: added {added} conversations ({len(indexed_ids)} total)"
             )
 
     def _get_date_folder(self, date: datetime) -> Path:
@@ -195,7 +192,7 @@ class ConversationMemoryServer:
         month_folder.mkdir(parents=True, exist_ok=True)
         return month_folder
 
-    def _extract_topics(self, content: str) -> List[str]:
+    def _extract_topics(self, content: str) -> list[str]:
         """Extract topics from conversation content using simple keyword extraction"""
         common_tech_terms = [
             "python",
@@ -313,15 +310,15 @@ class ConversationMemoryServer:
     async def add_conversation(
         self,
         content: str,
-        title: Optional[str] = None,
-        conversation_date: Optional[str] = None,
+        title: str | None = None,
+        conversation_date: str | None = None,
         *,
-        session_id: Optional[str] = None,
-        user_id: Optional[str] = None,
-        tags: Optional[List[str]] = None,
-        conversation_type: Optional[str] = None,
-        custom_fields: Optional[Dict[str, Any]] = None,
-    ) -> Dict[str, Any]:
+        session_id: str | None = None,
+        user_id: str | None = None,
+        tags: list[str] | None = None,
+        conversation_type: str | None = None,
+        custom_fields: dict[str, Any] | None = None,
+    ) -> dict[str, Any]:
         """Add a new conversation to storage.
 
         The ``session_id``/``user_id``/``tags``/``conversation_type``/
@@ -335,9 +332,7 @@ class ConversationMemoryServer:
             # Parse date or use current
             if conversation_date:
                 try:
-                    date = datetime.fromisoformat(
-                        conversation_date.replace("Z", "+00:00")
-                    )
+                    date = datetime.fromisoformat(conversation_date.replace("Z", "+00:00"))
                 except ValueError:
                     date = datetime.now()
             else:
@@ -351,9 +346,7 @@ class ConversationMemoryServer:
                 title = first_line[:50] + "..." if len(first_line) > 50 else first_line
 
             # Create conversation record
-            conversation_id = (
-                f"conv_{date.strftime('%Y%m%d_%H%M%S')}_{uuid.uuid4().hex[:8]}"
-            )
+            conversation_id = f"conv_{date.strftime('%Y%m%d_%H%M%S')}_{uuid.uuid4().hex[:8]}"
 
             date_folder = self._get_date_folder(date)
             file_path = date_folder / f"{conversation_id}.json"
@@ -361,7 +354,7 @@ class ConversationMemoryServer:
             # Extract topics
             topics = self._extract_topics(content)
 
-            conversation_data: Dict[str, Any] = {
+            conversation_data: dict[str, Any] = {
                 "id": conversation_id,
                 "title": title,
                 "content": content,
@@ -385,9 +378,7 @@ class ConversationMemoryServer:
 
             # Save conversation file
             async with aiofiles.open(file_path, "w", encoding="utf-8") as f:
-                await f.write(
-                    json.dumps(conversation_data, indent=2, ensure_ascii=False)
-                )
+                await f.write(json.dumps(conversation_data, indent=2, ensure_ascii=False))
 
             # Update index
             self._update_index(conversation_data, file_path)
@@ -403,9 +394,7 @@ class ConversationMemoryServer:
             # add_conversation call doesn't leave an orphan.
             if self.use_sqlite_search and self.search_db:
                 relative_path = str(file_path.relative_to(self.storage_path))
-                sqlite_ok = self.search_db.add_conversation(
-                    conversation_data, relative_path
-                )
+                sqlite_ok = self.search_db.add_conversation(conversation_data, relative_path)
                 if not sqlite_ok:
                     self._rollback_add_conversation(file_path, conversation_id, topics)
                     return {
@@ -430,7 +419,7 @@ class ConversationMemoryServer:
             }
 
     def _rollback_add_conversation(
-        self, file_path: Path, conversation_id: str, topics: List[str]
+        self, file_path: Path, conversation_id: str, topics: list[str]
     ) -> None:
         """Undo the file + index writes from a failed add_conversation call
         so a SQLite indexing failure doesn't leave an orphaned JSON file
@@ -454,13 +443,11 @@ class ConversationMemoryServer:
     def _remove_index_entry(self, conversation_id: str) -> None:
         """Remove a conversation's entry from index.json (rollback helper)."""
         try:
-            with open(self.index_file, "r") as f:
+            with open(self.index_file) as f:
                 index_data = json.load(f)
 
             index_data["conversations"] = [
-                c
-                for c in index_data.get("conversations", [])
-                if c.get("id") != conversation_id
+                c for c in index_data.get("conversations", []) if c.get("id") != conversation_id
             ]
             index_data["last_updated"] = datetime.now().isoformat()
 
@@ -472,7 +459,7 @@ class ConversationMemoryServer:
 
     _CONVERSATION_ID_RE = re.compile(r"^conv_(\d{8})_(\d{6})_[\w]+$")
 
-    def _resolve_conversation_path(self, conversation_id: str) -> Optional[Path]:
+    def _resolve_conversation_path(self, conversation_id: str) -> Path | None:
         """Resolve a conversation_id to its on-disk JSON path, or None if the
         ID is malformed or the file is missing."""
         match = self._CONVERSATION_ID_RE.match(conversation_id)
@@ -491,16 +478,16 @@ class ConversationMemoryServer:
         self,
         conversation_id: str,
         *,
-        content: Optional[str] = None,
-        title: Optional[str] = None,
-        add_tags: Optional[List[str]] = None,
-        remove_tags: Optional[List[str]] = None,
-        set_tags: Optional[List[str]] = None,
-        conversation_type: Optional[str] = None,
-        session_id: Optional[str] = None,
-        user_id: Optional[str] = None,
-        change_note: Optional[str] = None,
-    ) -> Dict[str, Any]:
+        content: str | None = None,
+        title: str | None = None,
+        add_tags: list[str] | None = None,
+        remove_tags: list[str] | None = None,
+        set_tags: list[str] | None = None,
+        conversation_type: str | None = None,
+        session_id: str | None = None,
+        user_id: str | None = None,
+        change_note: str | None = None,
+    ) -> dict[str, Any]:
         """Update fields on an existing conversation in place.
 
         Mirrors ``add_conversation`` but operates on an existing record. The
@@ -530,7 +517,7 @@ class ConversationMemoryServer:
             }
 
         try:
-            async with aiofiles.open(file_path, "r", encoding="utf-8") as f:
+            async with aiofiles.open(file_path, encoding="utf-8") as f:
                 original_raw = await f.read()
                 conversation_data = json.loads(original_raw)
         except (OSError, ValueError) as e:
@@ -539,7 +526,7 @@ class ConversationMemoryServer:
                 "message": f"Failed to read conversation: {str(e)}",
             }
 
-        changes: List[str] = []
+        changes: list[str] = []
 
         if title is not None and title != conversation_data.get("title"):
             conversation_data["title"] = title
@@ -599,9 +586,7 @@ class ConversationMemoryServer:
 
         try:
             async with aiofiles.open(file_path, "w", encoding="utf-8") as f:
-                await f.write(
-                    json.dumps(conversation_data, indent=2, ensure_ascii=False)
-                )
+                await f.write(json.dumps(conversation_data, indent=2, ensure_ascii=False))
         except OSError as e:
             return {
                 "status": "error",
@@ -621,9 +606,7 @@ class ConversationMemoryServer:
         # enough to keep them consistent with the restored file.
         if self.use_sqlite_search and self.search_db:
             relative_path = str(file_path.relative_to(self.storage_path))
-            sqlite_ok = self.search_db.add_conversation(
-                conversation_data, relative_path
-            )
+            sqlite_ok = self.search_db.add_conversation(conversation_data, relative_path)
             if not sqlite_ok:
                 self._rollback_update_conversation(file_path, original_raw)
                 return {
@@ -667,10 +650,10 @@ class ConversationMemoryServer:
         except OSError as e:
             self.logger.error(f"Rollback: failed to restore prior content: {e}")
 
-    def _replace_index_entry(self, conversation_data: Dict, file_path: Path):
+    def _replace_index_entry(self, conversation_data: dict, file_path: Path):
         """Replace (or insert) the index.json entry for a conversation."""
         try:
-            with open(self.index_file, "r") as f:
+            with open(self.index_file) as f:
                 index_data = json.load(f)
 
             relative_path = file_path.relative_to(self.storage_path)
@@ -708,8 +691,8 @@ class ConversationMemoryServer:
 
     def _resync_topics_index(
         self,
-        old_topics: List[str],
-        new_topics: List[str],
+        old_topics: list[str],
+        new_topics: list[str],
         conversation_id: str,
     ):
         """Update the topics index after a content change: drop entries for
@@ -717,7 +700,7 @@ class ConversationMemoryServer:
         Topics still present after the update are left untouched so we don't
         churn ``added_at`` timestamps."""
         try:
-            with open(self.topics_file, "r") as f:
+            with open(self.topics_file) as f:
                 topics_data = json.load(f)
         except (OSError, ValueError) as e:
             self.logger.error(f"Error loading topics index: {e}")
@@ -736,9 +719,7 @@ class ConversationMemoryServer:
             topics_index[topic] = [
                 e
                 for e in entries
-                if not (
-                    isinstance(e, dict) and e.get("conversation_id") == conversation_id
-                )
+                if not (isinstance(e, dict) and e.get("conversation_id") == conversation_id)
             ]
             if not topics_index[topic]:
                 del topics_index[topic]
@@ -765,10 +746,10 @@ class ConversationMemoryServer:
 
     def _calculate_search_score(
         self,
-        query_terms: List[str],
+        query_terms: list[str],
         content: str,
         title: str,
-        topics: List[str],
+        topics: list[str],
     ) -> int:
         """Calculate relevance score for a conversation based on query terms"""
         score = 0
@@ -780,15 +761,15 @@ class ConversationMemoryServer:
         return score
 
     async def _process_conversation_for_search(
-        self, conv_info: dict, query_terms: List[str]
-    ) -> Optional[dict]:
+        self, conv_info: dict, query_terms: list[str]
+    ) -> dict | None:
         """Process a single conversation for search results"""
         try:
             file_path = self.storage_path / conv_info["file_path"]
             if not file_path.exists():
                 return None
 
-            async with aiofiles.open(file_path, "r", encoding="utf-8") as f:
+            async with aiofiles.open(file_path, encoding="utf-8") as f:
                 content = await f.read()
                 conv_data = json.loads(content)
 
@@ -805,33 +786,27 @@ class ConversationMemoryServer:
                     "date": conv_data["date"],
                     "topics": conv_data["topics"],
                     "score": score,
-                    "preview": (
-                        content[:200] + "..." if len(content) > 200 else content
-                    ),
+                    "preview": (content[:200] + "..." if len(content) > 200 else content),
                 }
             return None
 
         except (OSError, ValueError, KeyError, TypeError):
             return None
 
-    async def search_conversations(
-        self, query: str, limit: int = 10
-    ) -> List[Dict[str, Any]]:
+    async def search_conversations(self, query: str, limit: int = 10) -> list[dict[str, Any]]:
         """Search conversations by content and topics"""
         # Use SQLite FTS search if available and enabled
         if self.use_sqlite_search and self.search_db:
             try:
                 return self.search_db.search_conversations(query, limit)
             except Exception as e:
-                self.logger.warning(
-                    f"SQLite search failed, falling back to linear search: {e}"
-                )
+                self.logger.warning(f"SQLite search failed, falling back to linear search: {e}")
                 # Fall through to linear search
 
         # Fallback to linear search through JSON files
         try:
             # Load index
-            async with aiofiles.open(self.index_file, "r") as f:
+            async with aiofiles.open(self.index_file) as f:
                 content = await f.read()
                 index_data = json.loads(content)
 
@@ -840,9 +815,7 @@ class ConversationMemoryServer:
 
             results = []
             for conv_info in conversations:
-                result = await self._process_conversation_for_search(
-                    conv_info, query_terms
-                )
+                result = await self._process_conversation_for_search(conv_info, query_terms)
                 if result:
                     results.append(result)
 
@@ -853,10 +826,10 @@ class ConversationMemoryServer:
         except (OSError, ValueError, KeyError, TypeError) as e:
             return [{"error": f"Search failed: {str(e)}"}]
 
-    def _get_preview(self, file_path: Path, query_terms: List[str]) -> str:
+    def _get_preview(self, file_path: Path, query_terms: list[str]) -> str:
         """Get a preview of the conversation around the search terms"""
         try:
-            with open(file_path, "r", encoding="utf-8") as f:
+            with open(file_path, encoding="utf-8") as f:
                 content = f.read()
 
             lines = content.split("\n")
@@ -882,7 +855,7 @@ class ConversationMemoryServer:
         """Get a preview of a specific conversation"""
         try:
             # Load index to find the conversation
-            with open(self.index_file, "r") as f:
+            with open(self.index_file) as f:
                 index_data = json.load(f)
 
             conversations = index_data.get("conversations", [])
@@ -892,7 +865,7 @@ class ConversationMemoryServer:
                     file_path = self.storage_path / conv_info["file_path"]
 
                     if file_path.exists():
-                        with open(file_path, "r", encoding="utf-8") as f:
+                        with open(file_path, encoding="utf-8") as f:
                             conv_data = json.load(f)
 
                         content = conv_data.get("content", "")
@@ -905,11 +878,11 @@ class ConversationMemoryServer:
         except (OSError, ValueError, KeyError, TypeError) as e:
             return f"Error retrieving conversation: {str(e)}"
 
-    def _update_index(self, conversation_data: Dict, file_path: Path):
+    def _update_index(self, conversation_data: dict, file_path: Path):
         """Update the main index with new conversation"""
         try:
             # Load existing index
-            with open(self.index_file, "r") as f:
+            with open(self.index_file) as f:
                 index_data = json.load(f)
 
             # Add new conversation to index
@@ -933,11 +906,11 @@ class ConversationMemoryServer:
         except (OSError, ValueError, KeyError, TypeError) as e:
             self.logger.error(f"Error updating index: {e}")
 
-    def _update_topics_index(self, topics: List[str], conversation_id: str):
+    def _update_topics_index(self, topics: list[str], conversation_id: str):
         """Update the topics index with new conversation topics"""
         try:
             # Load existing topics index
-            with open(self.topics_file, "r") as f:
+            with open(self.topics_file) as f:
                 topics_data = json.load(f)
 
             topics_index = topics_data.get("topics", {})
@@ -973,9 +946,7 @@ class ConversationMemoryServer:
             start_of_week = today - timedelta(days=today.weekday() + (week_offset * 7))
             end_of_week = start_of_week + timedelta(days=6)
 
-            week_conversations = self._get_week_conversations(
-                start_of_week, end_of_week
-            )
+            week_conversations = self._get_week_conversations(start_of_week, end_of_week)
             if not week_conversations:
                 if week_offset == 0:
                     return (
@@ -1003,12 +974,10 @@ class ConversationMemoryServer:
         except (OSError, ValueError, KeyError, TypeError) as e:
             return f"Failed to generate weekly summary: {str(e)}"
 
-    def _get_week_conversations(
-        self, start_of_week: datetime, end_of_week: datetime
-    ) -> List[dict]:
+    def _get_week_conversations(self, start_of_week: datetime, end_of_week: datetime) -> list[dict]:
         """Return conversations for the given week range"""
         try:
-            with open(self.index_file, "r") as f:
+            with open(self.index_file) as f:
                 index_data = json.load(f)
             conversations = index_data.get("conversations", [])
         except (OSError, ValueError, KeyError, TypeError):
@@ -1017,14 +986,12 @@ class ConversationMemoryServer:
         week_conversations = []
         for conv_info in conversations:
             try:
-                conv_date = datetime.fromisoformat(
-                    conv_info["date"].replace("Z", "+00:00")
-                )
+                conv_date = datetime.fromisoformat(conv_info["date"].replace("Z", "+00:00"))
                 if start_of_week.date() <= conv_date.date() <= end_of_week.date():
                     file_path = self.storage_path / conv_info["file_path"]
                     if file_path.exists():
                         try:
-                            with open(file_path, "r", encoding="utf-8") as f:
+                            with open(file_path, encoding="utf-8") as f:
                                 conv_data = json.load(f)
                             week_conversations.append(conv_data)
                         except (OSError, ValueError, KeyError, TypeError):
@@ -1043,7 +1010,7 @@ class ConversationMemoryServer:
         self,
         start_of_week: datetime,
         end_of_week: datetime,
-        week_conversations: List[dict],
+        week_conversations: list[dict],
     ) -> str:
         """Build the markdown summary text for the week"""
         summary_parts = []
@@ -1051,23 +1018,19 @@ class ConversationMemoryServer:
             f"# Weekly Summary: {start_of_week.strftime('%Y-%m-%d')} "
             f"to {end_of_week.strftime('%Y-%m-%d')}"
         )
-        summary_parts.append(
-            f"\n## Overview\n- Total conversations: {len(week_conversations)}"
-        )
+        summary_parts.append(f"\n## Overview\n- Total conversations: {len(week_conversations)}")
 
         all_topics = []
         for conv in week_conversations:
             all_topics.extend(conv.get("topics", []))
 
-        topic_counts: Dict[str, int] = {}
+        topic_counts: dict[str, int] = {}
         for topic in all_topics:
             topic_counts[topic] = topic_counts.get(topic, 0) + 1
 
         if topic_counts:
             summary_parts.append("\n## Popular Topics")
-            sorted_topics = sorted(
-                topic_counts.items(), key=lambda x: x[1], reverse=True
-            )
+            sorted_topics = sorted(topic_counts.items(), key=lambda x: x[1], reverse=True)
             for topic, count in sorted_topics[:10]:
                 summary_parts.append(f"- {topic}: {count} conversations")
 
@@ -1084,14 +1047,12 @@ class ConversationMemoryServer:
 
         return "\n".join(summary_parts)
 
-    async def get_search_stats(self) -> Dict[str, Any]:
+    async def get_search_stats(self) -> dict[str, Any]:
         """Get search engine statistics and status."""
         stats = {
             "sqlite_available": SQLITE_AVAILABLE,
             "sqlite_enabled": self.use_sqlite_search,
-            "search_engine": (
-                "sqlite_fts" if self.use_sqlite_search else "linear_json"
-            ),
+            "search_engine": ("sqlite_fts" if self.use_sqlite_search else "linear_json"),
         }
 
         if self.use_sqlite_search and self.search_db:
@@ -1103,7 +1064,7 @@ class ConversationMemoryServer:
 
         return stats
 
-    async def migrate_to_sqlite(self) -> Dict[str, Any]:
+    async def migrate_to_sqlite(self) -> dict[str, Any]:
         """Migrate existing conversations to SQLite database."""
         if not SQLITE_AVAILABLE:
             return {"error": "SQLite not available"}
@@ -1127,9 +1088,7 @@ class ConversationMemoryServer:
         except Exception as e:
             return {"error": f"Migration failed: {str(e)}"}
 
-    async def search_by_topic(
-        self, topic: str, limit: int = 10
-    ) -> List[Dict[str, Any]]:
+    async def search_by_topic(self, topic: str, limit: int = 10) -> list[dict[str, Any]]:
         """Search conversations by specific topic."""
         if self.use_sqlite_search and self.search_db:
             try:
@@ -1140,7 +1099,7 @@ class ConversationMemoryServer:
         # Fallback to JSON-based topic search
         return await self._search_topic_json(topic, limit)
 
-    async def search_by_tag(self, tag: str, limit: int = 10) -> List[Dict[str, Any]]:
+    async def search_by_tag(self, tag: str, limit: int = 10) -> list[dict[str, Any]]:
         """Search conversations by a specific tag (D2 metadata field).
 
         SQLite-only: if SQLite search is unavailable, returns an empty list
@@ -1156,9 +1115,7 @@ class ConversationMemoryServer:
 
         return [{"error": "Tag search requires SQLite FTS to be enabled"}]
 
-    async def search_by_session_id(
-        self, session_id: str, limit: int = 10
-    ) -> List[Dict[str, Any]]:
+    async def search_by_session_id(self, session_id: str, limit: int = 10) -> list[dict[str, Any]]:
         """Search conversations by session_id (D2 metadata field)."""
         if self.use_sqlite_search and self.search_db:
             try:
@@ -1171,23 +1128,21 @@ class ConversationMemoryServer:
 
     async def search_by_conversation_type(
         self, conversation_type: str, limit: int = 10
-    ) -> List[Dict[str, Any]]:
+    ) -> list[dict[str, Any]]:
         """Search conversations by conversation_type (D2 metadata field)."""
         if self.use_sqlite_search and self.search_db:
             try:
-                return self.search_db.search_by_conversation_type(
-                    conversation_type, limit
-                )
+                return self.search_db.search_by_conversation_type(conversation_type, limit)
             except Exception as e:
                 self.logger.warning("SQLite conversation-type search failed: %s", e)
                 return [{"error": f"Conversation-type search failed: {e}"}]
 
         return [{"error": "Conversation-type search requires SQLite FTS to be enabled"}]
 
-    async def _search_topic_json(self, topic: str, limit: int) -> List[Dict[str, Any]]:
+    async def _search_topic_json(self, topic: str, limit: int) -> list[dict[str, Any]]:
         """Helper method for JSON-based topic search."""
         try:
-            async with aiofiles.open(self.topics_file, "r") as f:
+            async with aiofiles.open(self.topics_file) as f:
                 content = await f.read()
                 topics_data = json.loads(content)
 
@@ -1209,9 +1164,7 @@ class ConversationMemoryServer:
                             {
                                 "id": conv_id,
                                 "preview": (
-                                    preview[:200] + "..."
-                                    if len(preview) > 200
-                                    else preview
+                                    preview[:200] + "..." if len(preview) > 200 else preview
                                 ),
                             }
                         )
@@ -1221,7 +1174,7 @@ class ConversationMemoryServer:
         except (OSError, ValueError, KeyError, TypeError) as e:
             return [{"error": f"Topic search failed: {str(e)}"}]
 
-    def _analyze_conversations(self, conversations: List[dict]) -> List[dict]:
+    def _analyze_conversations(self, conversations: list[dict]) -> list[dict]:
         """Legacy method for test compatibility - analyze conversation data"""
         results = []
         for conv in conversations:

@@ -17,7 +17,7 @@ def analyze_json_structure(file_path):
         print(f"📊 File size: {file_size:,} bytes ({file_size / 1024 / 1024:.1f} MB)")
 
         # Read and parse JSON
-        with open(file_path, 'r', encoding='utf-8') as f:
+        with open(file_path, encoding="utf-8") as f:
             # Read first 2000 characters to peek at structure
             f.seek(0)
             sample = f.read(2000)
@@ -38,8 +38,8 @@ def analyze_json_structure(file_path):
                     print(f"🔑 Root keys: {list(data.keys())}")
 
                     # Look for conversations data
-                    if 'conversations' in data:
-                        conversations = data['conversations']
+                    if "conversations" in data:
+                        conversations = data["conversations"]
                         print(f"💬 Found {len(conversations)} conversations")
 
                         if len(conversations) > 0:

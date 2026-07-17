@@ -10,13 +10,13 @@ case "$1" in
     start)
         echo "Starting Claude Memory MCP Server..."
         cd "$PROJECT_DIR"
-        
+
         # Check if already running
         if [ -f "$PIDFILE" ] && kill -0 $(cat "$PIDFILE") 2>/dev/null; then
             echo "Server already running (PID: $(cat $PIDFILE))"
             exit 1
         fi
-        
+
         # Start server and capture PID
         nohup uv run mcp dev "$SERVER_NAME" > "$LOGFILE" 2>&1 &
         echo $! > "$PIDFILE"
@@ -24,7 +24,7 @@ case "$1" in
         echo "Inspector URL: http://$(hostname -I | awk '{print $1}'):6274"
         echo "Logs: tail -f $LOGFILE"
         ;;
-        
+
     stop)
         echo "Stopping Claude Memory MCP Server..."
         if [ -f "$PIDFILE" ]; then
@@ -43,13 +43,13 @@ case "$1" in
             echo "Killed any running MCP processes"
         fi
         ;;
-        
+
     restart)
         $0 stop
         sleep 2
         $0 start
         ;;
-        
+
     status)
         if [ -f "$PIDFILE" ] && kill -0 $(cat "$PIDFILE") 2>/dev/null; then
             echo "Server running (PID: $(cat $PIDFILE))"
@@ -58,7 +58,7 @@ case "$1" in
             echo "Server not running"
         fi
         ;;
-        
+
     logs)
         if [ -f "$LOGFILE" ]; then
             tail -f "$LOGFILE"
@@ -66,7 +66,7 @@ case "$1" in
             echo "No log file found"
         fi
         ;;
-        
+
     kill-all)
         echo "Killing all MCP processes..."
         pkill -f "mcp dev"
@@ -74,7 +74,7 @@ case "$1" in
         rm -f "$PIDFILE"
         echo "All MCP processes killed"
         ;;
-        
+
     *)
         echo "Usage: $0 {start|stop|restart|status|logs|kill-all}"
         echo ""
