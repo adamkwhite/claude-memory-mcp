@@ -23,14 +23,16 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Set up Python
-        uses: actions/setup-python@v6
+      - name: Install uv
+        uses: astral-sh/setup-uv@v8
         with:
           python-version: '3.14'
+          enable-cache: true
 
       - name: Install linting tools
         run: |
-          pip install --only-binary :all: -e ".[lint]"
+          uv sync --locked --no-build --no-install-project --extra lint
+          echo "$PWD/.venv/bin" >> "$GITHUB_PATH"
 
       - name: Check code formatting (Black)
         run: |
@@ -64,14 +66,17 @@ jobs:
         with:
           fetch-depth: 0  # Full history for SonarQube
 
-      - name: Set up Python
-        uses: actions/setup-python@v6
+      - name: Install uv
+        uses: astral-sh/setup-uv@v8
         with:
           python-version: '3.14'
+          enable-cache: true
 
       - name: Install dependencies
         run: |
-          pip install --only-binary :all: -e ".[dev]"
+          uv sync --locked --no-build --no-install-project --extra dev
+          uv pip install -e . --no-deps
+          echo "$PWD/.venv/bin" >> "$GITHUB_PATH"
 
       - name: Run tests with coverage
         run: |
