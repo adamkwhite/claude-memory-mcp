@@ -16,17 +16,17 @@ from typing import Any, Dict, List, Optional
 
 import aiofiles
 
+# Plain absolute import: ``src/`` is always a direct sys.path entry (see
+# server_fastmcp.py for the full explanation), so no relative-import
+# fallback is needed. ImportError is still caught here because it's a
+# genuine possible failure -- SearchDatabase needs stdlib ``sqlite3``,
+# which some minimal Python builds omit -- not a dual-style redefinition.
 try:
-    from .search_database import SearchDatabase
+    from search_database import SearchDatabase
 
     SQLITE_AVAILABLE = True
 except ImportError:
-    try:
-        from search_database import SearchDatabase
-
-        SQLITE_AVAILABLE = True
-    except ImportError:
-        SQLITE_AVAILABLE = False
+    SQLITE_AVAILABLE = False
 
 
 class ConversationMemoryServer:
@@ -1222,14 +1222,3 @@ class ConversationMemoryServer:
             except Exception as e:
                 results.append({"error": str(e)})
         return results
-
-    @classmethod
-    def _validate_storage_path(cls, path: str) -> bool:
-        """Legacy method for test compatibility - validate storage path"""
-        try:
-            from pathlib import Path
-
-            p = Path(path)
-            return p.is_dir() or not p.exists()
-        except Exception:
-            return False

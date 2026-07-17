@@ -553,11 +553,13 @@ def init_default_logging(config: "Optional[Config]" = None):
                 log_file = str(get_default_log_file(cfg))
             except TypeError:
                 log_file = str(get_default_log_file())
-        elif os.getenv("HOME"):
-            # Fallback to manual construction
-            log_file = os.path.join(
-                os.getenv("HOME"), ".claude-memory", "logs", "claude-mcp.log"
-            )
+        else:
+            home = os.getenv("HOME")
+            if home:
+                # Fallback to manual construction
+                log_file = os.path.join(
+                    home, ".claude-memory", "logs", "claude-mcp.log"
+                )
 
     # Console output for MCP server mode (must remain False by default to
     # avoid corrupting the JSON-RPC stream over stdout).

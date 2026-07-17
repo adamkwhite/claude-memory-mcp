@@ -11,41 +11,27 @@ from typing import List, Optional
 
 from mcp.server.fastmcp import FastMCP
 
-try:
-    from .config import Config
-    from .conversation_memory import ConversationMemoryServer as CoreMemoryServer
-    from .exceptions import ValidationError
-    from .logging_config import (
-        get_logger,
-        init_default_logging,
-        log_function_call,
-        log_security_event,
-        set_correlation_id,
-    )
-    from .validators import (
-        validate_conversation_type,
-        validate_session_id,
-        validate_tags,
-        validate_user_id,
-    )
-except ImportError:
-    # For direct imports during testing
-    from config import Config
-    from conversation_memory import ConversationMemoryServer as CoreMemoryServer
-    from exceptions import ValidationError
-    from logging_config import (
-        get_logger,
-        init_default_logging,
-        log_function_call,
-        log_security_event,
-        set_correlation_id,
-    )
-    from validators import (
-        validate_conversation_type,
-        validate_session_id,
-        validate_tags,
-        validate_user_id,
-    )
+# Plain absolute imports: ``src/`` is always a direct sys.path entry (the
+# editable install's .pth, ``PYTHONPATH=.`` in tests, or the script's own
+# directory when run as ``python3 src/server_fastmcp.py``). No package
+# context is required, so there's no relative-import fallback to maintain --
+# that dual try/except used to generate every no-redef mypy error here.
+from config import Config
+from conversation_memory import ConversationMemoryServer as CoreMemoryServer
+from exceptions import ValidationError
+from logging_config import (
+    get_logger,
+    init_default_logging,
+    log_function_call,
+    log_security_event,
+    set_correlation_id,
+)
+from validators import (
+    validate_conversation_type,
+    validate_session_id,
+    validate_tags,
+    validate_user_id,
+)
 
 # Constants
 DEFAULT_PREVIEW_LENGTH = 500

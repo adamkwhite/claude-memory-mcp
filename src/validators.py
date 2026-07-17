@@ -5,25 +5,19 @@ import re
 from datetime import datetime
 from typing import Any, Dict, List, Optional
 
-try:
-    from .exceptions import (
-        ContentValidationError,
-        DateValidationError,
-        MetadataValidationError,
-        QueryValidationError,
-        TitleValidationError,
-        ValidationError,
-    )
-except ImportError:
-    # For direct imports during testing
-    from exceptions import (
-        ContentValidationError,
-        DateValidationError,
-        MetadataValidationError,
-        QueryValidationError,
-        TitleValidationError,
-        ValidationError,
-    )
+# Plain absolute import, matching server_fastmcp.py/conversation_memory.py:
+# ``src/`` is always a direct sys.path entry, and server_fastmcp.py imports
+# this module bare (``from validators import ...``), so a relative import
+# here raises "attempted relative import with no known parent package" the
+# moment the server runs as a script.
+from exceptions import (
+    ContentValidationError,
+    DateValidationError,
+    MetadataValidationError,
+    QueryValidationError,
+    TitleValidationError,
+    ValidationError,
+)
 
 # Constants for validation
 MAX_TITLE_LENGTH = 200

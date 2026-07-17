@@ -303,6 +303,37 @@ class TestInitDefaultLogging:
         assert kwargs["log_file"] == "/home/test/.claude-memory/logs/claude-mcp.log"
         assert kwargs["console_output"] is True
 
+    @patch.dict(os.environ, {}, clear=True)
+    @patch("src.logging_config.setup_logging")
+    @patch("src.logging_config.get_default_log_file", None)
+    def test_init_default_logging_home_fallback_no_toctou(self, mock_setup):
+        """The HOME fallback must fetch ``os.getenv("HOME")`` exactly once.
+
+        The old code called ``os.getenv("HOME")`` twice (once in the
+        ``elif`` guard, once inside ``os.path.join``). If HOME became falsy
+        between those two calls -- e.g. another thread clearing os.environ --
+        ``os.path.join(None, ...)`` would raise TypeError. Reusing a single
+        fetched value closes that window entirely.
+        """
+        call_count = {"HOME": 0}
+        real_getenv = os.getenv
+
+        def flaky_getenv(key, default=None):
+            if key == "HOME":
+                call_count["HOME"] += 1
+                # First (and only, post-fix) call sees HOME set; a second
+                # call -- which the pre-fix code made -- would see it gone.
+                return "/home/racer" if call_count["HOME"] == 1 else None
+            return real_getenv(key, default)
+
+        with patch("src.logging_config.os.getenv", side_effect=flaky_getenv):
+            init_default_logging()  # must not raise TypeError
+
+        mock_setup.assert_called_once()
+        kwargs = mock_setup.call_args.kwargs
+        assert kwargs["log_file"] == "/home/racer/.claude-memory/logs/claude-mcp.log"
+        assert call_count["HOME"] == 1
+
 
 class TestLoggingIntegration:
     """Test logging integration with actual file operations"""
