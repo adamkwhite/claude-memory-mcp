@@ -170,11 +170,9 @@ pip install pytest pytest-cov pytest-asyncio
 - Target: 90%+ coverage maintained through layered testing approach
 
 **PR Quality Gate Enforcement:**
-- All PRs trigger GitHub Actions workflow with SonarCloud analysis
-- PRs are blocked if tests fail or SonarCloud quality gate fails
-- Quality gate enforces: Coverage on New Code ≥ 90%
-- Failed quality gates prevent PR merging (requires branch protection rules)
-- This ensures all new code meets quality standards before merge
+- All PRs run 5 required status checks: `Quick Validation`, `Tests & SonarQube Analysis`, `performance-tests`, `performance-comparison`, `Analyze (python)` (wired as required checks on branch protection alongside the `ci/mirror-job-agent` CI rework — verify current state with `gh api repos/adamkwhite/claude-memory-mcp/rulesets/5957219`)
+- `Tests & SonarQube Analysis` fails the PR if the SonarCloud quality gate is red. The gate ("Sonar way", verified via the SonarCloud API) requires coverage on new code ≥ **80%**, not 90% as this doc previously (incorrectly) claimed — also new duplicated lines ≤ 3% and A ratings on new security/reliability/maintainability
+- Draft PRs skip all 5 checks until flipped ready (`gh pr ready`); a skipped required check reports as passing, so a draft never blocks merge, it just hasn't been checked yet
 
 ## Git Workflow
 
@@ -198,14 +196,16 @@ python -m pytest tests/ --cov=src --cov-report=term -v
 git push origin feature/your-feature-name
 
 # 5. Open Pull Request on GitHub
+# - Open it ready (not draft) if you want CI to run now — draft PRs skip
+#   all 5 required checks until you run `gh pr ready`
 # - ALWAYS mention @claude in PR body or comments for review
 # - PR triggers automated testing and SonarCloud analysis
-# - Must pass all quality gates before merge is allowed
-# - Coverage on new code must be ≥ 90%
+# - Must pass all 5 required status checks before merge unlocks
+# - SonarCloud's new-code coverage threshold is 80%, not 90%
 
-# 6. Merge PR (only after quality gates pass)
-# - Tests must pass ✅
-# - SonarCloud quality gate must pass ✅
+# 6. Merge PR (only after all 5 required checks are green)
+# - Quick Validation, Tests & SonarQube Analysis, performance-tests,
+#   performance-comparison, Analyze (python) must all pass
 # - PR conversations must be resolved ✅
 ```
 
@@ -217,13 +217,12 @@ git push origin feature/your-feature-name
 - ⚠️ **This applies to todos.md, README.md, and ALL files without exception**
 
 ### **Quality Gate Requirements:**
-- All tests must pass
-- SonarCloud analysis must pass
-- Coverage on new code ≥ 90%
+- All 5 required status checks must pass: `Quick Validation`, `Tests & SonarQube Analysis`, `performance-tests`, `performance-comparison`, `Analyze (python)`
+- SonarCloud coverage on new code ≥ **80%** (not 90%)
 - No unresolved PR conversations
 - Linear history maintained
 
-**Note:** Even repository owners cannot bypass these rules - this ensures enterprise-grade quality standards.
+**Note:** Branch protection (`current_user_can_bypass: never`, verified via `gh api .../rulesets/5957219`) blocks deletion, force-push, and non-fast-forward pushes to main for everyone including repository owners — that part was already true. Whether a *red CI check* also blocks merge depends on the required-status-checks rule described above, not on this bypass setting.
 
 ### **Mandatory Testing Requirements**
 

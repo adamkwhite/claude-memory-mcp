@@ -12,12 +12,65 @@ on:
   pull_request:
     branches:
       - main
-    paths-ignore: ['*.md', 'docs/**', 'LICENSE', '.gitignore', '.github/**']
+    # NO paths-ignore here on purpose (mirrors job-agent's ci.yml). A skipped
+    # WORKFLOW never reports a required status check, so a docs/.github-only
+    # PR would sit at "Expected — waiting for status" forever. Instead the
+    # workflow always starts and the `changes` job below decides whether the
+    # heavy jobs run; a skipped JOB still reports (passing) to branch
+    # protection.
+    types: [opened, reopened, ready_for_review, synchronize]
 
 jobs:
+  # Mirrors job-agent's `changes` job: always runs, computes whether this PR
+  # touches anything beyond docs/config, and gates the heavy jobs below on
+  # that plus draft status. See the pull_request trigger comment above for why.
+  changes:
+    name: Detect changed paths
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: read
+    timeout-minutes: 3
+    outputs:
+      code: ${{ steps.set.outputs.code }}
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+      # `code` = "anything that isn't a docs/config-only change".
+      # predicate-quantifier: every is required for the `!` exclusions to
+      # bind (default `some` matches `**` trivially and ignores them).
+      - uses: dorny/paths-filter@d1c1ffe0248fe513906c8e24db8ea791d46f8590 # v3
+        id: filter_code
+        if: github.event_name == 'pull_request'
+        with:
+          predicate-quantifier: 'every'
+          filters: |
+            code:
+              - '**'
+              - '!*.md'
+              - '!docs/**'
+              - '!LICENSE'
+              - '!.gitignore'
+              - '!.github/**'
+      - name: Resolve flags
+        id: set
+        # Non-PR events (push, workflow_dispatch) have no base to diff
+        # against, so default to running everything.
+        run: |
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            echo "code=${{ steps.filter_code.outputs.code }}" >> "$GITHUB_OUTPUT"
+          else
+            echo "code=true" >> "$GITHUB_OUTPUT"
+          fi
+
   # Stage 1: Quick validation checks (30-60 seconds)
   quick-checks:
     name: Quick Validation
+    needs: [changes]
+    # Skip (-> reports passing) on draft PRs and docs/.github-only PRs; run on
+    # push/workflow_dispatch and on non-draft PRs that touch code.
+    if: >-
+      (github.event.pull_request.draft == false || github.event_name != 'pull_request')
+      && needs.changes.outputs.code == 'true'
     runs-on: ubuntu-latest
 
     steps:
@@ -56,7 +109,13 @@ jobs:
   # Stage 2: Tests and SonarQube analysis (2-3 minutes)
   sonarqube:
     name: Tests & SonarQube Analysis
-    needs: quick-checks  # Only run if quick checks pass
+    needs: [changes, quick-checks]  # Only run if quick checks pass
+    # Same gate as quick-checks. quick-checks being skipped would cascade
+    # this to skipped anyway (default `needs` behavior), but state it
+    # explicitly so the condition is legible without cross-referencing.
+    if: >-
+      (github.event.pull_request.draft == false || github.event_name != 'pull_request')
+      && needs.changes.outputs.code == 'true'
     runs-on: ubuntu-latest
     permissions:
       contents: write
