@@ -14,7 +14,7 @@ import tempfile
 import time
 from datetime import datetime
 from pathlib import Path
-from typing import Dict
+from typing import Any, Dict, Optional
 
 import psutil
 import pytest
@@ -62,7 +62,7 @@ class BenchmarkResults:
         operation: str,
         dataset_size: int,
         metrics: Dict[str, float],
-        additional_info: Dict = None,
+        additional_info: Optional[Dict] = None,
     ):
         """Add a benchmark result."""
         result = {
@@ -79,10 +79,10 @@ class BenchmarkResults:
 
     def get_summary(self) -> Dict:
         """Get summary statistics for all results."""
-        summary = {}
+        summary: Dict[str, Any] = {}
 
         # Group by operation and dataset size
-        operations = {}
+        operations: Dict[Any, Any] = {}
         for result in self.results:
             op = result["operation"]
             size = result["dataset_size"]
@@ -177,7 +177,16 @@ class TestSearchPerformance:
 
         try:
             # Copy subset of test data
-            self._copy_test_data_subset(test_data_path, temp_dir, dataset_size)
+            copied = self._copy_test_data_subset(test_data_path, temp_dir, dataset_size)
+
+            # Refuse to "pass" against an empty directory. The copy previously
+            # hardcoded the legacy layout and silently no-opped, so this test
+            # benchmarked nothing and reported success regardless.
+            assert copied > 0, (
+                f"No conversation files copied from {test_data_path} — this test "
+                f"would be benchmarking an empty directory. Generate the dataset "
+                f"first: python scripts/generate_test_data.py --conversations 159"
+            )
 
             server = ConversationMemoryServer(temp_dir)
 
@@ -263,25 +272,45 @@ class TestSearchPerformance:
             f"(threshold: {memory_threshold}MB, using SQLite: {server.use_sqlite_search})"
         )
 
+    @staticmethod
+    def _conversations_dir(root: Path) -> Path:
+        """Locate the conversations dir under ``root``, honouring both layouts.
+
+        Mirrors ConversationMemoryServer._detect_data_directory_structure: the
+        consolidated ``data/conversations`` layout is the default for fresh
+        paths (which is what generate_test_data.py produces), while existing
+        installs may still use the legacy ``conversations`` layout. This helper
+        used to hardcode the legacy path, so it silently found nothing against
+        generated data and the scaling test benchmarked an empty directory.
+        """
+        legacy = root / "conversations"
+        return legacy if legacy.exists() else root / "data" / "conversations"
+
     def _copy_test_data_subset(self, source_path: Path, dest_path: str, count: int):
-        """Copy a subset of test data for benchmarking."""
+        """Copy a subset of test data for benchmarking.
+
+        Returns the number of conversation files copied so callers can assert
+        they are actually benchmarking data rather than an empty directory.
+        """
         dest = Path(dest_path)
 
-        # Copy directory structure
-        conversations_src = source_path / "conversations"
-        conversations_dst = dest / "conversations"
+        conversations_src = self._conversations_dir(source_path)
+        # Keep the destination layout identical to the source's, so the server
+        # auto-detects the same structure it was generated with.
+        conversations_dst = dest / conversations_src.relative_to(source_path)
         conversations_dst.mkdir(parents=True, exist_ok=True)
 
         # Copy index files
-        for index_file in ["index.json", "topics.json"]:
-            src_file = conversations_src / index_file
+        for index_name in ["index.json", "topics.json"]:
+            src_file = conversations_src / index_name
             if src_file.exists():
-                shutil.copy2(src_file, conversations_dst / index_file)
+                shutil.copy2(src_file, conversations_dst / index_name)
 
         # Load and truncate index
-        index_file = conversations_dst / "index.json"
-        if index_file.exists():
-            with open(index_file, "r") as f:
+        copied = 0
+        index_path = conversations_dst / "index.json"
+        if index_path.exists():
+            with open(index_path, "r") as f:
                 index_data = json.load(f)
 
             # Keep only first 'count' conversations
@@ -295,10 +324,13 @@ class TestSearchPerformance:
                 dst_file.parent.mkdir(parents=True, exist_ok=True)
                 if src_file.exists():
                     shutil.copy2(src_file, dst_file)
+                    copied += 1
 
             # Save truncated index
-            with open(index_file, "w") as f:
+            with open(index_path, "w") as f:
                 json.dump(index_data, f, indent=2)
+
+        return copied
 
 
 class TestWritePerformance:
