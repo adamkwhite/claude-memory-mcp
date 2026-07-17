@@ -1392,20 +1392,30 @@ class TestServerExceptionCoverage:
             ConversationMemoryServer(restricted_path)
 
     def test_malformed_storage_path_handling(self):
-        """Test handling of malformed storage paths"""
+        """Malformed storage_path values must be rejected outright rather
+        than silently creating bogus directories relative to the cwd (e.g.
+        ``./None/`` for the string "None", or ``./data/`` for "").
+
+        See validators.py::validate_storage_path -- the shared choke point
+        both ConversationMemoryServer and FastMCPConversationMemoryServer
+        route through.
+        """
         malformed_paths = [
-            "",  # Empty path
-            "None",  # String "None"
+            "",  # Empty path -> would resolve into cwd
+            "   ",  # whitespace-only
+            "None",  # str(None) upstream bug -> would create ./None/
             "invalid\x00path",  # Path with null character
+            "evil-relative",  # relative -> would scribble into cwd
         ]
 
+        cwd_entries_before = set(Path.cwd().iterdir())
+
         for path in malformed_paths:
-            try:
+            with pytest.raises((ValueError, OSError, TypeError)):
                 ConversationMemoryServer(path)
-                # Some paths might be accepted and handled
-            except (ValueError, OSError, TypeError) as e:
-                # Expected for malformed paths
-                assert isinstance(e, (ValueError, OSError, TypeError))
+
+        # None of the rejected paths left a stray directory behind.
+        assert set(Path.cwd().iterdir()) == cwd_entries_before
 
 
 if __name__ == "__main__":
