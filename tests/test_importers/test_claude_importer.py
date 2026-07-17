@@ -12,7 +12,7 @@ from unittest.mock import patch
 
 import pytest  # type: ignore[import-not-found]
 
-from src.importers.claude_importer import ClaudeImporter
+from importers.claude_importer import ClaudeImporter
 
 
 class TestClaudeImporter:

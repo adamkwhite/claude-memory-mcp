@@ -475,9 +475,9 @@ class TestServerIntegration:
         """Test that all required imports are available"""
         # Test core imports
         try:
-            from src.conversation_memory import ConversationMemoryServer  # noqa: F401
-            from src.exceptions import ValidationError  # noqa: F401
-            from src.validators import validate_content, validate_title  # noqa: F401
+            from conversation_memory import ConversationMemoryServer  # noqa: F401
+            from exceptions import ValidationError  # noqa: F401
+            from validators import validate_content, validate_title  # noqa: F401
             assert True, "Core imports successful"
         except ImportError as e:
             pytest.fail(f"Import failed: {e}")

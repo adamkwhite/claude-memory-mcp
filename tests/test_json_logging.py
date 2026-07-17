@@ -13,7 +13,7 @@ from io import StringIO
 
 import pytest
 
-from src.logging_config import (
+from logging_config import (
     JSONFormatter,
     _get_log_format,
     log_file_operation,

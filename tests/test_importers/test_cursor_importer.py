@@ -13,7 +13,7 @@ from unittest.mock import patch
 
 import pytest  # type: ignore[import-not-found]
 
-from src.importers.cursor_importer import CursorImporter
+from importers.cursor_importer import CursorImporter
 
 
 class TestCursorImporter:
