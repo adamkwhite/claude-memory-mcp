@@ -163,10 +163,9 @@ pip install pytest pytest-cov pytest-asyncio
 - `test_direct_coverage.py` - Direct testing of server components
 - `test_fastmcp_coverage.py` - FastMCP-specific functionality testing
 - `test_server.py` - Integration testing of complete server functionality
-- `standalone_test.py` - Manual test script (excluded from pytest)
 
 **Coverage Monitoring:**
-- Local: Run `pytest tests/ --ignore=tests/standalone_test.py --cov=src --cov-report=term`
+- Local: Run `pytest tests/ --cov=src --cov-report=term`
 - CI: GitHub Actions runs all tests and reports to SonarCloud
 - Target: 90%+ coverage maintained through layered testing approach
 
@@ -193,7 +192,7 @@ git commit -m "descriptive message"
 # 3. **MANDATORY: Run full test suite after major changes**
 # Activate virtual environment and run tests
 source claude-memory-mcp-venv/bin/activate
-python -m pytest tests/ --ignore=tests/standalone_test.py --cov=src --cov-report=term -v
+python -m pytest tests/ --cov=src --cov-report=term -v
 
 # 4. Push branch to GitHub (NEVER push directly to main)
 git push origin feature/your-feature-name
@@ -239,7 +238,7 @@ git push origin feature/your-feature-name
 
 **Testing Command (Copy-Paste Ready):**
 ```bash
-source claude-memory-mcp-venv/bin/activate && python -m pytest tests/ --ignore=tests/standalone_test.py --cov=src --cov-report=term -v
+source claude-memory-mcp-venv/bin/activate && python -m pytest tests/ --cov=src --cov-report=term -v
 ```
 
 **Expected Results:**
@@ -290,7 +289,7 @@ This prevents back-and-forth in PRs due to test failures.
 
 - [ ] **1. Run Full Test Suite Locally**
   ```bash
-  source claude-memory-mcp-venv/bin/activate && python -m pytest tests/ --ignore=tests/standalone_test.py --cov=src --cov-report=term -v
+  source claude-memory-mcp-venv/bin/activate && python -m pytest tests/ --cov=src --cov-report=term -v
   ```
 - [ ] **2. Verify All Tests Pass** (expect 803+ passing tests, 1 skipped — verified July 2026)
 - [ ] **3. Check Coverage Baseline** (expect ≥88% coverage per SonarCloud, not local `.coverage`)

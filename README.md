@@ -92,12 +92,6 @@ Documentation: https://code.claude.com/docs/en/mcp
 
 ### Basic Usage
 
-#### Standalone Testing
-```bash
-# Test core functionality
-python3 tests/standalone_test.py
-```
-
 #### MCP Server Mode
 ```bash
 # Run as MCP server (from project root)
@@ -356,11 +350,8 @@ search_conversations("deployment configuration")
 # Run validation suite
 python3 tests/validate_system.py
 
-# Test individual components
-python3 tests/standalone_test.py
-
 # Run full test suite with coverage
-python3 -m pytest tests/ --ignore=tests/standalone_test.py --cov=src --cov-report=term
+python3 -m pytest tests/ --cov=src --cov-report=term
 
 # Import test data
 python3 scripts/bulk_import_enhanced.py test_data.json --dry-run
