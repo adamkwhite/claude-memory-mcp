@@ -34,9 +34,12 @@ class MockFastMCP:
         pass
 
 
-# Patch the import before importing the server
-sys.modules["mcp.server.fastmcp"] = type(sys)("mcp.server.fastmcp")
-sys.modules["mcp.server.fastmcp"].FastMCP = MockFastMCP
+# Patch the import before importing the server. The module is synthesised at
+# runtime, so mypy can't know it has a FastMCP attribute — setattr keeps the
+# stub injection honest without a blanket type: ignore.
+_fastmcp_stub = type(sys)("mcp.server.fastmcp")
+setattr(_fastmcp_stub, "FastMCP", MockFastMCP)
+sys.modules["mcp.server.fastmcp"] = _fastmcp_stub
 
 # Add the project root and src directory to path using dynamic resolution
 project_root = Path(__file__).parent.parent

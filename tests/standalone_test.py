@@ -9,7 +9,7 @@ import json
 import re
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional
 
 
 class ConversationMemoryServer:
@@ -31,11 +31,13 @@ class ConversationMemoryServer:
     def _init_index_files(self):
         """Initialize index and topics files if they don't exist"""
         if not self.index_file.exists():
-            with open(self.index_file, 'w') as f:
-                json.dump({"conversations": [], "last_updated": datetime.now().isoformat()}, f)
+            with open(self.index_file, "w") as f:
+                json.dump(
+                    {"conversations": [], "last_updated": datetime.now().isoformat()}, f
+                )
 
         if not self.topics_file.exists():
-            with open(self.topics_file, 'w') as f:
+            with open(self.topics_file, "w") as f:
                 json.dump({"topics": {}, "last_updated": datetime.now().isoformat()}, f)
 
     def _get_date_folder(self, date: datetime) -> Path:
@@ -48,10 +50,32 @@ class ConversationMemoryServer:
     def _extract_topics(self, content: str) -> List[str]:
         """Extract topics from conversation content using simple keyword extraction"""
         common_tech_terms = [
-            'python', 'javascript', 'react', 'node', 'aws', 'docker', 'kubernetes',
-            'terraform', 'mcp', 'api', 'database', 'sql', 'mongodb', 'redis',
-            'git', 'github', 'vscode', 'linux', 'ubuntu', 'windows', 'wsl',
-            'authentication', 'security', 'testing', 'deployment', 'ci/cd'
+            "python",
+            "javascript",
+            "react",
+            "node",
+            "aws",
+            "docker",
+            "kubernetes",
+            "terraform",
+            "mcp",
+            "api",
+            "database",
+            "sql",
+            "mongodb",
+            "redis",
+            "git",
+            "github",
+            "vscode",
+            "linux",
+            "ubuntu",
+            "windows",
+            "wsl",
+            "authentication",
+            "security",
+            "testing",
+            "deployment",
+            "ci/cd",
         ]
 
         topics = []
@@ -67,10 +91,12 @@ class ConversationMemoryServer:
 
         return list(set(topics))  # Remove duplicates
 
-    async def search_conversations(self, query: str, limit: int = 5) -> List[Dict[str, Any]]:
+    async def search_conversations(
+        self, query: str, limit: int = 5
+    ) -> List[Dict[str, Any]]:
         """Search conversations for relevant content"""
         try:
-            with open(self.index_file, 'r') as f:
+            with open(self.index_file, "r") as f:
                 index_data = json.load(f)
 
             results = []
@@ -90,7 +116,7 @@ class ConversationMemoryServer:
 
                 # Check content match
                 try:
-                    with open(file_path, 'r', encoding='utf-8') as f:
+                    with open(file_path, "r", encoding="utf-8") as f:
                         content = f.read().lower()
                         for term in query_terms:
                             score += content.count(term)
@@ -98,14 +124,16 @@ class ConversationMemoryServer:
                     continue
 
                 if score > 0:
-                    results.append({
-                        "file_path": str(file_path),
-                        "date": conv_info["date"],
-                        "topics": conv_info.get("topics", []),
-                        "title": conv_info.get("title", "Untitled Conversation"),
-                        "score": score,
-                        "preview": self._get_preview(file_path, query_terms)
-                    })
+                    results.append(
+                        {
+                            "file_path": str(file_path),
+                            "date": conv_info["date"],
+                            "topics": conv_info.get("topics", []),
+                            "title": conv_info.get("title", "Untitled Conversation"),
+                            "score": score,
+                            "preview": self._get_preview(file_path, query_terms),
+                        }
+                    )
 
             # Sort by score and return top results
             results.sort(key=lambda x: x["score"], reverse=True)
@@ -117,10 +145,10 @@ class ConversationMemoryServer:
     def _get_preview(self, file_path: Path, query_terms: List[str]) -> str:
         """Get a preview of the conversation around the search terms"""
         try:
-            with open(file_path, 'r', encoding='utf-8') as f:
+            with open(file_path, "r", encoding="utf-8") as f:
                 content = f.read()
 
-            lines = content.split('\n')
+            lines = content.split("\n")
             preview_lines = []
 
             for i, line in enumerate(lines):
@@ -133,25 +161,26 @@ class ConversationMemoryServer:
                     preview_lines.extend(context)
                     break
 
-            preview = '\n'.join(preview_lines[:10])  # Limit preview length
+            preview = "\n".join(preview_lines[:10])  # Limit preview length
             return preview[:500] + "..." if len(preview) > 500 else preview
 
         except BaseException:
             return "Preview unavailable"
 
-    async def add_conversation(self, content: str, title: str = None,
-                               date: str = None) -> Dict[str, str]:
+    async def add_conversation(
+        self, content: str, title: Optional[str] = None, date: Optional[str] = None
+    ) -> Dict[str, Any]:
         """Add a new conversation to the memory system"""
         try:
             # Parse date or use current date
             if date:
-                conv_date = datetime.fromisoformat(date.replace('Z', '+00:00'))
+                conv_date = datetime.fromisoformat(date.replace("Z", "+00:00"))
             else:
                 conv_date = datetime.now()
 
             # Generate filename
-            title_slug = re.sub(r'[^\w\s-]', '', title or "conversation").strip()
-            title_slug = re.sub(r'[-\s]+', '-', title_slug).lower()
+            title_slug = re.sub(r"[^\w\s-]", "", title or "conversation").strip()
+            title_slug = re.sub(r"[-\s]+", "-", title_slug).lower()
             filename = f"{conv_date.strftime('%Y-%m-%d')}_{title_slug}.md"
 
             # Get date folder and create file
@@ -162,7 +191,7 @@ class ConversationMemoryServer:
             topics = self._extract_topics(content)
 
             # Create conversation file
-            with open(file_path, 'w', encoding='utf-8') as f:
+            with open(file_path, "w", encoding="utf-8") as f:
                 f.write(f"# {title or 'Claude Conversation'}\n\n")
                 f.write(f"**Date:** {conv_date.strftime('%Y-%m-%d %H:%M:%S')}\n")
                 f.write(f"**Topics:** {', '.join(topics)}\n\n")
@@ -176,19 +205,21 @@ class ConversationMemoryServer:
                 "status": "success",
                 "file_path": str(file_path),
                 "topics": topics,
-                "message": f"Conversation saved successfully to {filename}"
+                "message": f"Conversation saved successfully to {filename}",
             }
 
         except Exception as e:
             return {
                 "status": "error",
-                "message": f"Failed to save conversation: {str(e)}"
+                "message": f"Failed to save conversation: {str(e)}",
             }
 
-    async def _update_index(self, file_path: Path, date: datetime, topics: List[str], title: str):
+    async def _update_index(
+        self, file_path: Path, date: datetime, topics: List[str], title: Optional[str]
+    ):
         """Update the conversation index"""
         try:
-            with open(self.index_file, 'r') as f:
+            with open(self.index_file, "r") as f:
                 index_data = json.load(f)
 
             # Add conversation to index
@@ -198,13 +229,13 @@ class ConversationMemoryServer:
                 "date": date.isoformat(),
                 "topics": topics,
                 "title": title or "Untitled Conversation",
-                "added": datetime.now().isoformat()
+                "added": datetime.now().isoformat(),
             }
 
             index_data["conversations"].append(conv_entry)
             index_data["last_updated"] = datetime.now().isoformat()
 
-            with open(self.index_file, 'w') as f:
+            with open(self.index_file, "w") as f:
                 json.dump(index_data, f, indent=2)
 
             # Update topics index
@@ -216,7 +247,7 @@ class ConversationMemoryServer:
     async def _update_topics_index(self, topics: List[str]):
         """Update the topics index"""
         try:
-            with open(self.topics_file, 'r') as f:
+            with open(self.topics_file, "r") as f:
                 topics_data = json.load(f)
 
             for topic in topics:
@@ -227,7 +258,7 @@ class ConversationMemoryServer:
 
             topics_data["last_updated"] = datetime.now().isoformat()
 
-            with open(self.topics_file, 'w') as f:
+            with open(self.topics_file, "w") as f:
                 json.dump(topics_data, f, indent=2)
 
         except Exception as e:
@@ -263,11 +294,11 @@ The key is to implement the proper MCP protocol.
     result = await server.add_conversation(
         content=test_content,
         title="MCP Server Setup Discussion",
-        date="2025-01-15T10:30:00"
+        date="2025-01-15T10:30:00",
     )
 
     print(f"✅ Add conversation result: {result['status']}")
-    if result['status'] == 'success':
+    if result["status"] == "success":
         print(f"   📄 File: {result['file_path']}")
         print(f"   🏷️  Topics: {result['topics']}")
     else:
@@ -291,7 +322,7 @@ The key is to implement the proper MCP protocol.
     expected_files = [
         Path(test_path) / "conversations" / "index.json",
         Path(test_path) / "conversations" / "topics.json",
-        Path(test_path) / "summaries" / "weekly"
+        Path(test_path) / "summaries" / "weekly",
     ]
 
     all_exist = True
