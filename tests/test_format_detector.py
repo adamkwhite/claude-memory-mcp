@@ -9,7 +9,7 @@ import json
 import tempfile
 from pathlib import Path
 
-from src.format_detector import FormatDetector, PlatformType
+from format_detector import FormatDetector, PlatformType
 
 
 class TestFormatDetector:

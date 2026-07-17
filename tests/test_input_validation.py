@@ -3,14 +3,14 @@
 
 import pytest
 
-from src.exceptions import (
+from exceptions import (
     ContentValidationError,
     DateValidationError,
     QueryValidationError,
     TitleValidationError,
     ValidationError,
 )
-from src.validators import (
+from validators import (
     validate_content,
     validate_date,
     validate_limit,

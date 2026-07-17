@@ -611,6 +611,23 @@ class TestFastMCPConfigWiring:
         with pytest.raises(ValueError, match="cannot contain"):
             srv._validate_storage_path(Path("/some/../evil"), trusted=True)
 
+    def test_base_class_has_no_validate_storage_path(self):
+        """The dead legacy ``_validate_storage_path`` classmethod is gone.
+
+        It used to live on ``ConversationMemoryServer`` with an incompatible
+        signature (``cls, str -> bool``) purely for "test compatibility",
+        with zero real callers, while ``FastMCPConversationMemoryServer``
+        overrode it with the real security check (``self, Path,
+        trusted=... -> None``). That mismatch is the override mypy flagged.
+        Removing the unused base method is the fix; this guards against it
+        (or an incompatible sibling) creeping back in.
+        """
+        assert "_validate_storage_path" not in ConversationMemoryServer.__dict__
+        assert (
+            "_validate_storage_path"
+            in server_fastmcp.FastMCPConversationMemoryServer.__dict__
+        )
+
 
 if __name__ == "__main__":
     # Run tests with coverage

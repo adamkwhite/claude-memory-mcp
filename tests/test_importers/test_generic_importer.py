@@ -14,7 +14,7 @@ from unittest.mock import patch
 
 import pytest  # type: ignore[import-not-found]
 
-from src.importers.generic_importer import GenericImporter
+from importers.generic_importer import GenericImporter
 
 
 class TestGenericImporter:

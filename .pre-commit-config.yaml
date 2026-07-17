@@ -21,7 +21,7 @@ repos:
     hooks:
       - id: mypy
         name: Type check with mypy
-        additional_dependencies: [pydantic>=2.0.0]
+        additional_dependencies: [pydantic>=2.0.0, types-aiofiles>=24.1.0]
         args: [--config-file=pyproject.toml]  # Match CI: use project config
 
   # General file checks

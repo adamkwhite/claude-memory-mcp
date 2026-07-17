@@ -14,7 +14,7 @@ from io import StringIO
 
 import pytest
 
-from src.logging_config import (
+from logging_config import (
     NO_CORRELATION_ID,
     CorrelationIdFilter,
     JSONFormatter,
@@ -26,7 +26,7 @@ from src.logging_config import (
 @pytest.fixture(autouse=True)
 def _reset_correlation_id():
     """Every test starts (and ends) with no correlation ID set."""
-    from src.logging_config import _correlation_id
+    from logging_config import _correlation_id
 
     yield
     _correlation_id.set(None)

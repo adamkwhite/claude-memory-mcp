@@ -12,7 +12,7 @@ from unittest.mock import patch
 
 import pytest  # type: ignore[import-not-found]
 
-from src.importers.chatgpt_importer import ChatGPTImporter
+from importers.chatgpt_importer import ChatGPTImporter
 
 
 class TestChatGPTImporter:

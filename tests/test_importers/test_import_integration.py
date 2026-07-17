@@ -12,8 +12,8 @@ from unittest.mock import patch
 
 import pytest
 
-from src.format_detector import FormatDetector
-from src.importers.chatgpt_importer import ChatGPTImporter
+from format_detector import FormatDetector
+from importers.chatgpt_importer import ChatGPTImporter
 
 
 class TestImportIntegration:
