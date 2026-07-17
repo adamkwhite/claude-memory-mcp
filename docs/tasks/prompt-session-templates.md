@@ -25,7 +25,7 @@ Core template for recording individual test sessions:
 
 **Task Breakdown (TBS Metrics):**
 - Test Design and Execution percentage
-- Bug Investigation and Reporting percentage  
+- Bug Investigation and Reporting percentage
 - Session Setup percentage
 - Charter vs. Opportunity testing ratio
 
@@ -143,7 +143,7 @@ Operational guidance for effective session execution:
 - Enable clear communication of testing status
 - Support continuous improvement
 
-#### Efficiency  
+#### Efficiency
 - Quick to complete during and after sessions
 - Easy to review and analyze
 - Minimal training required

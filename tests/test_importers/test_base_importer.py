@@ -8,7 +8,7 @@ Tests the foundation functionality for all platform-specific importers.
 import tempfile
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, List
+from typing import Any
 
 from importers.base_importer import BaseImporter, ImportResult
 
@@ -19,7 +19,7 @@ class TestImporter(BaseImporter):
     def __init__(self, storage_path: Path):
         super().__init__(storage_path, "test")
 
-    def get_supported_formats(self) -> List[str]:
+    def get_supported_formats(self) -> list[str]:
         return [".json", ".txt"]
 
     def import_file(self, file_path: Path) -> ImportResult:
@@ -33,7 +33,7 @@ class TestImporter(BaseImporter):
             metadata={"test": True},
         )
 
-    def parse_conversation(self, raw_data: Any) -> Dict[str, Any]:
+    def parse_conversation(self, raw_data: Any) -> dict[str, Any]:
         """Simple implementation for testing."""
         return self.create_universal_conversation(
             platform_id="test_123",
@@ -275,9 +275,7 @@ class TestBaseImporter:
 
         content = self.importer._combine_messages_to_content(messages)
 
-        expected = (
-            "**Human**: Hello\n\n**Assistant**: Hi there!\n\n**Human**: How are you?"
-        )
+        expected = "**Human**: Hello\n\n**Assistant**: Hi there!\n\n**Human**: How are you?"
         assert content == expected
 
     def test_validate_conversation_valid(self):
@@ -391,9 +389,7 @@ class TestBaseImporterEdgeCases:
         assert message["content"] == ""
 
         # None timestamp (should use current time)
-        message = self.importer._create_message(
-            role="user", content="test", timestamp=None
-        )
+        message = self.importer._create_message(role="user", content="test", timestamp=None)
         assert "timestamp" in message
 
     def test_extract_topics_empty_content(self):

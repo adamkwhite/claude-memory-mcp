@@ -134,7 +134,7 @@ await asyncio.sleep(0.1)  # Increase for slower systems
 # Search for Python discussions
 search_conversations("python")
 
-# Find MCP-related conversations  
+# Find MCP-related conversations
 search_conversations("mcp server")
 
 # Look for troubleshooting discussions

@@ -1,7 +1,13 @@
 # Pre-commit hooks configuration
 # Automatically runs code quality checks before each commit
 # Install: pip install pre-commit && pre-commit install
+#          pre-commit install --hook-type pre-push   # enables the blocking mypy-full gate
 # Run manually: pre-commit run --all-files
+#               pre-commit run --hook-stage pre-push --all-files
+
+# Default every hook to the commit stage. The pre-push gate (mypy-full) opts
+# in explicitly via `stages: [pre-push]` below, so nothing else changes speed.
+default_stages: [pre-commit]
 
 repos:
   # Python linting and formatting with Ruff (replaces black, flake8, isort)
@@ -15,14 +21,40 @@ repos:
         name: Format Python code with Ruff
         args: [--check]  # Match CI: fail if not formatted
 
-  # Static type checking
+  # Static type checking (commit stage, fast tier).
+  # Runs in an isolated env with only the declared additional_dependencies,
+  # so it can't see real third-party types for mcp/jsonschema (only
+  # pydantic/types-aiofiles are installed here). ignore_missing_imports=true
+  # in pyproject.toml papers over that gap for quick per-commit feedback.
+  # It is NOT the authoritative gate — that's the `mypy-full` pre-push hook
+  # below, which runs in the project venv and sees real installed types.
   - repo: https://github.com/pre-commit/mirrors-mypy
     rev: v1.16.0
     hooks:
       - id: mypy
-        name: Type check with mypy
+        name: Type check with mypy (fast, isolated env)
         additional_dependencies: [pydantic>=2.0.0, types-aiofiles>=24.1.0]
         args: [--config-file=pyproject.toml]  # Match CI: use project config
+
+  # === Pre-push blocking gate (local, project venv) ===
+  # Full-project mypy using the real project venv (sees mcp/jsonschema's
+  # actual installed types, not just the fast tier's isolated-env subset).
+  # Runs on `git push` only — too slow for every commit — and blocks the
+  # push on failure. Repo is mypy-clean as of #163, so a failure here is
+  # real signal, not noise. Enable once per clone:
+  #   pre-commit install --hook-type pre-push
+  # Resolves the venv from the shared .git (--git-common-dir) so the hook
+  # works from linked worktrees too, where claude-memory-mcp-venv/ may not
+  # exist locally.
+  - repo: local
+    hooks:
+      - id: mypy-full
+        name: Type check (full, project venv) — blocking
+        entry: bash -c 'exec "$(git rev-parse --git-common-dir)/../claude-memory-mcp-venv/bin/mypy" src tests --config-file=pyproject.toml' --
+        language: system
+        pass_filenames: false
+        always_run: true
+        stages: [pre-push]
 
   # General file checks
   - repo: https://github.com/pre-commit/pre-commit-hooks

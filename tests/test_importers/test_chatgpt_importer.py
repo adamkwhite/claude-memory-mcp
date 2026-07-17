@@ -26,9 +26,9 @@ class TestChatGPTImporter:
 
         # Load test data
         test_data_dir = Path(__file__).parent.parent / "data" / "chatgpt"
-        with open(test_data_dir / "valid_export.json", "r") as f:
+        with open(test_data_dir / "valid_export.json") as f:
             self.valid_export = json.load(f)
-        with open(test_data_dir / "malformed_export.json", "r") as f:
+        with open(test_data_dir / "malformed_export.json") as f:
             self.malformed_export = json.load(f)
 
     def test_importer_initialization(self):
@@ -79,9 +79,7 @@ class TestChatGPTImporter:
         conversation = self.importer.parse_conversation(conv_data)
 
         # Check basic fields
-        assert (
-            conversation["platform_id"] == "conv-123e4567-e89b-12d3-a456-426614174000"
-        )
+        assert conversation["platform_id"] == "conv-123e4567-e89b-12d3-a456-426614174000"
         assert conversation["title"] == "Python Programming Help"
         assert conversation["platform"] == "chatgpt"
         assert conversation["model"] == "gpt-4"  # Default assumption
@@ -121,9 +119,7 @@ class TestChatGPTImporter:
 
     def test_parse_conversation_invalid_data(self):
         """Test parsing invalid conversation data."""
-        with pytest.raises(
-            ValueError, match="ChatGPT conversation data must be a dictionary"
-        ):
+        with pytest.raises(ValueError, match="ChatGPT conversation data must be a dictionary"):
             self.importer.parse_conversation("not a dict")
 
     def test_parse_conversation_missing_messages(self):
@@ -172,9 +168,7 @@ class TestChatGPTImporter:
     def test_extract_model_info_from_content(self):
         """Test model extraction from message content."""
         conv_data = {
-            "messages": [
-                {"role": "assistant", "content": "I'm powered by GPT-4 technology"}
-            ]
+            "messages": [{"role": "assistant", "content": "I'm powered by GPT-4 technology"}]
         }
         model = self.importer._extract_model_info(conv_data)
         assert model == "gpt-4"
@@ -306,7 +300,7 @@ class TestChatGPTImporter:
         assert file_path.name == "conv_test_123.json"
 
         # Check file content
-        with open(file_path, "r") as f:
+        with open(file_path) as f:
             saved_data = json.load(f)
         assert saved_data == conversation
 
@@ -478,9 +472,7 @@ class TestChatGPTUniversalMetadata:
 
     def test_tags_include_starred_archived_and_gizmo(self):
         """Starred/archived/gizmo signals become tags."""
-        payload = self._base_payload(
-            is_starred=True, is_archived=True, gizmo_id="g-abc"
-        )
+        payload = self._base_payload(is_starred=True, is_archived=True, gizmo_id="g-abc")
         conv = self.importer.parse_conversation(payload)
         assert "starred" in conv["tags"]
         assert "archived" in conv["tags"]

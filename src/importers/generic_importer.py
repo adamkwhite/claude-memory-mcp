@@ -10,7 +10,7 @@ import logging
 import re
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from validators import validate_import_file_path
 
@@ -29,7 +29,7 @@ class GenericImporter(BaseImporter):
         super().__init__(storage_path, "generic")
         self.logger = logging.getLogger(f"{__name__}.GenericImporter")
 
-    def get_supported_formats(self) -> List[str]:
+    def get_supported_formats(self) -> list[str]:
         """Return list of supported file formats."""
         return [".json", ".md", ".txt", ".csv", ".xml"]
 
@@ -80,7 +80,7 @@ class GenericImporter(BaseImporter):
     def _import_json_format(self, file_path: Path) -> ImportResult:
         """Import generic JSON format files."""
         try:
-            with open(file_path, "r", encoding="utf-8") as f:
+            with open(file_path, encoding="utf-8") as f:
                 data = json.load(f)
 
             # Try different parsing strategies
@@ -119,7 +119,7 @@ class GenericImporter(BaseImporter):
     def _import_text_format(self, file_path: Path) -> ImportResult:
         """Import text/markdown format files."""
         try:
-            with open(file_path, "r", encoding="utf-8") as f:
+            with open(file_path, encoding="utf-8") as f:
                 content = f.read()
 
             # Parse text conversation
@@ -144,7 +144,7 @@ class GenericImporter(BaseImporter):
 
             conversations = []
 
-            with open(file_path, "r", encoding="utf-8") as f:
+            with open(file_path, encoding="utf-8") as f:
                 csv_reader = csv.DictReader(f)
 
                 # Group rows by conversation if possible
@@ -219,7 +219,7 @@ class GenericImporter(BaseImporter):
                 metadata={},
             )
 
-    def parse_conversation(self, raw_data: Any) -> Dict[str, Any]:
+    def parse_conversation(self, raw_data: Any) -> dict[str, Any]:
         """
         Parse raw generic conversation data into universal format.
 
@@ -234,16 +234,12 @@ class GenericImporter(BaseImporter):
         else:
             raise ValueError("Generic conversation data must be string, dict, or list")
 
-    def _parse_json_array(self, data: List[Any]) -> List[Dict[str, Any]]:
+    def _parse_json_array(self, data: list[Any]) -> list[dict[str, Any]]:
         """Parse JSON array - could be conversations or messages."""
         conversations = []
 
         # Check if items look like individual conversations
-        if (
-            data
-            and isinstance(data[0], dict)
-            and self._looks_like_conversation(data[0])
-        ):
+        if data and isinstance(data[0], dict) and self._looks_like_conversation(data[0]):
             # Array of conversations
             for item in data:
                 try:
@@ -261,7 +257,7 @@ class GenericImporter(BaseImporter):
 
         return conversations
 
-    def _parse_json_object(self, data: Dict[str, Any]) -> List[Dict[str, Any]]:
+    def _parse_json_object(self, data: dict[str, Any]) -> list[dict[str, Any]]:
         """Parse JSON object - single conversation or structured data."""
         conversations = []
 
@@ -276,7 +272,7 @@ class GenericImporter(BaseImporter):
 
         return conversations
 
-    def _parse_single_conversation(self, data: Dict[str, Any]) -> List[Dict[str, Any]]:
+    def _parse_single_conversation(self, data: dict[str, Any]) -> list[dict[str, Any]]:
         """Parse data as single conversation."""
         try:
             conv = self.parse_conversation(data)
@@ -285,7 +281,7 @@ class GenericImporter(BaseImporter):
             self.logger.warning("Failed to parse conversation object: %s", e)
             return []
 
-    def _parse_nested_conversations(self, data: Dict[str, Any]) -> List[Dict[str, Any]]:
+    def _parse_nested_conversations(self, data: dict[str, Any]) -> list[dict[str, Any]]:
         """Parse nested conversation arrays within object."""
         conversations = []
 
@@ -303,7 +299,7 @@ class GenericImporter(BaseImporter):
         first_item = value[0] if isinstance(value[0], dict) else {}
         return self._looks_like_conversation(first_item)
 
-    def _process_conversation_array(self, items: List[Any]) -> List[Dict[str, Any]]:
+    def _process_conversation_array(self, items: list[Any]) -> list[dict[str, Any]]:
         """Process array of conversation items."""
         conversations = []
 
@@ -316,9 +312,7 @@ class GenericImporter(BaseImporter):
 
         return conversations
 
-    def _parse_fallback_conversation(
-        self, data: Dict[str, Any]
-    ) -> List[Dict[str, Any]]:
+    def _parse_fallback_conversation(self, data: dict[str, Any]) -> list[dict[str, Any]]:
         """Parse object as single conversation fallback."""
         try:
             conv = self._parse_dict_as_conversation(data)
@@ -327,9 +321,7 @@ class GenericImporter(BaseImporter):
             self.logger.warning("Failed to parse object as conversation: %s", e)
             return []
 
-    def _parse_text_content(
-        self, content: str, file_path: Path
-    ) -> List[Dict[str, Any]]:
+    def _parse_text_content(self, content: str, file_path: Path) -> list[dict[str, Any]]:
         """Parse text content for conversation patterns."""
         conversations = []
 
@@ -347,9 +339,7 @@ class GenericImporter(BaseImporter):
 
         return conversations
 
-    def _parse_csv_rows(
-        self, rows: List[Dict[str, str]], file_path: Path
-    ) -> Optional[Dict[str, Any]]:
+    def _parse_csv_rows(self, rows: list[dict[str, str]], file_path: Path) -> dict[str, Any] | None:
         """Parse CSV rows into conversation format."""
         if not rows:
             return None
@@ -358,9 +348,7 @@ class GenericImporter(BaseImporter):
         headers = list(rows[0].keys())
 
         # Look for common conversation column names
-        message_col = self._find_column(
-            headers, ["message", "content", "text", "dialogue"]
-        )
+        message_col = self._find_column(headers, ["message", "content", "text", "dialogue"])
         speaker_col = self._find_column(headers, ["speaker", "role", "user", "author"])
         time_col = self._find_column(headers, ["time", "timestamp", "date", "created"])
 
@@ -375,9 +363,7 @@ class GenericImporter(BaseImporter):
             if message_text.strip():
                 # Create message
                 timestamp = (
-                    self._parse_timestamp(timestamp_str)
-                    if timestamp_str
-                    else datetime.now()
+                    self._parse_timestamp(timestamp_str) if timestamp_str else datetime.now()
                 )
 
                 message = self._create_message(
@@ -406,7 +392,7 @@ class GenericImporter(BaseImporter):
             metadata={"csv_headers": headers, "row_count": len(rows)},
         )
 
-    def _parse_xml_tree(self, root) -> List[Dict[str, Any]]:
+    def _parse_xml_tree(self, root) -> list[dict[str, Any]]:
         """Parse XML tree for conversation data."""
         conversations = []
 
@@ -426,7 +412,7 @@ class GenericImporter(BaseImporter):
 
         return conversations
 
-    def _looks_like_conversation(self, data: Dict[str, Any]) -> bool:
+    def _looks_like_conversation(self, data: dict[str, Any]) -> bool:
         """Check if a dictionary looks like a conversation."""
         conversation_indicators = [
             "messages",
@@ -471,18 +457,16 @@ class GenericImporter(BaseImporter):
 
         # Check for separator patterns
         separator_patterns = ["---", "===", "***", "___"]
-        separator_lines = sum(
-            1 for line in lines if any(sep in line for sep in separator_patterns)
-        )
+        separator_lines = sum(1 for line in lines if any(sep in line for sep in separator_patterns))
 
         return timestamp_lines >= 2 or separator_lines >= 2
 
-    def _extract_dialogue_messages(self, lines: List[str]) -> tuple:
+    def _extract_dialogue_messages(self, lines: list[str]) -> tuple:
         """Extract messages from dialogue lines."""
-        messages: List[Dict[str, Any]] = []
-        content_parts: List[str] = []
+        messages: list[dict[str, Any]] = []
+        content_parts: list[str] = []
         current_speaker = None
-        current_message: List[str] = []
+        current_message: list[str] = []
 
         for line in lines:
             speaker_match = re.match(r"(\*\*)?(\w+)(\*\*)?\s*:\s*(.*)", line)
@@ -491,33 +475,27 @@ class GenericImporter(BaseImporter):
                 self._process_speaker_change(
                     current_speaker, current_message, messages, content_parts
                 )
-                current_speaker, current_message = self._start_new_message(
-                    speaker_match
-                )
+                current_speaker, current_message = self._start_new_message(speaker_match)
             else:
                 current_message = self._continue_current_message(
                     current_speaker, current_message, line
                 )
 
         # Save final message
-        self._process_speaker_change(
-            current_speaker, current_message, messages, content_parts
-        )
+        self._process_speaker_change(current_speaker, current_message, messages, content_parts)
 
         return messages, content_parts
 
     def _process_speaker_change(
         self,
-        current_speaker: Optional[str],
-        current_message: List[str],
-        messages: List[Dict],
-        content_parts: List[str],
+        current_speaker: str | None,
+        current_message: list[str],
+        messages: list[dict],
+        content_parts: list[str],
     ) -> None:
         """Process speaker change and save previous message."""
         if current_speaker and current_message:
-            self._save_dialogue_message(
-                current_speaker, current_message, messages, content_parts
-            )
+            self._save_dialogue_message(current_speaker, current_message, messages, content_parts)
 
     def _start_new_message(self, speaker_match: re.Match) -> tuple:
         """Start new message from speaker match."""
@@ -527,8 +505,8 @@ class GenericImporter(BaseImporter):
         return speaker, message
 
     def _continue_current_message(
-        self, current_speaker: Optional[str], current_message: List[str], line: str
-    ) -> List[str]:
+        self, current_speaker: str | None, current_message: list[str], line: str
+    ) -> list[str]:
         """Continue current message with new line."""
         if current_speaker:
             current_message.append(line)
@@ -537,9 +515,9 @@ class GenericImporter(BaseImporter):
     def _save_dialogue_message(
         self,
         speaker: str,
-        message_lines: List[str],
-        messages: List,
-        content_parts: List,
+        message_lines: list[str],
+        messages: list,
+        content_parts: list,
     ):
         """Save a dialogue message to collections."""
         message_text = "\n".join(message_lines).strip()
@@ -552,9 +530,7 @@ class GenericImporter(BaseImporter):
             messages.append(message)
             content_parts.append(f"**{speaker}**: {message_text}")
 
-    def _parse_dialogue_text(
-        self, content: str, file_path: Optional[Path] = None
-    ) -> Dict[str, Any]:
+    def _parse_dialogue_text(self, content: str, file_path: Path | None = None) -> dict[str, Any]:
         """Parse text with dialogue markers."""
         lines = content.split("\n")
         messages, content_parts = self._extract_dialogue_messages(lines)
@@ -576,9 +552,7 @@ class GenericImporter(BaseImporter):
             metadata={"parsing_strategy": "dialogue_markers"},
         )
 
-    def _parse_message_blocks(
-        self, content: str, file_path: Optional[Path] = None
-    ) -> Dict[str, Any]:
+    def _parse_message_blocks(self, content: str, file_path: Path | None = None) -> dict[str, Any]:
         """Parse text with message block structure."""
         # Split by common separators
         separators = ["---", "===", "***", "___"]
@@ -627,8 +601,8 @@ class GenericImporter(BaseImporter):
         )
 
     def _parse_text_as_conversation(
-        self, content: str, file_path: Optional[Path] = None
-    ) -> Dict[str, Any]:
+        self, content: str, file_path: Path | None = None
+    ) -> dict[str, Any]:
         """Parse entire text as single conversation."""
         # Create a single message from entire content
         message = self._create_message(
@@ -649,7 +623,7 @@ class GenericImporter(BaseImporter):
             metadata={"parsing_strategy": "full_text"},
         )
 
-    def _parse_dict_as_conversation(self, data: Dict[str, Any]) -> Dict[str, Any]:
+    def _parse_dict_as_conversation(self, data: dict[str, Any]) -> dict[str, Any]:
         """Parse dictionary as conversation using flexible mapping."""
         # Try to map common fields
         title = self._extract_field(data, ["title", "name", "subject", "topic"])
@@ -670,12 +644,11 @@ class GenericImporter(BaseImporter):
             for msg in messages:
                 if isinstance(msg, dict):
                     role = (
-                        self._extract_field(msg, ["role", "speaker", "user", "author"])
-                        or "unknown"
+                        self._extract_field(msg, ["role", "speaker", "user", "author"]) or "unknown"
                     )
-                    msg_content = self._extract_field(
-                        msg, ["content", "text", "message"]
-                    ) or str(msg)
+                    msg_content = self._extract_field(msg, ["content", "text", "message"]) or str(
+                        msg
+                    )
 
                     message = self._create_message(
                         role=self._normalize_role(role),
@@ -697,20 +670,12 @@ class GenericImporter(BaseImporter):
         session_id = self._extract_field(data, ["session_id", "conversation_id"])
         user_id = self._extract_field(data, ["user_id", "account_id", "owner_id"])
         explicit_tags = self._extract_field(data, ["tags", "labels"])
-        tags = (
-            [str(t) for t in explicit_tags if t]
-            if isinstance(explicit_tags, list)
-            else []
-        )
-        explicit_type = self._extract_field(
-            data, ["conversation_type", "type", "category"]
-        )
+        tags = [str(t) for t in explicit_tags if t] if isinstance(explicit_tags, list) else []
+        explicit_type = self._extract_field(data, ["conversation_type", "type", "category"])
         conversation_type = (
             explicit_type if isinstance(explicit_type, str) and explicit_type else None
         )
-        explicit_custom = self._extract_field(
-            data, ["custom_fields", "extra", "extras"]
-        )
+        explicit_custom = self._extract_field(data, ["custom_fields", "extra", "extras"])
         custom_fields = explicit_custom if isinstance(explicit_custom, dict) else {}
 
         return self.create_universal_conversation(
@@ -728,7 +693,7 @@ class GenericImporter(BaseImporter):
             custom_fields=custom_fields,
         )
 
-    def _parse_list_as_conversation(self, data: List[Any]) -> Dict[str, Any]:
+    def _parse_list_as_conversation(self, data: list[Any]) -> dict[str, Any]:
         """Parse list as conversation - treat as messages array."""
         messages = []
         content_parts = []
@@ -740,9 +705,7 @@ class GenericImporter(BaseImporter):
                     self._extract_field(item, ["role", "speaker", "user", "author"])
                     or f"speaker_{i % 2 + 1}"
                 )
-                msg_content = self._extract_field(
-                    item, ["content", "text", "message"]
-                ) or str(item)
+                msg_content = self._extract_field(item, ["content", "text", "message"]) or str(item)
 
                 message = self._create_message(
                     role=self._normalize_role(role),
@@ -775,14 +738,14 @@ class GenericImporter(BaseImporter):
             metadata={"parsing_strategy": "list_format", "list_length": len(data)},
         )
 
-    def _extract_field(self, data: Dict[str, Any], field_names: List[str]) -> Any:
+    def _extract_field(self, data: dict[str, Any], field_names: list[str]) -> Any:
         """Extract field using multiple possible names."""
         for name in field_names:
             if name in data:
                 return data[name]
         return None
 
-    def _find_column(self, headers: List[str], candidates: List[str]) -> str:
+    def _find_column(self, headers: list[str], candidates: list[str]) -> str:
         """Find best matching column name."""
         headers_lower = [h.lower() for h in headers]
         for candidate in candidates:
@@ -802,7 +765,7 @@ class GenericImporter(BaseImporter):
         ]
         return elem.tag.lower() in conversation_tags or len(list(elem)) > 3
 
-    def _parse_xml_element_as_conversation(self, elem) -> Dict[str, Any]:
+    def _parse_xml_element_as_conversation(self, elem) -> dict[str, Any]:
         """Parse XML element as conversation."""
         content = elem.text or ""
         for child in elem:
@@ -819,7 +782,7 @@ class GenericImporter(BaseImporter):
             metadata={"xml_tag": elem.tag},
         )
 
-    def _parse_xml_root_as_conversation(self, root) -> Dict[str, Any]:
+    def _parse_xml_root_as_conversation(self, root) -> dict[str, Any]:
         """Parse entire XML root as conversation."""
         content = root.text or ""
         for elem in root.iter():
@@ -851,7 +814,7 @@ class GenericImporter(BaseImporter):
             return role_lower
 
     def _save_conversations(
-        self, conversations: List[Dict[str, Any]], file_path: Path, format_type: str
+        self, conversations: list[dict[str, Any]], file_path: Path, format_type: str
     ) -> ImportResult:
         """Save multiple conversations and return result."""
         imported_count = 0
@@ -891,7 +854,7 @@ class GenericImporter(BaseImporter):
             },
         )
 
-    def _save_conversation(self, conversation: Dict[str, Any]) -> Path:
+    def _save_conversation(self, conversation: dict[str, Any]) -> Path:
         """Save a conversation to the storage directory."""
         # Create date-based subdirectory
         date = datetime.fromisoformat(conversation["date"].replace("Z", "+00:00"))

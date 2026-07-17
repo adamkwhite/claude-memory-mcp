@@ -34,7 +34,7 @@ echo "SYSTEM_FILE" > /etc/security-test-target.txt  # If permissions allow
 
 ---
 
-#### SEC-001.2: Absolute Path Injection  
+#### SEC-001.2: Absolute Path Injection
 **Steps:**
 1. Execute `add_conversation` with absolute path
    - Content: "Test conversation"
@@ -51,7 +51,7 @@ echo "SYSTEM_FILE" > /etc/security-test-target.txt  # If permissions allow
 #### SEC-001.3: Windows Path Injection (WSL Context)
 **Steps:**
 1. Execute `add_conversation` with Windows-style paths
-   - Content: "Test conversation" 
+   - Content: "Test conversation"
    - Title: "C:\\Windows\\System32\\test"
 2. Execute with UNC paths
    - Title: "\\\\server\\share\\test"
@@ -116,7 +116,7 @@ echo "SYSTEM_FILE" > /etc/security-test-target.txt  # If permissions allow
 
 **Objective**: Verify the system safely handles malformed JSON and injection attempts.
 
-### Test Cases  
+### Test Cases
 
 #### SEC-003.1: Malformed JSON in Content
 **Steps:**
@@ -223,7 +223,7 @@ find ~/claude-memory -type f -exec ls -l {} \;
 
 ### Pre-Test Setup
 1. Backup current conversation data
-2. Prepare isolated test environment  
+2. Prepare isolated test environment
 3. Enable any available logging/monitoring
 4. Document system state before testing
 
@@ -241,12 +241,12 @@ find ~/claude-memory -type f -exec ls -l {} \;
 
 ### Risk Classification
 - **Critical**: Data exposure, system access, data loss
-- **High**: Predictable vulnerabilities, weak access controls  
+- **High**: Predictable vulnerabilities, weak access controls
 - **Medium**: Information disclosure, input validation gaps
 - **Low**: Minor security improvements, hardening opportunities
 
 ---
 
-**Test Suite Version**: 1.0  
-**Last Updated**: 2025-06-01  
+**Test Suite Version**: 1.0
+**Last Updated**: 2025-06-01
 **Author**: Security Test Suite Generator

@@ -9,42 +9,42 @@ This library contains 7 reusable prompts for generating comprehensive testing do
 ### 📋 Strategic Planning Prompts
 
 #### 1. `prompt-test-strategy.md`
-**Purpose:** Generate risk-based test strategies using HTSM methodology  
-**Output:** Comprehensive test strategy with risk analysis, priorities, and session planning  
+**Purpose:** Generate risk-based test strategies using HTSM methodology
+**Output:** Comprehensive test strategy with risk analysis, priorities, and session planning
 **Use When:** Starting a new testing effort, need strategic direction, risk assessment required
 
-#### 2. `prompt-test-execution-guide.md`  
-**Purpose:** Create practical execution guides for managing testing activities  
-**Output:** Phase-based execution plan with resource management and progress tracking  
+#### 2. `prompt-test-execution-guide.md`
+**Purpose:** Create practical execution guides for managing testing activities
+**Output:** Phase-based execution plan with resource management and progress tracking
 **Use When:** Need structured approach to execute testing, team coordination required
 
 ### 🎯 Exploratory Testing Prompts
 
 #### 3. `prompt-session-charters.md`
-**Purpose:** Generate focused session charters for exploratory testing  
-**Output:** Time-boxed session charters with clear missions and risk focus  
+**Purpose:** Generate focused session charters for exploratory testing
+**Output:** Time-boxed session charters with clear missions and risk focus
 **Use When:** Planning exploratory testing, need focused test sessions, SBTM approach
 
 #### 4. `prompt-session-templates.md`
-**Purpose:** Create SBTM documentation templates for session recording  
-**Output:** Session sheets, debrief checklists, and management templates  
+**Purpose:** Create SBTM documentation templates for session recording
+**Output:** Session sheets, debrief checklists, and management templates
 **Use When:** Implementing SBTM, need consistent documentation, session quality control
 
 ### 🔧 Structured Testing Prompts
 
 #### 5. `prompt-security-tests.md`
-**Purpose:** Generate systematic security test procedures  
-**Output:** Structured security test cases covering major vulnerability categories  
+**Purpose:** Generate systematic security test procedures
+**Output:** Structured security test cases covering major vulnerability categories
 **Use When:** Security testing required, need systematic coverage, compliance validation
 
 #### 6. `prompt-integration-tests.md`
-**Purpose:** Create integration and compatibility test suites  
-**Output:** Protocol compliance, API testing, and compatibility validation procedures  
+**Purpose:** Create integration and compatibility test suites
+**Output:** Protocol compliance, API testing, and compatibility validation procedures
 **Use When:** Testing system interactions, API validation, compatibility requirements
 
 #### 7. `prompt-functional-tests.md`
-**Purpose:** Generate comprehensive functional test procedures  
-**Output:** Requirement validation tests covering core functionality  
+**Purpose:** Generate comprehensive functional test procedures
+**Output:** Requirement validation tests covering core functionality
 **Use When:** Functional validation needed, requirement verification, acceptance testing
 
 ## Usage Patterns
@@ -126,12 +126,12 @@ Prompts are based on these methodologies:
    - Product: [Your system description]
    - Priorities: [Security, Performance, etc.]
    - Resources: [Team size, timeline]
-   
+
 2. Use prompt-session-charters.md with:
    - Risk areas from strategy
    - Available session time
    - Tester skill levels
-   
+
 3. Use specific test suite prompts as needed
 4. Use prompt-execution-guide.md to coordinate
 ```
@@ -142,11 +142,11 @@ Prompts are based on these methodologies:
    - System architecture details
    - Security requirements
    - Compliance needs
-   
+
 2. Use prompt-session-charters.md for:
    - Exploratory security testing
    - Risk-based session planning
-   
+
 3. Use prompt-test-execution-guide.md for:
    - Coordinating security testing phases
 ```
@@ -157,11 +157,11 @@ Prompts are based on these methodologies:
    - API specifications
    - Protocol requirements
    - Client compatibility needs
-   
+
 2. Use prompt-functional-tests.md for:
    - API functionality validation
    - Business logic testing
-   
+
 3. Add exploratory sessions for edge cases
 ```
 
@@ -189,7 +189,7 @@ Prompts are based on these methodologies:
 
 ---
 
-**Library Version:** 1.0  
-**Based on:** HTSM, SBTM, and RST methodologies  
-**Last Updated:** 2025-06-01  
+**Library Version:** 1.0
+**Based on:** HTSM, SBTM, and RST methodologies
+**Last Updated:** 2025-06-01
 **Usage:** Provide context-specific inputs to generate tailored testing documentation

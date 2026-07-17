@@ -77,9 +77,7 @@ class TestAddConversationMetadataValidation:
 
         monkeypatch.setattr(server_fastmcp.memory_server, "add_conversation", fake_add)
 
-        result = await server_fastmcp.add_conversation(
-            content="c", session_id="x" * 300
-        )
+        result = await server_fastmcp.add_conversation(content="c", session_id="x" * 300)
 
         assert "Status: error" in result
         assert called["hit"] is False
@@ -110,9 +108,7 @@ class TestUpdateConversationMetadataValidation:
             captured["kwargs"] = kwargs
             return {"status": "success", "message": "ok"}
 
-        monkeypatch.setattr(
-            server_fastmcp.memory_server, "update_conversation", fake_update
-        )
+        monkeypatch.setattr(server_fastmcp.memory_server, "update_conversation", fake_update)
 
         result = await server_fastmcp.update_conversation(
             "conv_20260101_000000_abcd1234",
@@ -136,29 +132,21 @@ class TestUpdateConversationMetadataValidation:
             captured["kwargs"] = kwargs
             return {"status": "success", "message": "ok"}
 
-        monkeypatch.setattr(
-            server_fastmcp.memory_server, "update_conversation", fake_update
-        )
+        monkeypatch.setattr(server_fastmcp.memory_server, "update_conversation", fake_update)
 
-        await server_fastmcp.update_conversation(
-            "conv_20260101_000000_abcd1234", title="renamed"
-        )
+        await server_fastmcp.update_conversation("conv_20260101_000000_abcd1234", title="renamed")
 
         assert captured["kwargs"]["set_tags"] is None
 
     @pytest.mark.asyncio
-    async def test_invalid_conversation_type_rejected_before_forwarding(
-        self, monkeypatch
-    ):
+    async def test_invalid_conversation_type_rejected_before_forwarding(self, monkeypatch):
         called = {"hit": False}
 
         async def fake_update(conversation_id, **kwargs):
             called["hit"] = True
             return {"status": "success", "message": "ok"}
 
-        monkeypatch.setattr(
-            server_fastmcp.memory_server, "update_conversation", fake_update
-        )
+        monkeypatch.setattr(server_fastmcp.memory_server, "update_conversation", fake_update)
 
         result = await server_fastmcp.update_conversation(
             "conv_20260101_000000_abcd1234",
@@ -176,9 +164,7 @@ class TestUpdateConversationMetadataValidation:
             called["hit"] = True
             return {"status": "success", "message": "ok"}
 
-        monkeypatch.setattr(
-            server_fastmcp.memory_server, "update_conversation", fake_update
-        )
+        monkeypatch.setattr(server_fastmcp.memory_server, "update_conversation", fake_update)
 
         result = await server_fastmcp.update_conversation(
             "conv_20260101_000000_abcd1234",

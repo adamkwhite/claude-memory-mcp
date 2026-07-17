@@ -36,15 +36,15 @@ class TestImportIntegration:
                             "id": "msg1",
                             "role": "user",
                             "content": "Test integration",
-                            "create_time": "2025-01-15T10:00:00Z"
+                            "create_time": "2025-01-15T10:00:00Z",
                         },
                         {
                             "id": "msg2",
                             "role": "assistant",
                             "content": "Integration test successful",
-                            "create_time": "2025-01-15T10:01:00Z"
-                        }
-                    ]
+                            "create_time": "2025-01-15T10:01:00Z",
+                        },
+                    ],
                 }
             ]
         }
@@ -59,7 +59,7 @@ class TestImportIntegration:
         importer = ChatGPTImporter(self.storage_path)
 
         # Mock save to avoid file I/O complexity in test
-        with patch.object(importer, '_save_conversation') as mock_save:
+        with patch.object(importer, "_save_conversation") as mock_save:
             mock_save.return_value = self.storage_path / "test_conv.json"
 
             # Import file
@@ -105,7 +105,7 @@ class TestImportIntegration:
             pytest.fail("Expected ChatGPT format detection")
 
         # Import with detected importer
-        with patch.object(importer, '_save_conversation') as mock_save:
+        with patch.object(importer, "_save_conversation") as mock_save:
             result = importer.import_file(test_file)
 
         assert result.success is True
@@ -121,7 +121,7 @@ class TestImportIntegration:
                         "id": "conv-1",
                         "title": "First Chat",
                         "create_time": "2025-01-15T10:00:00Z",
-                        "messages": [{"role": "user", "content": "Hello 1"}]
+                        "messages": [{"role": "user", "content": "Hello 1"}],
                     }
                 ]
             },
@@ -131,10 +131,10 @@ class TestImportIntegration:
                         "id": "conv-2",
                         "title": "Second Chat",
                         "create_time": "2025-01-15T11:00:00Z",
-                        "messages": [{"role": "user", "content": "Hello 2"}]
+                        "messages": [{"role": "user", "content": "Hello 2"}],
                     }
                 ]
-            }
+            },
         ]
 
         # Create test files
@@ -148,7 +148,7 @@ class TestImportIntegration:
         importer = ChatGPTImporter(self.storage_path)
         total_imported = 0
 
-        with patch.object(importer, '_save_conversation') as mock_save:
+        with patch.object(importer, "_save_conversation") as mock_save:
             for test_file in test_files:
                 result = importer.import_file(test_file)
                 total_imported += result.conversations_imported
@@ -165,14 +165,14 @@ class TestImportIntegration:
                     "id": "conv-valid",
                     "title": "Valid Chat",
                     "create_time": "2025-01-15T10:00:00Z",
-                    "messages": [{"role": "user", "content": "Valid message"}]
+                    "messages": [{"role": "user", "content": "Valid message"}],
                 },
                 {
                     "id": "conv-invalid",
                     "title": "Invalid Chat",
                     "create_time": "invalid-date",
-                    "messages": "not an array"  # This will cause parsing issues
-                }
+                    "messages": "not an array",  # This will cause parsing issues
+                },
             ]
         }
 
@@ -190,15 +190,14 @@ class TestImportIntegration:
                 return False
             return original_validate(conv)
 
-        with patch.object(importer, '_validate_conversation', side_effect=mock_validate):
-            with patch.object(importer, '_save_conversation') as mock_save:
+        with patch.object(importer, "_validate_conversation", side_effect=mock_validate):
+            with patch.object(importer, "_save_conversation") as mock_save:
                 result = importer.import_file(test_file)
 
         # Should have partial success
         assert result.conversations_imported >= 1
         assert result.conversations_failed >= 0  # May vary based on validation
-        assert len(result.errors) == 0 or len(
-            result.errors) >= 0  # Depends on validation
+        assert len(result.errors) == 0 or len(result.errors) >= 0  # Depends on validation
 
     def test_conversation_format_consistency(self):
         """Test that imported conversations maintain consistent format."""
@@ -214,7 +213,7 @@ class TestImportIntegration:
             saved_conversations.append(conversation)
             return self.storage_path / f"{conversation['id']}.json"
 
-        with patch.object(importer, '_save_conversation', side_effect=capture_save):
+        with patch.object(importer, "_save_conversation", side_effect=capture_save):
             importer.import_file(test_file)
 
         assert len(saved_conversations) == 1
@@ -222,8 +221,18 @@ class TestImportIntegration:
 
         # Verify universal format compliance
         required_fields = [
-            "id", "platform_id", "title", "content", "date", "platform",
-            "topics", "created_at", "messages", "model", "session_context", "import_metadata"
+            "id",
+            "platform_id",
+            "title",
+            "content",
+            "date",
+            "platform",
+            "topics",
+            "created_at",
+            "messages",
+            "model",
+            "session_context",
+            "import_metadata",
         ]
 
         for field in required_fields:
@@ -242,9 +251,7 @@ class TestImportIntegration:
     def test_import_performance_basic(self):
         """Test basic import performance characteristics."""
         # Create larger dataset for performance testing
-        large_data = {
-            "conversations": []
-        }
+        large_data = {"conversations": []}
 
         # Generate 10 conversations with multiple messages each
         for i in range(10):
@@ -252,17 +259,19 @@ class TestImportIntegration:
                 "id": f"conv-perf-{i}",
                 "title": f"Performance Test Chat {i}",
                 "create_time": "2025-01-15T10:00:00Z",
-                "messages": []
+                "messages": [],
             }
 
             # Add 5 messages per conversation
             for j in range(5):
-                conv["messages"].append({
-                    "id": f"msg-{i}-{j}",
-                    "role": "user" if j % 2 == 0 else "assistant",
-                    "content": f"Message {j} in conversation {i}",
-                    "create_time": f"2025-01-15T10:{j:02d}:00Z"
-                })
+                conv["messages"].append(
+                    {
+                        "id": f"msg-{i}-{j}",
+                        "role": "user" if j % 2 == 0 else "assistant",
+                        "content": f"Message {j} in conversation {i}",
+                        "create_time": f"2025-01-15T10:{j:02d}:00Z",
+                    }
+                )
 
             large_data["conversations"].append(conv)
 
@@ -271,9 +280,10 @@ class TestImportIntegration:
 
         # Import with timing
         import time
+
         importer = ChatGPTImporter(self.storage_path)
 
-        with patch.object(importer, '_save_conversation') as mock_save:
+        with patch.object(importer, "_save_conversation") as mock_save:
             start_time = time.time()
             result = importer.import_file(test_file)
             end_time = time.time()
@@ -289,20 +299,30 @@ class TestImportIntegration:
     def test_import_validation_integration(self):
         """Test integration between import and validation systems."""
         # Create test data with validation challenges
-        test_data = {"conversations": [{"id": "conv-validation-test",
-                                        "title": "Validation Test",
-                                        "create_time": "2025-01-15T10:00:00Z",
-                                        "messages": [{"id": "msg1",
-                                                       "role": "user",
-                                                       "content": "Test message with special chars: <script>alert('test')</script>",
-                                                       "create_time": "2025-01-15T10:00:00Z"}]}]}
+        test_data = {
+            "conversations": [
+                {
+                    "id": "conv-validation-test",
+                    "title": "Validation Test",
+                    "create_time": "2025-01-15T10:00:00Z",
+                    "messages": [
+                        {
+                            "id": "msg1",
+                            "role": "user",
+                            "content": "Test message with special chars: <script>alert('test')</script>",
+                            "create_time": "2025-01-15T10:00:00Z",
+                        }
+                    ],
+                }
+            ]
+        }
 
         test_file = self.storage_path / "validation_test.json"
         test_file.write_text(json.dumps(test_data))
 
         importer = ChatGPTImporter(self.storage_path)
 
-        with patch.object(importer, '_save_conversation') as mock_save:
+        with patch.object(importer, "_save_conversation") as mock_save:
             result = importer.import_file(test_file)
 
         # Should handle validation gracefully
@@ -370,7 +390,7 @@ class TestImportWorkflowEdgeCases:
                     "id": "conv-storage-test",
                     "title": "Storage Test",
                     "create_time": "2025-01-15T10:00:00Z",
-                    "messages": [{"role": "user", "content": "Test"}]
+                    "messages": [{"role": "user", "content": "Test"}],
                 }
             ]
         }

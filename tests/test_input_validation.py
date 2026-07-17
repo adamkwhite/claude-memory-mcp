@@ -62,10 +62,7 @@ class TestTitleValidation:
 
     def test_dangerous_characters_removed(self):
         """Test dangerous file characters are sanitized"""
-        assert (
-            validate_title('test<script>alert("xss")</script>')
-            == "testscriptalert(xss)/script"
-        )
+        assert validate_title('test<script>alert("xss")</script>') == "testscriptalert(xss)/script"
         assert validate_title("file:name|test") == "filenametest"
         assert validate_title("test*file?name") == "testfilename"
 

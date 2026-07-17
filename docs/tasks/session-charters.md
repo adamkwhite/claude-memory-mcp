@@ -1,6 +1,6 @@
 # Test Session Charters: Claude Conversation Memory MCP Server
 
-## Session 1: Security & Data Protection 
+## Session 1: Security & Data Protection
 **Priority: HIGH | Duration: 90 minutes**
 
 ### Charter
@@ -9,7 +9,7 @@ Explore the security characteristics of the conversation memory system, particul
 ### Areas to Test
 - **File System Security**: Directory traversal, path injection, permission handling
 - **Data Protection**: Information disclosure in logs, error messages, temporary files
-- **Input Validation**: Malicious content handling, JSON injection attacks  
+- **Input Validation**: Malicious content handling, JSON injection attacks
 - **Storage Security**: File permissions, access controls, data visibility
 
 ### Setup

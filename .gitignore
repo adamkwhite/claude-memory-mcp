@@ -114,3 +114,7 @@ test_*.db-journal
 
 # Runtime search index — never track (app rewrites it every run)
 data/conversations/search.db
+
+# Agent scratch notes (session handoffs, analysis) — local only
+.agent-notes/
+.context/

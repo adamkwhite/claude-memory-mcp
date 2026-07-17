@@ -71,25 +71,25 @@ Create `src/importers/chatgpt_importer.py`:
 ```python
 class ChatGPTImporter:
     """Convert ChatGPT export format to universal conversation format"""
-    
+
     def __init__(self, config=None):
         self.config = config or {}
-    
+
     def parse_export(self, export_data: dict) -> List[Dict]:
         """Parse ChatGPT export and return universal format conversations"""
         conversations = []
-        
+
         for conv in export_data.get('conversations', []):
             conversation = self._convert_conversation(conv)
             conversations.append(conversation)
-        
+
         return conversations
-    
+
     def _convert_conversation(self, chatgpt_conv: dict) -> dict:
         """Convert single ChatGPT conversation to universal format"""
         # Extract messages from mapping structure
         messages = self._extract_messages(chatgpt_conv.get('mapping', {}))
-        
+
         # Convert to our format
         return {
             'id': chatgpt_conv.get('id'),
@@ -114,14 +114,14 @@ Extend `ConversationMemoryServer` to support imports:
 def import_chatgpt_conversations(self, export_file_path: str) -> dict:
     """Import ChatGPT conversations from export file"""
     importer = ChatGPTImporter()
-    
+
     with open(export_file_path, 'r') as f:
         export_data = json.load(f)
-    
+
     conversations = importer.parse_export(export_data)
     imported = 0
     errors = []
-    
+
     for conv in conversations:
         try:
             self.add_conversation(
@@ -133,7 +133,7 @@ def import_chatgpt_conversations(self, export_file_path: str) -> dict:
             imported += 1
         except Exception as e:
             errors.append(f"Failed to import {conv['title']}: {e}")
-    
+
     return {
         'imported': imported,
         'total': len(conversations),
@@ -154,19 +154,19 @@ def test_chatgpt_import():
     # Load ChatGPT export
     with open('test_data/chatgpt_export.json', 'r') as f:
         export_data = json.load(f)
-    
+
     # Initialize memory server
     server = ConversationMemoryServer()
-    
+
     # Import conversations
     result = server.import_chatgpt_conversations('test_data/chatgpt_export.json')
-    
+
     print(f"Imported {result['imported']}/{result['total']} conversations")
-    
+
     # Test search functionality
     search_results = server.search_conversations("python", limit=5)
     print(f"Found {len(search_results)} results for 'python'")
-    
+
     # Verify platform filtering
     chatgpt_results = [r for r in search_results if r.get('platform') == 'chatgpt']
     print(f"ChatGPT-specific results: {len(chatgpt_results)}")
@@ -203,19 +203,19 @@ If needed, create `src/bridges/chatgpt_bridge.py`:
 ```python
 class ChatGPTMCPBridge:
     """Bridge between ChatGPT and our MCP memory server"""
-    
+
     def __init__(self, memory_server_url: str):
         self.memory_server_url = memory_server_url
         self.mcp_client = MCPClient(memory_server_url)
-    
+
     async def search_memory(self, query: str, limit: int = 5) -> List[Dict]:
         """Search memory and return results for ChatGPT"""
         results = await self.mcp_client.call_tool(
-            "search_conversations", 
+            "search_conversations",
             {"query": query, "limit": limit}
         )
         return self._format_for_chatgpt(results)
-    
+
     def _format_for_chatgpt(self, results: List[Dict]) -> List[Dict]:
         """Format results for ChatGPT consumption"""
         formatted = []

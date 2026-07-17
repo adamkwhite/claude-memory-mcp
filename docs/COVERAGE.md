@@ -33,7 +33,7 @@ Test coverage has been set up for the Claude Memory MCP Server using pytest and 
 
 ### ✅ Well Tested
 - **Core Functionality**: Conversation addition, search, topic extraction
-- **File Organization**: Date-based folder structure, index management  
+- **File Organization**: Date-based folder structure, index management
 - **Error Handling**: Invalid inputs, missing files, edge cases
 - **Data Persistence**: JSON index and topic tracking
 
@@ -69,7 +69,7 @@ coverage report --show-missing
 
 ### Fixtures
 - `temp_storage` - Isolated test directories
-- `standalone_server` - Clean server instances  
+- `standalone_server` - Clean server instances
 - `sample_conversation_content` - Realistic test data
 
 ### Test Classes
@@ -81,7 +81,7 @@ coverage report --show-missing
 
 The `.coveragerc` file excludes:
 - Test files themselves
-- Archive and script directories  
+- Archive and script directories
 - Environment and setup files
 - Debug and abstract methods
 
@@ -92,7 +92,7 @@ The `.coveragerc` file excludes:
 2. **Production Server Tests**: Test actual server functionality
 3. **Security Tests**: Validate input sanitization and file protection
 
-### Medium Priority  
+### Medium Priority
 1. **Performance Tests**: Large dataset handling
 2. **Integration Tests**: Full end-to-end workflows
 3. **Regression Tests**: Prevent functionality breaking
@@ -121,7 +121,7 @@ Consider adding:
 
 ---
 
-**Last Updated**: June 2025  
-**Test Framework**: pytest + coverage.py  
-**Total Tests**: 15 (13 passed, 2 skipped)  
+**Last Updated**: June 2025
+**Test Framework**: pytest + coverage.py
+**Total Tests**: 15 (13 passed, 2 skipped)
 **Coverage Tool**: coverage.py v7.6.1

@@ -83,9 +83,7 @@ class TestDefaults:
 
 
 class TestEnvOverrides:
-    def test_env_overrides_all_fields(
-        self, tmp_path: Path, writable_storage: Path
-    ) -> None:
+    def test_env_overrides_all_fields(self, tmp_path: Path, writable_storage: Path) -> None:
         env = {
             "CLAUDE_MEMORY_PATH": str(writable_storage),
             "CLAUDE_MCP_LOG_FORMAT": "json",
@@ -115,9 +113,7 @@ class TestEnvOverrides:
         assert cfg.log_format == "json"
         assert cfg.resolved_storage_path() == writable_storage.resolve()
 
-    def test_empty_env_value_is_ignored(
-        self, tmp_path: Path, writable_storage: Path
-    ) -> None:
+    def test_empty_env_value_is_ignored(self, tmp_path: Path, writable_storage: Path) -> None:
         env = {
             "CLAUDE_MEMORY_PATH": str(writable_storage),
             "CLAUDE_MCP_LOG_FORMAT": "",
@@ -152,9 +148,7 @@ class TestEnvOverrides:
         cfg = Config.load(config_file=tmp_path / "no.json", env=env)
         assert cfg.enable_sqlite is expected
 
-    def test_disable_sqlite_off_switch(
-        self, tmp_path: Path, writable_storage: Path
-    ) -> None:
+    def test_disable_sqlite_off_switch(self, tmp_path: Path, writable_storage: Path) -> None:
         env = {
             "CLAUDE_MEMORY_PATH": str(writable_storage),
             "CLAUDE_MEMORY_DISABLE_SQLITE": "true",
@@ -162,9 +156,7 @@ class TestEnvOverrides:
         cfg = Config.load(config_file=tmp_path / "no.json", env=env)
         assert cfg.enable_sqlite is False
 
-    def test_disable_sqlite_wins_over_enable(
-        self, tmp_path: Path, writable_storage: Path
-    ) -> None:
+    def test_disable_sqlite_wins_over_enable(self, tmp_path: Path, writable_storage: Path) -> None:
         env = {
             "CLAUDE_MEMORY_PATH": str(writable_storage),
             "CLAUDE_MCP_ENABLE_SQLITE": "true",
@@ -218,9 +210,7 @@ class TestFileLoading:
         with pytest.raises(ConfigError, match="Invalid JSON"):
             Config.load(config_file=cfg_file, env=empty_env)
 
-    def test_non_mapping_top_level_raises(
-        self, tmp_path: Path, empty_env: dict
-    ) -> None:
+    def test_non_mapping_top_level_raises(self, tmp_path: Path, empty_env: dict) -> None:
         cfg_file = tmp_path / "list.json"
         cfg_file.write_text(json.dumps([1, 2, 3]), encoding="utf-8")
         with pytest.raises(ConfigError, match="JSON object"):
@@ -350,25 +340,17 @@ class TestValidation:
         with pytest.raises(ConfigError, match="log_sample_rates must be a dict"):
             cfg.validate()
 
-    def test_log_sample_rates_non_int_value_raises(
-        self, writable_storage: Path
-    ) -> None:
-        cfg = Config(
-            storage_path=str(writable_storage), log_sample_rates={"search": "ten"}
-        )  # type: ignore[dict-item]
+    def test_log_sample_rates_non_int_value_raises(self, writable_storage: Path) -> None:
+        cfg = Config(storage_path=str(writable_storage), log_sample_rates={"search": "ten"})  # type: ignore[dict-item]
         with pytest.raises(ConfigError, match="log_sample_rates must be a dict"):
             cfg.validate()
 
-    def test_log_sample_rates_zero_or_negative_raises(
-        self, writable_storage: Path
-    ) -> None:
+    def test_log_sample_rates_zero_or_negative_raises(self, writable_storage: Path) -> None:
         cfg = Config(storage_path=str(writable_storage), log_sample_rates={"search": 0})
         with pytest.raises(ConfigError, match="log_sample_rates must be a dict"):
             cfg.validate()
 
-    def test_log_sample_rates_from_env_json(
-        self, tmp_path: Path, writable_storage: Path
-    ) -> None:
+    def test_log_sample_rates_from_env_json(self, tmp_path: Path, writable_storage: Path) -> None:
         env = {
             "CLAUDE_MEMORY_PATH": str(writable_storage),
             "CLAUDE_MCP_LOG_SAMPLE_RATES": '{"performance": 10, "file_operation": 50}',
@@ -406,9 +388,7 @@ class TestValidation:
         with pytest.raises(ConfigError, match="Invalid log_level"):
             cfg.validate()
 
-    def test_invalid_platform_profile_via_validate(
-        self, writable_storage: Path
-    ) -> None:
+    def test_invalid_platform_profile_via_validate(self, writable_storage: Path) -> None:
         cfg = Config(storage_path=str(writable_storage), platform_profile="bogus")
         with pytest.raises(ConfigError, match="Unknown platform_profile"):
             cfg.validate()
@@ -428,9 +408,7 @@ class TestValidation:
         with pytest.raises(ConfigError, match="non-empty"):
             cfg.validate()
 
-    def test_unwritable_storage_path(
-        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
-    ) -> None:
+    def test_unwritable_storage_path(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
         target = tmp_path / "unwritable"
         target.mkdir()
 
@@ -499,9 +477,7 @@ class TestProfiles:
         for name in ("default", "claude", "chatgpt", "cursor"):
             assert name in PLATFORM_PROFILES
 
-    def test_chatgpt_profile_defaults(
-        self, tmp_path: Path, writable_storage: Path
-    ) -> None:
+    def test_chatgpt_profile_defaults(self, tmp_path: Path, writable_storage: Path) -> None:
         env = {
             "CLAUDE_MEMORY_PATH": str(writable_storage),
             "CLAUDE_MCP_PLATFORM_PROFILE": "chatgpt",
@@ -510,9 +486,7 @@ class TestProfiles:
         assert cfg.platform_profile == "chatgpt"
         assert cfg.log_format == "json"
 
-    def test_claude_profile_defaults(
-        self, tmp_path: Path, writable_storage: Path
-    ) -> None:
+    def test_claude_profile_defaults(self, tmp_path: Path, writable_storage: Path) -> None:
         env = {
             "CLAUDE_MEMORY_PATH": str(writable_storage),
             "CLAUDE_MCP_PLATFORM_PROFILE": "claude",

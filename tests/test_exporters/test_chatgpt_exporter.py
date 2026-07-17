@@ -14,7 +14,9 @@ if str(SRC_DIR) not in sys.path:
     sys.path.insert(0, str(SRC_DIR))
 
 from exporters.base_exporter import Filters  # type: ignore[import-not-found]  # noqa: E402
-from exporters.chatgpt_exporter import ChatgptExporter  # type: ignore[import-not-found]  # noqa: E402
+from exporters.chatgpt_exporter import (  # type: ignore[import-not-found]  # noqa: E402
+    ChatgptExporter,
+)
 
 from .test_base_exporter import (  # noqa: E402
     _build_storage,

@@ -11,7 +11,7 @@ from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -23,9 +23,9 @@ class ImportResult:
     success: bool
     conversations_imported: int
     conversations_failed: int
-    errors: List[str]
-    imported_ids: List[str]
-    metadata: Dict[str, Any]
+    errors: list[str]
+    imported_ids: list[str]
+    metadata: dict[str, Any]
 
     @property
     def total_processed(self) -> int:
@@ -69,7 +69,7 @@ class BaseImporter(ABC):
         """
 
     @abstractmethod
-    def parse_conversation(self, raw_data: Any) -> Dict[str, Any]:
+    def parse_conversation(self, raw_data: Any) -> dict[str, Any]:
         """
         Parse raw conversation data into universal format.
 
@@ -85,17 +85,17 @@ class BaseImporter(ABC):
         platform_id: str,
         title: str,
         content: str,
-        messages: List[Dict[str, Any]],
+        messages: list[dict[str, Any]],
         date: datetime,
-        model: Optional[str] = None,
-        session_context: Optional[Dict[str, Any]] = None,
-        metadata: Optional[Dict[str, Any]] = None,
-        session_id: Optional[str] = None,
-        user_id: Optional[str] = None,
-        tags: Optional[List[str]] = None,
-        conversation_type: Optional[str] = None,
-        custom_fields: Optional[Dict[str, Any]] = None,
-    ) -> Dict[str, Any]:
+        model: str | None = None,
+        session_context: dict[str, Any] | None = None,
+        metadata: dict[str, Any] | None = None,
+        session_id: str | None = None,
+        user_id: str | None = None,
+        tags: list[str] | None = None,
+        conversation_type: str | None = None,
+        custom_fields: dict[str, Any] | None = None,
+    ) -> dict[str, Any]:
         """
         Create a conversation in universal internal format.
 
@@ -135,9 +135,7 @@ class BaseImporter(ABC):
             "messages": messages,
             "date": date.isoformat(),
             "last_updated": (
-                messages[-1].get("timestamp", date.isoformat())
-                if messages
-                else date.isoformat()
+                messages[-1].get("timestamp", date.isoformat()) if messages else date.isoformat()
             ),
             "topics": topics,
             "session_context": session_context or {},
@@ -170,7 +168,7 @@ class BaseImporter(ABC):
         random_suffix = str(uuid.uuid4())[:8]
         return f"conv_{timestamp}_{random_suffix}"
 
-    def _extract_topics(self, content: str) -> List[str]:
+    def _extract_topics(self, content: str) -> list[str]:
         """
         Extract topics from conversation content.
 
@@ -246,10 +244,10 @@ class BaseImporter(ABC):
         self,
         role: str,
         content: str,
-        timestamp: Optional[datetime] = None,
-        message_id: Optional[str] = None,
-        metadata: Optional[Dict[str, Any]] = None,
-    ) -> Dict[str, Any]:
+        timestamp: datetime | None = None,
+        message_id: str | None = None,
+        metadata: dict[str, Any] | None = None,
+    ) -> dict[str, Any]:
         """Create a standardized message object."""
         return {
             "id": message_id or str(uuid.uuid4()),
@@ -272,9 +270,7 @@ class BaseImporter(ABC):
 
         for fmt in formats:
             try:
-                return datetime.strptime(
-                    timestamp_str.replace("Z", ""), fmt.replace("Z", "")
-                )
+                return datetime.strptime(timestamp_str.replace("Z", ""), fmt.replace("Z", ""))
             except ValueError:
                 continue
 
@@ -283,12 +279,10 @@ class BaseImporter(ABC):
         # %r (through lazy %-formatting) rather than f-string concatenation
         # so control/newline characters are escaped instead of injected
         # verbatim into the log (SonarCloud pythonsecurity:S5145).
-        self.logger.warning(
-            "Could not parse timestamp: %r, using current time", timestamp_str
-        )
+        self.logger.warning("Could not parse timestamp: %r, using current time", timestamp_str)
         return datetime.now()
 
-    def _combine_messages_to_content(self, messages: List[Dict[str, Any]]) -> str:
+    def _combine_messages_to_content(self, messages: list[dict[str, Any]]) -> str:
         """Combine individual messages into a single content string."""
         content_parts = []
 
@@ -308,7 +302,7 @@ class BaseImporter(ABC):
 
         return "\n\n".join(content_parts)
 
-    def _validate_conversation(self, conversation: Dict[str, Any]) -> bool:
+    def _validate_conversation(self, conversation: dict[str, Any]) -> bool:
         """Validate that a conversation has required fields."""
         required_fields = ["id", "platform", "title", "content", "date", "messages"]
 
@@ -324,7 +318,7 @@ class BaseImporter(ABC):
 
         return True
 
-    def get_import_stats(self) -> Dict[str, Any]:
+    def get_import_stats(self) -> dict[str, Any]:
         """Get statistics about the importer."""
         return {
             "platform": self.platform_name,
@@ -333,10 +327,10 @@ class BaseImporter(ABC):
         }
 
     @abstractmethod
-    def get_supported_formats(self) -> List[str]:
+    def get_supported_formats(self) -> list[str]:
         """Return list of supported file formats for this importer."""
 
-    def batch_import(self, file_paths: List[Path]) -> ImportResult:
+    def batch_import(self, file_paths: list[Path]) -> ImportResult:
         """Import multiple files and combine results."""
         total_conversations = 0
         total_failed = 0

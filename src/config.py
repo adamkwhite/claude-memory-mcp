@@ -258,10 +258,7 @@ class Config:
                 f"must be one of {sorted(PLATFORM_PROFILES)}"
             )
         if not isinstance(self.log_sample_rates, dict) or not all(
-            isinstance(k, str)
-            and isinstance(v, int)
-            and not isinstance(v, bool)
-            and v >= 1
+            isinstance(k, str) and isinstance(v, int) and not isinstance(v, bool) and v >= 1
             for k, v in self.log_sample_rates.items()
         ):
             raise ConfigError(
@@ -343,9 +340,7 @@ def _load_file_data(path: Path) -> dict[str, Any]:
         raise ConfigError(f"Invalid JSON in config file {path}: {exc}") from exc
 
     if not isinstance(data, dict):
-        raise ConfigError(
-            f"Config file {path} must contain a JSON object at the top level"
-        )
+        raise ConfigError(f"Config file {path} must contain a JSON object at the top level")
     return data
 
 
@@ -386,9 +381,7 @@ def _apply_overrides(cfg: Config, overrides: Mapping[str, Any], source: str) -> 
             try:
                 coerced[key] = json.loads(value)
             except json.JSONDecodeError as exc:
-                raise ConfigError(
-                    f"Invalid JSON for log_sample_rates in {source}: {exc}"
-                ) from exc
+                raise ConfigError(f"Invalid JSON for log_sample_rates in {source}: {exc}") from exc
         else:
             coerced[key] = value
     return replace(cfg, **coerced)

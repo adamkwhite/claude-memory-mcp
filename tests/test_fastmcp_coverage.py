@@ -139,10 +139,7 @@ class TestWeeklySummaryGeneration:
 
         # Check for category sections or conversation titles
         assert "💻 Coding & Development" in summary or "Coding Task" in summary
-        assert (
-            "🎯 Decisions & Recommendations" in summary
-            or "Architecture Decision" in summary
-        )
+        assert "🎯 Decisions & Recommendations" in summary or "Architecture Decision" in summary
         assert "📚 Learning & Exploration" in summary or "Learning Topic" in summary
 
     @pytest.mark.asyncio
@@ -195,9 +192,7 @@ class TestMCPToolFunctions:
     @pytest.mark.asyncio
     async def test_mcp_search_tool_no_results(self):
         """Test MCP search tool when no results found"""
-        result = await server_fastmcp.search_conversations(
-            "nonexistentquery12345", limit=5
-        )
+        result = await server_fastmcp.search_conversations("nonexistentquery12345", limit=5)
         assert "No conversations found" in result
 
     @pytest.mark.asyncio
@@ -312,9 +307,7 @@ class TestMCPToolFunctions:
                 {"id": "b", "title": "B", "date": "2026-04-19"},
             ]
 
-        monkeypatch.setattr(
-            server_fastmcp.memory_server, "search_by_session_id", fake_search
-        )
+        monkeypatch.setattr(server_fastmcp.memory_server, "search_by_session_id", fake_search)
 
         result = await server_fastmcp.search_by_session_id("sess_x")
         assert "Found 2 conversations for session 'sess_x'" in result
@@ -348,9 +341,7 @@ class TestMCPToolFunctions:
                 "conversation_types": [{"type": "code", "count": 5}],
             }
 
-        monkeypatch.setattr(
-            server_fastmcp.memory_server, "get_search_stats", fake_stats
-        )
+        monkeypatch.setattr(server_fastmcp.memory_server, "get_search_stats", fake_stats)
 
         result = await server_fastmcp.get_search_stats()
         assert "Popular Tags:" in result
@@ -371,9 +362,7 @@ class TestMCPToolFunctions:
                 "conversation_types": [],
             }
 
-        monkeypatch.setattr(
-            server_fastmcp.memory_server, "get_search_stats", fake_stats
-        )
+        monkeypatch.setattr(server_fastmcp.memory_server, "get_search_stats", fake_stats)
 
         result = await server_fastmcp.get_search_stats()
         assert "Popular Tags:" not in result
@@ -417,9 +406,7 @@ class TestErrorHandlingAndEdgeCases:
     async def test_search_with_missing_files(self, server, temp_storage):
         """Test search when conversation files are missing"""
         # Add a conversation normally
-        result = await server.add_conversation(
-            "Test content", "Test Title", "2025-01-15T10:30:00"
-        )
+        result = await server.add_conversation("Test content", "Test Title", "2025-01-15T10:30:00")
 
         # Remove the conversation file but keep index entry
         file_path = Path(result["file_path"])
@@ -489,9 +476,7 @@ class TestErrorHandlingAndEdgeCases:
     async def test_conversation_content_encoding_issues(self, server):
         """Test handling of various text encodings"""
         # Content with various special characters
-        special_content = (
-            "Content with special chars: àáâãäåæçèéêë ñ 中文 русский العربية"
-        )
+        special_content = "Content with special chars: àáâãäåæçèéêë ñ 中文 русский العربية"
 
         result = await server.add_conversation(
             content=special_content,
@@ -590,9 +575,7 @@ class TestFastMCPConfigWiring:
 
     def test_trusted_path_outside_home_is_accepted(self, home_temp_storage):
         """An explicitly-configured path outside HOME passes validation."""
-        srv = server_fastmcp.FastMCPConversationMemoryServer(
-            storage_path=home_temp_storage
-        )
+        srv = server_fastmcp.FastMCPConversationMemoryServer(storage_path=home_temp_storage)
         outside = Path(tempfile.mkdtemp(prefix="outside_home_")).resolve()
         try:
             # Untrusted (defaulted) path outside HOME is rejected...
@@ -605,9 +588,7 @@ class TestFastMCPConfigWiring:
 
     def test_traversal_guard_applies_even_when_trusted(self, home_temp_storage):
         """The ``..`` traversal guard is enforced regardless of trust."""
-        srv = server_fastmcp.FastMCPConversationMemoryServer(
-            storage_path=home_temp_storage
-        )
+        srv = server_fastmcp.FastMCPConversationMemoryServer(storage_path=home_temp_storage)
         with pytest.raises(ValueError, match="cannot contain"):
             srv._validate_storage_path(Path("/some/../evil"), trusted=True)
 
@@ -623,10 +604,7 @@ class TestFastMCPConfigWiring:
         (or an incompatible sibling) creeping back in.
         """
         assert "_validate_storage_path" not in ConversationMemoryServer.__dict__
-        assert (
-            "_validate_storage_path"
-            in server_fastmcp.FastMCPConversationMemoryServer.__dict__
-        )
+        assert "_validate_storage_path" in server_fastmcp.FastMCPConversationMemoryServer.__dict__
 
 
 if __name__ == "__main__":

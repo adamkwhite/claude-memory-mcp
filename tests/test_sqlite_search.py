@@ -234,9 +234,7 @@ class TestMetadataIndexing:
         assert row["session_id"] == "session_abc123"
         assert row["user_id"] == "user_42"
         assert row["conversation_type"] == "code"
-        assert json.loads(row["custom_fields_json"]) == {
-            "workspace_path": "/home/dev/mcp"
-        }
+        assert json.loads(row["custom_fields_json"]) == {"workspace_path": "/home/dev/mcp"}
         assert set(tags) == {"starred", "workspace:memory-mcp", "has-file-changes"}
 
     def test_add_conversation_without_metadata_still_works(self, search_db):
@@ -255,8 +253,7 @@ class TestMetadataIndexing:
 
         with sqlite3.connect(search_db.db_path) as conn:
             row = conn.execute(
-                "SELECT session_id, user_id, conversation_type FROM conversations "
-                "WHERE id=?",
+                "SELECT session_id, user_id, conversation_type FROM conversations WHERE id=?",
                 (legacy["id"],),
             ).fetchone()
             tag_count = conn.execute(
@@ -278,9 +275,7 @@ class TestMetadataIndexing:
 
         assert search_db.search_by_tag("nonexistent") == []
 
-    def test_search_by_session_id_orders_chronologically(
-        self, search_db, conv_with_metadata
-    ):
+    def test_search_by_session_id_orders_chronologically(self, search_db, conv_with_metadata):
         second = {
             **conv_with_metadata,
             "id": "conv_meta_002",
@@ -374,8 +369,7 @@ class TestMetadataIndexing:
             cursor = conn.execute("PRAGMA table_info(conversations)")
             columns = {row[1] for row in cursor.fetchall()}
             existing_row = conn.execute(
-                "SELECT id, session_id, conversation_type FROM conversations "
-                "WHERE id='legacy_01'"
+                "SELECT id, session_id, conversation_type FROM conversations WHERE id='legacy_01'"
             ).fetchone()
 
         assert {
@@ -389,7 +383,7 @@ class TestMetadataIndexing:
     def test_migration_is_idempotent(self, search_db):
         """Running init twice does not duplicate columns or data."""
         # Re-init on an already-new-schema DB is a no-op
-        SearchDatabase(search_db.db_path)  # noqa: new instance reuses same file
+        SearchDatabase(search_db.db_path)  # new instance reuses same file
 
         import sqlite3
 
@@ -482,9 +476,7 @@ class TestConversationMemoryServerSQLite:
         linear_conv = next((r for r in linear_results if r["title"] == title), None)
 
         assert sqlite_conv is not None, "SQLite should find the added conversation"
-        assert linear_conv is not None, (
-            "Linear search should find the added conversation"
-        )
+        assert linear_conv is not None, "Linear search should find the added conversation"
 
         # IDs should match (both use same generation logic)
         assert sqlite_conv["id"] == linear_conv["id"]
@@ -519,9 +511,7 @@ class TestConversationMemoryServerSQLite:
             assert updated_stats["total_conversations"] >= 1
 
     @pytest.mark.asyncio
-    async def test_add_conversation_persists_metadata_to_json(
-        self, memory_server_sqlite
-    ):
+    async def test_add_conversation_persists_metadata_to_json(self, memory_server_sqlite):
         """Metadata kwargs survive the round-trip through JSON storage."""
         result = await memory_server_sqlite.add_conversation(
             "Some content",
@@ -544,9 +534,7 @@ class TestConversationMemoryServerSQLite:
         assert data["custom_fields"] == {"workspace": "/tmp/ws"}
 
     @pytest.mark.asyncio
-    async def test_add_conversation_without_metadata_keeps_legacy_shape(
-        self, memory_server_sqlite
-    ):
+    async def test_add_conversation_without_metadata_keeps_legacy_shape(self, memory_server_sqlite):
         """Omitting metadata does not add empty keys — keeps JSON shape stable."""
         result = await memory_server_sqlite.add_conversation(
             "plain content", "plain title", "2026-04-18T10:00:00"
@@ -608,9 +596,7 @@ class TestConversationMemoryServerSQLite:
         assert [h["title"] for h in code_hits] == ["Code one"]
 
     @pytest.mark.asyncio
-    async def test_metadata_search_without_sqlite_returns_error(
-        self, memory_server_linear
-    ):
+    async def test_metadata_search_without_sqlite_returns_error(self, memory_server_linear):
         """Without SQLite, metadata search methods return an error marker."""
         result = await memory_server_linear.search_by_tag("starred")
         assert result == [{"error": "Tag search requires SQLite FTS to be enabled"}]
@@ -619,9 +605,7 @@ class TestConversationMemoryServerSQLite:
         assert result == [{"error": "Session search requires SQLite FTS to be enabled"}]
 
         result = await memory_server_linear.search_by_conversation_type("chat")
-        assert result == [
-            {"error": "Conversation-type search requires SQLite FTS to be enabled"}
-        ]
+        assert result == [{"error": "Conversation-type search requires SQLite FTS to be enabled"}]
 
 
 class TestConversationMigration:
@@ -782,16 +766,12 @@ class TestPerformanceComparison:
             for query in test_queries:
                 # SQLite search
                 start_time = time.perf_counter()
-                sqlite_results = await sqlite_server.search_conversations(
-                    query, limit=10
-                )
+                sqlite_results = await sqlite_server.search_conversations(query, limit=10)
                 sqlite_time = time.perf_counter() - start_time
 
                 # Linear search
                 start_time = time.perf_counter()
-                linear_results = await linear_server.search_conversations(
-                    query, limit=10
-                )
+                linear_results = await linear_server.search_conversations(query, limit=10)
                 linear_time = time.perf_counter() - start_time
 
                 # Both should return results
@@ -803,9 +783,7 @@ class TestPerformanceComparison:
                 # Allow 5x overhead for small test datasets
                 assert sqlite_time < linear_time * 5
 
-                print(
-                    f"Query '{query}': SQLite {sqlite_time:.4f}s, Linear {linear_time:.4f}s"
-                )
+                print(f"Query '{query}': SQLite {sqlite_time:.4f}s, Linear {linear_time:.4f}s")
 
 
 if __name__ == "__main__":

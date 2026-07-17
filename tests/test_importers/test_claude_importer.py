@@ -260,7 +260,7 @@ class TestClaudeImporterSaveConversation:
         assert file_path.name.endswith(".json")
 
         # Verify content
-        with open(file_path, "r") as f:
+        with open(file_path) as f:
             saved_data = json.load(f)
 
         assert saved_data["id"] == conversation["id"]
@@ -324,7 +324,7 @@ class TestClaudeImporterIntegration:
         # (no separate conversation file is created)
         assert test_file.exists()
 
-        with open(test_file, "r") as f:
+        with open(test_file) as f:
             original_data = json.load(f)
 
         assert original_data["platform"] == "claude"
@@ -357,15 +357,11 @@ class TestClaudeUniversalMetadata:
         return payload
 
     def test_session_id_uses_explicit_session_id(self):
-        conv = self.importer._parse_claude_json(
-            self._base_payload(session_id="claude-sess-1")
-        )
+        conv = self.importer._parse_claude_json(self._base_payload(session_id="claude-sess-1"))
         assert conv["session_id"] == "claude-sess-1"
 
     def test_session_id_falls_back_to_conversation_id(self):
-        conv = self.importer._parse_claude_json(
-            self._base_payload(conversation_id="claude-conv-2")
-        )
+        conv = self.importer._parse_claude_json(self._base_payload(conversation_id="claude-conv-2"))
         assert conv["session_id"] == "claude-conv-2"
 
     def test_session_id_falls_back_to_platform_id(self):
@@ -374,9 +370,7 @@ class TestClaudeUniversalMetadata:
         assert conv["session_id"] == "claude-conv-9"
 
     def test_user_id_passes_through(self):
-        conv = self.importer._parse_claude_json(
-            self._base_payload(user_id="claude-user-x")
-        )
+        conv = self.importer._parse_claude_json(self._base_payload(user_id="claude-user-x"))
         assert conv["user_id"] == "claude-user-x"
 
     def test_user_id_falls_back_to_account_id(self):
@@ -390,9 +384,7 @@ class TestClaudeUniversalMetadata:
         assert any(t.startswith("variant:") for t in conv["tags"])
 
     def test_tags_explicit_appended(self):
-        conv = self.importer._parse_claude_json(
-            self._base_payload(tags=["research", "deep-dive"])
-        )
+        conv = self.importer._parse_claude_json(self._base_payload(tags=["research", "deep-dive"]))
         assert "research" in conv["tags"]
         assert "deep-dive" in conv["tags"]
 
@@ -406,9 +398,7 @@ class TestClaudeUniversalMetadata:
         assert conv["conversation_type"] == "code"
 
     def test_conversation_type_explicit_overrides(self):
-        conv = self.importer._parse_claude_json(
-            self._base_payload(conversation_type="creative")
-        )
+        conv = self.importer._parse_claude_json(self._base_payload(conversation_type="creative"))
         assert conv["conversation_type"] == "creative"
 
     def test_custom_fields_capture_optional_keys(self):
