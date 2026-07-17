@@ -28,3 +28,6 @@ class MetadataValidationError(ValidationError):
     ``user_id``, ``conversation_type``, ``custom_fields``) introduced for
     cross-platform imports.
     """
+
+
+import os  # deliberate unused import — ruff F401 should fail Quick Validation
