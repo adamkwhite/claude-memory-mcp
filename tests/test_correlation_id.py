@@ -57,17 +57,13 @@ class TestCorrelationIdBasics:
 class TestCorrelationIdFilter:
     def test_filter_stamps_record_and_always_returns_true(self):
         set_correlation_id("stamped-id")
-        record = logging.LogRecord(
-            "test", logging.INFO, __file__, 1, "message", None, None
-        )
+        record = logging.LogRecord("test", logging.INFO, __file__, 1, "message", None, None)
         result = CorrelationIdFilter().filter(record)
         assert result is True
         assert record.correlation_id == "stamped-id"
 
     def test_filter_uses_placeholder_when_unset(self):
-        record = logging.LogRecord(
-            "test", logging.INFO, __file__, 1, "message", None, None
-        )
+        record = logging.LogRecord("test", logging.INFO, __file__, 1, "message", None, None)
         CorrelationIdFilter().filter(record)
         assert record.correlation_id == NO_CORRELATION_ID
 

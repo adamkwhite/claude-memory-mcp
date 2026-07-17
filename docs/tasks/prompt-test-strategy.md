@@ -25,7 +25,7 @@ Generate a test strategy document with these sections:
 #### 2. Risk Assessment & Test Focus
 Use HTSM Quality Criteria Categories to analyze risks:
 - **HIGH PRIORITY RISKS** - Critical business/technical risks requiring deep testing
-- **MEDIUM PRIORITY RISKS** - Important areas needing solid coverage  
+- **MEDIUM PRIORITY RISKS** - Important areas needing solid coverage
 - **LOWER PRIORITY RISKS** - Areas with acceptable risk levels
 
 For each risk area, include:

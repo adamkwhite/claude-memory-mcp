@@ -44,9 +44,7 @@ class TestCorrelationIdEndToEnd:
     """Mandatory test #1: default text format, child logger, no dropped
     records, no formatting error."""
 
-    def test_child_logger_record_lands_in_file_with_default_text_format(
-        self, tmp_path, capsys
-    ):
+    def test_child_logger_record_lands_in_file_with_default_text_format(self, tmp_path, capsys):
         log_file = tmp_path / "app.log"
 
         # Default format ("text"), the same as init_default_logging() uses
@@ -79,9 +77,7 @@ class TestSamplingEndToEnd:
     """Mandatory test #2: sampling actually samples through a child logger,
     and WARNING/ERROR are never sampled."""
 
-    def test_sampling_through_child_logger_drops_records_at_configured_rate(
-        self, tmp_path
-    ):
+    def test_sampling_through_child_logger_drops_records_at_configured_rate(self, tmp_path):
         from config import Config
 
         log_file = tmp_path / "sampled.log"
@@ -94,9 +90,7 @@ class TestSamplingEndToEnd:
         for i in range(total):
             child_logger.info(f"noisy record {i}", extra={"context": {"type": "noisy"}})
 
-        lines = [
-            line for line in log_file.read_text().splitlines() if "noisy record" in line
-        ]
+        lines = [line for line in log_file.read_text().splitlines() if "noisy record" in line]
         assert len(lines) == total // rate
 
     def test_warning_and_error_are_never_sampled_through_child_logger(self, tmp_path):
@@ -151,9 +145,7 @@ class TestNoDoubleCountingAcrossHandlers:
 
         # If the counter advanced once per handler (double-counting), the
         # effective rate would be rate/2 and this would be total // (rate/2).
-        file_lines = [
-            line for line in log_file.read_text().splitlines() if "noisy record" in line
-        ]
+        file_lines = [line for line in log_file.read_text().splitlines() if "noisy record" in line]
         assert len(file_lines) == total // rate
 
 

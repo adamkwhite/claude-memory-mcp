@@ -28,8 +28,7 @@ class TestChatGPTSchema:
     def test_schema_required_fields(self):
         """Test schema requires essential fields."""
         required_fields = CHATGPT_SCHEMA["items"]["required"]
-        expected_fields = ["title", "create_time",
-            "mapping", "conversation_id"]
+        expected_fields = ["title", "create_time", "mapping", "conversation_id"]
 
         for field in expected_fields:
             assert field in required_fields
@@ -70,8 +69,11 @@ class TestChatGPTSchema:
         """Test that schema defines valid author roles."""
         mapping_props = CHATGPT_SCHEMA["items"]["properties"]["mapping"]
         node_schema = mapping_props["patternProperties"]["^[a-zA-Z0-9-_]+$"]
-        message_obj = [obj for obj in node_schema["properties"]
-                       ["message"]["oneOf"] if obj.get("type") == "object"][0]
+        message_obj = [
+            obj
+            for obj in node_schema["properties"]["message"]["oneOf"]
+            if obj.get("type") == "object"
+        ][0]
 
         author_schema = message_obj["properties"]["author"]
         role_schema = author_schema["properties"]["role"]
@@ -85,25 +87,40 @@ class TestChatGPTValidation:
 
     def test_validate_chatgpt_export_valid(self):
         """Test validation with valid ChatGPT export."""
-        valid_export = [{"title": "Test Conversation",
-                         "create_time": 1705312800.0,
-                         "conversation_id": "test-conv-123",
-                         "mapping": {"msg-1": {"id": "msg-1",
-                                               "message": {"id": "msg-1",
-                                                           "author": {"role": "user"},
-                                                           "create_time": 1705312800.0,
-                                                           "content": {"content_type": "text",
-                                                                       "parts": ["Hello ChatGPT"]}},
-                                               "parent": None,
-                                               "children": ["msg-2"]},
-                                     "msg-2": {"id": "msg-2",
-                                               "message": {"id": "msg-2",
-                                                           "author": {"role": "assistant"},
-                                                           "create_time": 1705312860.0,
-                                                           "content": {"content_type": "text",
-                                                                       "parts": ["Hello! How can I help you?"]}},
-                                               "parent": "msg-1",
-                                               "children": []}}}]
+        valid_export = [
+            {
+                "title": "Test Conversation",
+                "create_time": 1705312800.0,
+                "conversation_id": "test-conv-123",
+                "mapping": {
+                    "msg-1": {
+                        "id": "msg-1",
+                        "message": {
+                            "id": "msg-1",
+                            "author": {"role": "user"},
+                            "create_time": 1705312800.0,
+                            "content": {"content_type": "text", "parts": ["Hello ChatGPT"]},
+                        },
+                        "parent": None,
+                        "children": ["msg-2"],
+                    },
+                    "msg-2": {
+                        "id": "msg-2",
+                        "message": {
+                            "id": "msg-2",
+                            "author": {"role": "assistant"},
+                            "create_time": 1705312860.0,
+                            "content": {
+                                "content_type": "text",
+                                "parts": ["Hello! How can I help you?"],
+                            },
+                        },
+                        "parent": "msg-1",
+                        "children": [],
+                    },
+                },
+            }
+        ]
 
         result = validate_chatgpt_export(valid_export)
         assert result["valid"] is True
@@ -112,9 +129,7 @@ class TestChatGPTValidation:
 
     def test_validate_chatgpt_export_invalid_structure(self):
         """Test validation with invalid structure."""
-        invalid_export = {
-            "not_an_array": "this should be an array"
-        }
+        invalid_export = {"not_an_array": "this should be an array"}
 
         result = validate_chatgpt_export(invalid_export)
         assert result["valid"] is False
@@ -140,7 +155,7 @@ class TestChatGPTValidation:
                 "title": 123,  # Should be string
                 "create_time": "not-a-number",  # Should be number
                 "conversation_id": ["not-a-string"],  # Should be string
-                "mapping": "not-an-object"  # Should be object
+                "mapping": "not-an-object",  # Should be object
             }
         ]
 
@@ -164,7 +179,7 @@ class TestChatGPTValidation:
                 "title": "Empty Mapping Test",
                 "create_time": 1705312800.0,
                 "conversation_id": "empty-mapping-123",
-                "mapping": {}  # Empty mapping should generate warning
+                "mapping": {},  # Empty mapping should generate warning
             }
         ]
 
@@ -185,9 +200,9 @@ class TestChatGPTValidation:
                         "id": "root",
                         "message": None,  # Root nodes don't count as messages
                         "parent": None,
-                        "children": []
+                        "children": [],
                     }
-                }
+                },
             }
         ]
 
@@ -198,13 +213,14 @@ class TestChatGPTValidation:
 
     def test_validate_chatgpt_export_missing_jsonschema(self):
         """Test validation when jsonschema is not available."""
+
         # Mock the import to raise ImportError
         def mock_import(name, *args, **kwargs):
-            if name == 'jsonschema':
+            if name == "jsonschema":
                 raise ImportError("No module named 'jsonschema'")
             return __import__(name, *args, **kwargs)
 
-        with patch('builtins.__import__', side_effect=mock_import):
+        with patch("builtins.__import__", side_effect=mock_import):
             result = validate_chatgpt_export([])
             assert result["valid"] is False
             assert "jsonschema library not available" in result["errors"][0]
@@ -216,7 +232,7 @@ class TestChatGPTValidation:
         mock_jsonschema.validate.side_effect = Exception("Validation error")
         mock_jsonschema.ValidationError = Exception  # Add ValidationError class
 
-        with patch.dict('sys.modules', {'jsonschema': mock_jsonschema}):
+        with patch.dict("sys.modules", {"jsonschema": mock_jsonschema}):
             result = validate_chatgpt_export([])
             assert result["valid"] is False
             assert "Validation error" in result["errors"][0]
@@ -227,20 +243,33 @@ class TestConversationStats:
 
     def test_get_chatgpt_conversation_stats_basic(self):
         """Test basic stats extraction."""
-        conversation = {"title": "Python Help Session",
+        conversation = {
+            "title": "Python Help Session",
+            "create_time": 1705312800.0,
+            "conversation_id": "conv-python-123",
+            "default_model_slug": "gpt-4",
+            "is_archived": False,
+            "is_starred": True,
+            "mapping": {
+                "msg-1": {
+                    "message": {
+                        "author": {"role": "user"},
                         "create_time": 1705312800.0,
-                        "conversation_id": "conv-python-123",
-                        "default_model_slug": "gpt-4",
-                        "is_archived": False,
-                        "is_starred": True,
-                        "mapping": {"msg-1": {"message": {"author": {"role": "user"},
-                                                          "create_time": 1705312800.0,
-                                                          "content": {"content_type": "text",
-                                                                      "parts": ["Help with Python"]}}},
-                                    "msg-2": {"message": {"author": {"role": "assistant"},
-                                                          "create_time": 1705312860.0,
-                                                          "content": {"content_type": "text",
-                                                                      "parts": ["I can help with Python programming!"]}}}}}
+                        "content": {"content_type": "text", "parts": ["Help with Python"]},
+                    }
+                },
+                "msg-2": {
+                    "message": {
+                        "author": {"role": "assistant"},
+                        "create_time": 1705312860.0,
+                        "content": {
+                            "content_type": "text",
+                            "parts": ["I can help with Python programming!"],
+                        },
+                    }
+                },
+            },
+        }
 
         stats = get_chatgpt_conversation_stats(conversation)
 
@@ -266,17 +295,17 @@ class TestConversationStats:
                     "message": {
                         "author": {"role": "user"},
                         # 5 chars
-                        "content": {"content_type": "text", "parts": ["Hello"]}
+                        "content": {"content_type": "text", "parts": ["Hello"]},
                     }
                 },
                 "msg-2": {
                     "message": {
                         "author": {"role": "assistant"},
                         # 9 + 12 = 21 chars
-                        "content": {"content_type": "text", "parts": ["Hi there!", "How are you?"]}
+                        "content": {"content_type": "text", "parts": ["Hi there!", "How are you?"]},
                     }
-                }
-            }
+                },
+            },
         }
 
         stats = get_chatgpt_conversation_stats(conversation)
@@ -296,28 +325,28 @@ class TestConversationStats:
                 "msg-1": {
                     "message": {
                         "author": {"role": "user"},
-                        "content": {"content_type": "text", "parts": ["User message"]}
+                        "content": {"content_type": "text", "parts": ["User message"]},
                     }
                 },
                 "msg-2": {
                     "message": {
                         "author": {"role": "assistant"},
-                        "content": {"content_type": "text", "parts": ["Assistant response"]}
+                        "content": {"content_type": "text", "parts": ["Assistant response"]},
                     }
                 },
                 "msg-3": {
                     "message": {
                         "author": {"role": "system"},
-                        "content": {"content_type": "text", "parts": ["System message"]}
+                        "content": {"content_type": "text", "parts": ["System message"]},
                     }
                 },
                 "msg-4": {
                     "message": {
                         "author": {"role": "unknown_role"},
-                        "content": {"content_type": "text", "parts": ["Unknown role"]}
+                        "content": {"content_type": "text", "parts": ["Unknown role"]},
                     }
-                }
-            }
+                },
+            },
         }
 
         stats = get_chatgpt_conversation_stats(conversation)
@@ -335,7 +364,7 @@ class TestConversationStats:
             "title": "Empty Mapping Test",
             "create_time": 1705312800.0,
             "conversation_id": "empty-test-999",
-            "mapping": {}
+            "mapping": {},
         }
 
         stats = get_chatgpt_conversation_stats(conversation)
@@ -351,7 +380,7 @@ class TestConversationStats:
         conversation = {
             "title": "Minimal Conversation",
             "create_time": 1705312800.0,
-            "conversation_id": "minimal-123"
+            "conversation_id": "minimal-123",
             # Missing mapping, model, archived/starred flags
         }
 
@@ -368,7 +397,7 @@ class TestConversationStats:
         conversation = {
             "create_time": 1705312800.0,
             "conversation_id": "no-title-456",
-            "mapping": {}
+            "mapping": {},
         }
 
         stats = get_chatgpt_conversation_stats(conversation)
@@ -402,16 +431,16 @@ class TestSchemaEdgeCases:
                 "msg-1": {
                     "message": {
                         "author": {"role": "user"},
-                        "content": {"content_type": "text", "parts": None}
+                        "content": {"content_type": "text", "parts": None},
                     }
                 },
                 "msg-2": {
                     "message": {
                         "author": {"role": "assistant"},
-                        "content": {"content_type": "text"}  # Missing parts
+                        "content": {"content_type": "text"},  # Missing parts
                     }
-                }
-            }
+                },
+            },
         }
 
         stats = get_chatgpt_conversation_stats(conversation)
@@ -422,15 +451,22 @@ class TestSchemaEdgeCases:
 
     def test_stats_with_non_string_parts(self):
         """Test stats when content parts contain non-strings."""
-        conversation = {"title": "Non-String Parts Test",
-                        "create_time": 1705312800.0,
-                        "conversation_id": "non-string-456",
-                        "mapping": {"msg-1": {"message": {"author": {"role": "user"},
-                                                          "content": {"content_type": "text",
-                                                                      "parts": ["valid string",
-                                                                                123,
-                                                                                None,
-                                                                                {"object": "data"}]}}}}}
+        conversation = {
+            "title": "Non-String Parts Test",
+            "create_time": 1705312800.0,
+            "conversation_id": "non-string-456",
+            "mapping": {
+                "msg-1": {
+                    "message": {
+                        "author": {"role": "user"},
+                        "content": {
+                            "content_type": "text",
+                            "parts": ["valid string", 123, None, {"object": "data"}],
+                        },
+                    }
+                }
+            },
+        }
 
         stats = get_chatgpt_conversation_stats(conversation)
 
@@ -453,10 +489,10 @@ class TestSchemaEdgeCases:
                 "msg-2": {
                     "message": {
                         "author": {},  # Empty author
-                        "content": {"content_type": "text", "parts": ["Message with empty author"]}
+                        "content": {"content_type": "text", "parts": ["Message with empty author"]},
                     }
-                }
-            }
+                },
+            },
         }
 
         stats = get_chatgpt_conversation_stats(conversation)
@@ -469,9 +505,12 @@ class TestSchemaEdgeCases:
 class TestMainModule:
     """Test main module functionality."""
 
-    @patch('builtins.open', new_callable=mock_open,
-           read_data='[{"title": "Test", "create_time": 1705312800.0, "conversation_id": "test-123", "mapping": {}}]')
-    @patch('sys.argv', ['chatgpt_schema.py', 'test_file.json'])
+    @patch(
+        "builtins.open",
+        new_callable=mock_open,
+        read_data='[{"title": "Test", "create_time": 1705312800.0, "conversation_id": "test-123", "mapping": {}}]',
+    )
+    @patch("sys.argv", ["chatgpt_schema.py", "test_file.json"])
     def test_main_module_execution(self, mock_file):
         """Test main module execution with valid file."""
         # Import the module to trigger main execution
@@ -479,14 +518,14 @@ class TestMainModule:
         # If we get here without errors, the main execution worked
         assert True
 
-    @patch('builtins.open', side_effect=FileNotFoundError("File not found"))
-    @patch('sys.argv', ['chatgpt_schema.py', 'nonexistent.json'])
+    @patch("builtins.open", side_effect=FileNotFoundError("File not found"))
+    @patch("sys.argv", ["chatgpt_schema.py", "nonexistent.json"])
     def test_main_module_file_not_found(self, mock_file):
         """Test main module execution with missing file."""
         # Should handle file not found gracefully
         assert True
 
-    @patch('sys.argv', ['chatgpt_schema.py'])
+    @patch("sys.argv", ["chatgpt_schema.py"])
     def test_main_module_no_arguments(self):
         """Test main module execution with no arguments."""
         assert True

@@ -69,13 +69,9 @@ class TestLoggingSetup:
         """Test log file rotation configuration"""
         with tempfile.NamedTemporaryFile(delete=False) as temp_file:
             try:
-                logger = setup_logging(
-                    log_file=temp_file.name, max_bytes=1024, backup_count=3
-                )
+                logger = setup_logging(log_file=temp_file.name, max_bytes=1024, backup_count=3)
 
-                file_handler = next(
-                    h for h in logger.handlers if hasattr(h, "maxBytes")
-                )
+                file_handler = next(h for h in logger.handlers if hasattr(h, "maxBytes"))
                 assert file_handler.maxBytes == 1024
                 assert file_handler.backupCount == 3
 
@@ -166,10 +162,7 @@ class TestLoggerHelpers:
         mock_logger.log.assert_called_once()
         call_args = mock_logger.log.call_args
         assert call_args[0][0] == logging.WARNING
-        assert (
-            "Security Event: PATH_TRAVERSAL | Attempted ../../../etc/passwd"
-            in call_args[0][1]
-        )
+        assert "Security Event: PATH_TRAVERSAL | Attempted ../../../etc/passwd" in call_args[0][1]
 
     @patch("logging_config.get_logger")
     def test_log_security_event_custom_severity(self, mock_get_logger):
@@ -218,10 +211,7 @@ class TestLoggerHelpers:
 
         mock_logger.info.assert_called_once()
         call_args = mock_logger.info.call_args[0][0]
-        assert (
-            "File create: /path/to/file.txt | SUCCESS | size=1024, topics=5"
-            in call_args
-        )
+        assert "File create: /path/to/file.txt | SUCCESS | size=1024, topics=5" in call_args
 
     @patch("logging_config.get_logger")
     def test_log_file_operation_failure(self, mock_get_logger):
@@ -233,9 +223,7 @@ class TestLoggerHelpers:
 
         mock_logger.info.assert_called_once()
         call_args = mock_logger.info.call_args[0][0]
-        assert (
-            "File read: /missing/file.txt | FAILED | error=File not found" in call_args
-        )
+        assert "File read: /missing/file.txt | FAILED | error=File not found" in call_args
 
 
 class TestInitDefaultLogging:
@@ -254,9 +242,7 @@ class TestInitDefaultLogging:
         assert call_args.kwargs["log_level"] == "INFO"
         # Now provides default path
         assert call_args.kwargs["log_file"] is not None
-        assert call_args.kwargs["log_file"].endswith(
-            ".claude-memory/logs/claude-mcp.log"
-        )
+        assert call_args.kwargs["log_file"].endswith(".claude-memory/logs/claude-mcp.log")
         assert call_args.kwargs["console_output"] is False
 
     @patch.dict(
@@ -368,9 +354,7 @@ class TestLoggingIntegration:
                 f"{base_name}.1"
 
                 # May or may not create backup depending on exact size, but config should be set
-                file_handler = next(
-                    h for h in logger.handlers if hasattr(h, "maxBytes")
-                )
+                file_handler = next(h for h in logger.handlers if hasattr(h, "maxBytes"))
                 assert file_handler.maxBytes == 100
                 assert file_handler.backupCount == 2
 
@@ -465,9 +449,7 @@ class TestLoggingExceptionHandling:
                 )
                 # Should not raise an exception - should use fallback
             except Exception as e:
-                pytest.fail(
-                    f"log_security_event should handle OSError, but raised: {e}"
-                )
+                pytest.fail(f"log_security_event should handle OSError, but raised: {e}")
 
     def test_file_operation_path_redaction_failure(self):
         """Test log_file_operation path redaction failure handling"""
@@ -478,9 +460,7 @@ class TestLoggingExceptionHandling:
                 log_file_operation("read", "/some/file/path.txt", True)
                 # Should not raise an exception
             except Exception as e:
-                pytest.fail(
-                    f"log_file_operation should handle path errors, but raised: {e}"
-                )
+                pytest.fail(f"log_file_operation should handle path errors, but raised: {e}")
 
 
 class TestLoggingSecurity:

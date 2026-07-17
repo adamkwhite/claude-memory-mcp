@@ -9,7 +9,7 @@ import json
 import logging
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, List
+from typing import Any
 
 from .base_importer import BaseImporter, ImportResult
 
@@ -23,7 +23,7 @@ class ChatGPTImporter(BaseImporter):
         super().__init__(storage_path, "chatgpt")
         self.logger = logging.getLogger(f"{__name__}.ChatGPTImporter")
 
-    def get_supported_formats(self) -> List[str]:
+    def get_supported_formats(self) -> list[str]:
         """Return list of supported file formats."""
         return [".json"]
 
@@ -45,7 +45,7 @@ class ChatGPTImporter(BaseImporter):
                 )
 
             # Load and validate ChatGPT export file
-            with open(file_path, "r", encoding="utf-8") as f:
+            with open(file_path, encoding="utf-8") as f:
                 data = json.load(f)
 
             if not self._validate_chatgpt_format(data):
@@ -81,9 +81,7 @@ class ChatGPTImporter(BaseImporter):
                 metadata={},
             )
 
-    def _process_conversations(
-        self, conversations: List[Any], file_path: Path
-    ) -> ImportResult:
+    def _process_conversations(self, conversations: list[Any], file_path: Path) -> ImportResult:
         """Process list of conversations and return import result."""
         imported_count = 0
         failed_count = 0
@@ -100,9 +98,7 @@ class ChatGPTImporter(BaseImporter):
                     self._save_conversation(universal_conv)
                     imported_ids.append(universal_conv["id"])
                     imported_count += 1
-                    self.logger.info(
-                        "Imported ChatGPT conversation: %s", universal_conv["id"]
-                    )
+                    self.logger.info("Imported ChatGPT conversation: %s", universal_conv["id"])
                 else:
                     failed_count += 1
                     errors.append(
@@ -130,7 +126,7 @@ class ChatGPTImporter(BaseImporter):
             },
         )
 
-    def parse_conversation(self, raw_data: Any) -> Dict[str, Any]:
+    def parse_conversation(self, raw_data: Any) -> dict[str, Any]:
         """
         Parse raw ChatGPT conversation data into universal format.
 
@@ -161,11 +157,7 @@ class ChatGPTImporter(BaseImporter):
         create_time_str = raw_data.get("create_time", "")
         update_time_str = raw_data.get("update_time", "")
 
-        date = (
-            self._parse_timestamp(create_time_str)
-            if create_time_str
-            else datetime.now()
-        )
+        date = self._parse_timestamp(create_time_str) if create_time_str else datetime.now()
 
         # Process messages
         raw_messages = raw_data.get("messages", [])
@@ -243,9 +235,9 @@ class ChatGPTImporter(BaseImporter):
             custom_fields=custom_fields,
         )
 
-    def _extract_chatgpt_tags(self, raw_data: Dict[str, Any]) -> List[str]:
+    def _extract_chatgpt_tags(self, raw_data: dict[str, Any]) -> list[str]:
         """Build tags list from ChatGPT-specific signals (starred, archived, gizmo)."""
-        tags: List[str] = []
+        tags: list[str] = []
         if raw_data.get("is_starred"):
             tags.append("starred")
         if raw_data.get("is_archived"):
@@ -259,9 +251,7 @@ class ChatGPTImporter(BaseImporter):
             tags.extend(str(t) for t in explicit if t)
         return tags
 
-    def _classify_conversation_type(
-        self, raw_data: Dict[str, Any], content: str
-    ) -> str:
+    def _classify_conversation_type(self, raw_data: dict[str, Any], content: str) -> str:
         """Classify a ChatGPT conversation as chat/code/analysis/etc.
 
         Uses lightweight heuristics — explicit hints win, otherwise content
@@ -275,15 +265,13 @@ class ChatGPTImporter(BaseImporter):
             return "code"
         return "chat"
 
-    def _extract_chatgpt_custom_fields(
-        self, raw_data: Dict[str, Any]
-    ) -> Dict[str, Any]:
+    def _extract_chatgpt_custom_fields(self, raw_data: dict[str, Any]) -> dict[str, Any]:
         """Capture optional ChatGPT-specific fields into custom_fields.
 
         Only populates entries that are actually present in the source so the
         default empty dict is preserved for typical exports.
         """
-        custom: Dict[str, Any] = {}
+        custom: dict[str, Any] = {}
         for key in (
             "default_model_slug",
             "conversation_template_id",
@@ -310,7 +298,7 @@ class ChatGPTImporter(BaseImporter):
 
         return self._validate_conversation_structure(data["conversations"])
 
-    def _validate_conversations_array(self, data: Dict[str, Any]) -> bool:
+    def _validate_conversations_array(self, data: dict[str, Any]) -> bool:
         """Validate conversations array exists and is valid."""
         if "conversations" not in data:
             return False
@@ -318,7 +306,7 @@ class ChatGPTImporter(BaseImporter):
         conversations = data["conversations"]
         return isinstance(conversations, list)
 
-    def _validate_conversation_structure(self, conversations: List[Any]) -> bool:
+    def _validate_conversation_structure(self, conversations: list[Any]) -> bool:
         """Validate conversation structure if conversations exist."""
         if not conversations:
             return True
@@ -329,7 +317,7 @@ class ChatGPTImporter(BaseImporter):
 
         return self._validate_messages_structure(sample_conv)
 
-    def _validate_messages_structure(self, conversation: Dict[str, Any]) -> bool:
+    def _validate_messages_structure(self, conversation: dict[str, Any]) -> bool:
         """Validate messages structure within conversation."""
         if "messages" not in conversation:
             return False
@@ -347,7 +335,7 @@ class ChatGPTImporter(BaseImporter):
 
         return "role" in sample_msg and "content" in sample_msg
 
-    def _extract_model_info(self, conversation_data: Dict[str, Any]) -> str:
+    def _extract_model_info(self, conversation_data: dict[str, Any]) -> str:
         """Extract model information from conversation data."""
         # ChatGPT exports don't always include model info explicitly
         # We can infer from metadata or default to GPT-4
@@ -370,7 +358,7 @@ class ChatGPTImporter(BaseImporter):
         # Default assumption for ChatGPT exports
         return "gpt-4"
 
-    def _save_conversation(self, conversation: Dict[str, Any]) -> Path:
+    def _save_conversation(self, conversation: dict[str, Any]) -> Path:
         """Save a conversation to the storage directory."""
         # Create date-based subdirectory
         date = datetime.fromisoformat(conversation["date"].replace("Z", "+00:00"))
@@ -388,7 +376,7 @@ class ChatGPTImporter(BaseImporter):
         self.logger.info(f"Saved conversation to: {file_path}")
         return file_path
 
-    def _extract_topics(self, content: str) -> List[str]:
+    def _extract_topics(self, content: str) -> list[str]:
         """Override base topic extraction for ChatGPT-specific patterns."""
         topics = super()._extract_topics(content)
 

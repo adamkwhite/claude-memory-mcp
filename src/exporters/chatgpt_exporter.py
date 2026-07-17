@@ -26,7 +26,7 @@ import logging
 import uuid
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any
 
 from .base_exporter import BaseExporter, ExportResult, Filters
 
@@ -65,7 +65,7 @@ class ChatgptExporter(BaseExporter):
     def export(
         self,
         output_path: Path,
-        filters: Optional[Filters] = None,
+        filters: Filters | None = None,
     ) -> ExportResult:
         """Write conversations as a ChatGPT-format JSON array."""
         output_path = Path(output_path)
@@ -83,8 +83,8 @@ class ChatgptExporter(BaseExporter):
 
         filtered = self.apply_filters(conversations, filters)
 
-        chatgpt_array: List[Dict[str, Any]] = []
-        errors: List[str] = []
+        chatgpt_array: list[dict[str, Any]] = []
+        errors: list[str] = []
         failed = 0
         for conv in filtered:
             try:
@@ -123,7 +123,7 @@ class ChatgptExporter(BaseExporter):
             },
         )
 
-    def validate(self, output_path: Path) -> Dict[str, Any]:
+    def validate(self, output_path: Path) -> dict[str, Any]:
         """Validate the exported file against the ChatGPT JSON schema."""
         output_path = Path(output_path)
         if not output_path.exists():
@@ -134,7 +134,7 @@ class ChatgptExporter(BaseExporter):
                 "conversation_count": 0,
             }
         try:
-            with open(output_path, "r", encoding="utf-8") as f:
+            with open(output_path, encoding="utf-8") as f:
                 data = json.load(f)
         except (OSError, json.JSONDecodeError) as exc:
             return {
@@ -150,7 +150,7 @@ class ChatgptExporter(BaseExporter):
     # Conversion helpers
     # ------------------------------------------------------------------
 
-    def _to_chatgpt(self, conv: Dict[str, Any]) -> Dict[str, Any]:
+    def _to_chatgpt(self, conv: dict[str, Any]) -> dict[str, Any]:
         """Convert one universal conversation into ChatGPT export shape."""
         conv_id = conv.get("platform_id") or conv.get("id") or str(uuid.uuid4())
         title = conv.get("title") or "Untitled Conversation"
@@ -171,9 +171,7 @@ class ChatgptExporter(BaseExporter):
             "default_model_slug": conv.get("model") or "unknown",
         }
 
-    def _build_mapping(
-        self, conv: Dict[str, Any]
-    ) -> Tuple[Dict[str, Any], Optional[str]]:
+    def _build_mapping(self, conv: dict[str, Any]) -> tuple[dict[str, Any], str | None]:
         """Build a ChatGPT-style ``mapping`` dict from universal messages.
 
         Returns:
@@ -184,7 +182,7 @@ class ChatgptExporter(BaseExporter):
         # The schema requires a non-empty mapping with at least one node.
         # Insert a synthetic root node so we always have something to anchor.
         root_id = f"root_{conv.get('id', uuid.uuid4().hex[:8])}"
-        mapping: Dict[str, Any] = {
+        mapping: dict[str, Any] = {
             root_id: {
                 "id": root_id,
                 "message": None,
@@ -194,7 +192,7 @@ class ChatgptExporter(BaseExporter):
         }
 
         previous_id: str = root_id
-        last_real_id: Optional[str] = None
+        last_real_id: str | None = None
         for idx, msg in enumerate(messages):
             node_id = msg.get("id") or f"node_{idx}_{uuid.uuid4().hex[:8]}"
             # Avoid collisions with the root node id.
@@ -209,7 +207,7 @@ class ChatgptExporter(BaseExporter):
             timestamp = msg.get("timestamp") or conv.get("date") or ""
             create_time = self._iso_to_epoch(timestamp)
 
-            chatgpt_message: Dict[str, Any] = {
+            chatgpt_message: dict[str, Any] = {
                 "id": node_id,
                 "author": {
                     "role": role,

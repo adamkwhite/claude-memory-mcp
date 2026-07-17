@@ -11,7 +11,7 @@ import logging
 import re
 from enum import Enum
 from pathlib import Path
-from typing import Any, Dict, List
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -35,7 +35,7 @@ class FormatDetector:
     def __init__(self):
         self.logger = logging.getLogger(__name__)
 
-    def detect_format(self, file_path: Path) -> Dict[str, Any]:
+    def detect_format(self, file_path: Path) -> dict[str, Any]:
         """
         Detect the format of a conversation export file.
 
@@ -63,27 +63,21 @@ class FormatDetector:
 
         except Exception as e:
             self.logger.error(f"Error detecting format for {file_path}: {e}")
-            return self._create_result(
-                PlatformType.UNKNOWN, 0.0, f"Detection error: {str(e)}"
-            )
+            return self._create_result(PlatformType.UNKNOWN, 0.0, f"Detection error: {str(e)}")
 
-    def _detect_json_format(self, file_path: Path) -> Dict[str, Any]:
+    def _detect_json_format(self, file_path: Path) -> dict[str, Any]:
         """Detect format for JSON files."""
         try:
-            with open(file_path, "r", encoding="utf-8") as f:
+            with open(file_path, encoding="utf-8") as f:
                 data = json.load(f)
 
             # Check for ChatGPT format
             if self._is_chatgpt_format(data):
-                return self._create_result(
-                    PlatformType.CHATGPT, 0.95, "ChatGPT export detected"
-                )
+                return self._create_result(PlatformType.CHATGPT, 0.95, "ChatGPT export detected")
 
             # Check for Cursor format
             if self._is_cursor_format(data):
-                return self._create_result(
-                    PlatformType.CURSOR, 0.95, "Cursor AI export detected"
-                )
+                return self._create_result(PlatformType.CURSOR, 0.95, "Cursor AI export detected")
 
             # Check for our own Claude Memory format
             if self._is_claude_memory_format(data):
@@ -108,18 +102,14 @@ class FormatDetector:
             return self._create_result(PlatformType.UNKNOWN, 0.0, "Unknown JSON format")
 
         except json.JSONDecodeError as e:
-            return self._create_result(
-                PlatformType.UNKNOWN, 0.0, f"Invalid JSON: {str(e)}"
-            )
+            return self._create_result(PlatformType.UNKNOWN, 0.0, f"Invalid JSON: {str(e)}")
         except Exception as e:
-            return self._create_result(
-                PlatformType.UNKNOWN, 0.0, f"JSON analysis error: {str(e)}"
-            )
+            return self._create_result(PlatformType.UNKNOWN, 0.0, f"JSON analysis error: {str(e)}")
 
-    def _detect_text_format(self, file_path: Path) -> Dict[str, Any]:
+    def _detect_text_format(self, file_path: Path) -> dict[str, Any]:
         """Detect format for text/markdown files."""
         try:
-            with open(file_path, "r", encoding="utf-8") as f:
+            with open(file_path, encoding="utf-8") as f:
                 content = f.read()
 
             # Check for Claude web interface format
@@ -139,9 +129,7 @@ class FormatDetector:
             return self._create_result(PlatformType.UNKNOWN, 0.0, "Unknown text format")
 
         except Exception as e:
-            return self._create_result(
-                PlatformType.UNKNOWN, 0.0, f"Text analysis error: {str(e)}"
-            )
+            return self._create_result(PlatformType.UNKNOWN, 0.0, f"Text analysis error: {str(e)}")
 
     def _is_chatgpt_format(self, data: Any) -> bool:
         """Check if data matches ChatGPT export format."""
@@ -218,9 +206,7 @@ class FormatDetector:
         claude_indicators = ["claude", "desktop", "mcp", "anthropic"]
         content_str = json.dumps(data).lower()
 
-        indicator_count = sum(
-            1 for indicator in claude_indicators if indicator in content_str
-        )
+        indicator_count = sum(1 for indicator in claude_indicators if indicator in content_str)
 
         # Also check for conversation structure
         if self._has_conversation_structure(data):
@@ -257,9 +243,7 @@ class FormatDetector:
         ]
 
         pattern_matches = sum(
-            1
-            for pattern in conversation_patterns
-            if re.search(pattern, content, re.MULTILINE)
+            1 for pattern in conversation_patterns if re.search(pattern, content, re.MULTILINE)
         )
 
         # Also check for back-and-forth conversation flow
@@ -276,7 +260,7 @@ class FormatDetector:
 
         return pattern_matches >= 2 or role_changes >= 3
 
-    def _has_role_based_messages(self, messages: List[Any]) -> bool:
+    def _has_role_based_messages(self, messages: list[Any]) -> bool:
         """Check if messages have role-based structure (user/assistant)."""
         if not messages or not isinstance(messages, list):
             return False
@@ -312,7 +296,7 @@ class FormatDetector:
 
     def _create_result(
         self, platform: PlatformType, confidence: float, message: str
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Create a standardized detection result."""
         return {
             "platform": platform.value,
@@ -321,20 +305,16 @@ class FormatDetector:
             "timestamp": Path(__file__).stat().st_mtime,  # Detection time
         }
 
-    def get_supported_platforms(self) -> List[str]:
+    def get_supported_platforms(self) -> list[str]:
         """Get list of supported platform types."""
-        return [
-            platform.value
-            for platform in PlatformType
-            if platform != PlatformType.UNKNOWN
-        ]
+        return [platform.value for platform in PlatformType if platform != PlatformType.UNKNOWN]
 
     def validate_platform_support(self, platform: str) -> bool:
         """Check if a platform is supported for import."""
         return platform in self.get_supported_platforms()
 
 
-def detect_file_format(file_path: Path) -> Dict[str, Any]:
+def detect_file_format(file_path: Path) -> dict[str, Any]:
     """Convenience function for format detection."""
     detector = FormatDetector()
     return detector.detect_format(file_path)

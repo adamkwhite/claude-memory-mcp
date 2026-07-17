@@ -30,20 +30,19 @@ jobs:
 
       - name: Install linting tools
         run: |
-          pip install flake8 mypy black isort
+          pip install ruff==0.15.0 mypy
 
-      - name: Check code formatting (Black)
+      # Ruff is the single owner of linting, formatting, and import sorting
+      # (replaces black/isort/flake8, which pre-commit had already dropped in
+      # favor of ruff — this step used to run a second, conflicting set of
+      # tools against the same files). See pyproject.toml [tool.ruff].
+      - name: Lint code (Ruff)
         run: |
-          black --check src/ || (echo "❌ Code formatting issues found. Run 'black src/' to fix." && exit 1)
+          ruff check .
 
-      - name: Check import sorting (isort)
+      - name: Check code formatting (Ruff)
         run: |
-          isort --check-only src/ || (echo "❌ Import sorting issues found. Run 'isort src/' to fix." && exit 1)
-
-      - name: Lint code (Flake8)
-        if: github.head_ref != 'feature/sonarcloud-migration'
-        run: |
-          flake8 src/ --max-line-length=100 --extend-ignore=E203,W503
+          ruff format --check .
 
       - name: Type checking (Mypy)
         if: false  # Temporarily disabled - type errors to be addressed in separate PR

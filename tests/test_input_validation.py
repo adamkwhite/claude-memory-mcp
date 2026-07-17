@@ -1,6 +1,5 @@
 """Test input validation for security and data integrity"""
 
-
 import pytest
 
 from exceptions import (
@@ -60,8 +59,8 @@ class TestTitleValidation:
     def test_dangerous_characters_removed(self):
         """Test dangerous file characters are sanitized"""
         assert validate_title('test<script>alert("xss")</script>') == "testscriptalert(xss)/script"
-        assert validate_title('file:name|test') == "filenametest"
-        assert validate_title('test*file?name') == "testfilename"
+        assert validate_title("file:name|test") == "filenametest"
+        assert validate_title("test*file?name") == "testfilename"
 
     def test_control_characters_removed(self):
         """Test control characters are removed except safe ones"""
@@ -71,7 +70,7 @@ class TestTitleValidation:
 
         # Other control chars should be removed
         assert validate_title("test\x01\x02\x03") == "test"
-        assert validate_title("test\x7F") == "test"
+        assert validate_title("test\x7f") == "test"
 
 
 class TestContentValidation:

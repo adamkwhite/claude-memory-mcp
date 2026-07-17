@@ -74,9 +74,7 @@ This is a test conversation to validate the memory system is working.
             if result.get("status") == "success":
                 print("✅ Add conversation: Success")
             else:
-                print(
-                    f"❌ Add conversation failed: {result.get('message', 'Unknown error')}"
-                )
+                print(f"❌ Add conversation failed: {result.get('message', 'Unknown error')}")
         except Exception as e:
             print(f"❌ Add conversation failed: {e}")
 
@@ -88,8 +86,7 @@ This is a test conversation to validate the memory system is working.
             results = await server.search_conversations("validation test", limit=1)
             if results and len(results) > 0:
                 found_test = any(
-                    "validation" in result.get("title", "").lower()
-                    for result in results
+                    "validation" in result.get("title", "").lower() for result in results
                 )
                 if found_test:
                     print("✅ Test conversation found in search")

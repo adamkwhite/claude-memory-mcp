@@ -17,15 +17,15 @@ echo "1️⃣ Virtual Environment Check"
 echo "----------------------------"
 if [ -d ".venv" ]; then
     echo "✅ Virtual environment exists"
-    
+
     if [ -f ".venv/bin/activate" ]; then
         echo "✅ Activation script found"
-        
+
         # Try to activate and test
         source .venv/bin/activate 2>/dev/null
         if [ $? -eq 0 ]; then
             echo "✅ Virtual environment activated successfully"
-            
+
             # Test MCP import
             if python3 -c "from mcp.server.fastmcp import FastMCP" 2>/dev/null; then
                 echo "✅ MCP module available"
@@ -51,18 +51,18 @@ echo "2️⃣ Data Files Check"
 echo "-------------------"
 if [ -d "data" ]; then
     echo "✅ Data directory exists"
-    
+
     # List all files with sizes
     echo "📊 Files in data directory:"
     for file in data/*; do
         if [ -f "$file" ]; then
             filename=$(basename "$file")
             size=$(stat -c%s "$file" 2>/dev/null || stat -f%z "$file" 2>/dev/null || echo "unknown")
-            
+
             if [ "$size" != "unknown" ] && [ "$size" -gt 0 ]; then
                 size_mb=$((size / 1024 / 1024))
                 echo "   • $filename: ${size} bytes (${size_mb} MB)"
-                
+
                 # Check if it's conversations.json
                 if [ "$filename" = "conversations.json" ]; then
                     if [ "$size" -gt 100000 ]; then  # >100KB suggests real conversation data
@@ -76,12 +76,12 @@ if [ -d "data" ]; then
             fi
         fi
     done
-    
+
     # Specific conversations.json check
     if [ -f "data/conversations.json" ]; then
         echo ""
         echo "🎯 conversations.json analysis:"
-        
+
         # Check first 200 characters
         first_chars=$(head -c 200 "data/conversations.json" 2>/dev/null)
         if echo "$first_chars" | grep -q '"uuid".*"full_name"'; then
@@ -96,7 +96,7 @@ if [ -d "data" ]; then
         else
             echo "⚠️  File format unclear from first 200 characters"
         fi
-        
+
         echo "📝 First 200 characters:"
         echo "$first_chars"
     else

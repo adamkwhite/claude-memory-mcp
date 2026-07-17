@@ -39,9 +39,7 @@ class TestSamplingFilterDefaults:
 class TestSamplingFilterRateBehavior:
     def test_samples_every_nth_record(self):
         f = SamplingFilter({"performance": 10})
-        results = [
-            f.filter(_make_record(context={"type": "performance"})) for _ in range(30)
-        ]
+        results = [f.filter(_make_record(context={"type": "performance"})) for _ in range(30)]
         kept_indexes = [i for i, kept in enumerate(results, start=1) if kept]
         assert kept_indexes == [10, 20, 30]
 
@@ -52,9 +50,7 @@ class TestSamplingFilterRateBehavior:
 
     def test_counters_are_independent_per_type(self):
         f = SamplingFilter({"performance": 2, "file_operation": 3})
-        perf_results = [
-            f.filter(_make_record(context={"type": "performance"})) for _ in range(4)
-        ]
+        perf_results = [f.filter(_make_record(context={"type": "performance"})) for _ in range(4)]
         file_results = [
             f.filter(_make_record(context={"type": "file_operation"})) for _ in range(3)
         ]
@@ -66,16 +62,12 @@ class TestSamplingNeverDropsWarningsOrErrors:
     def test_warning_always_logged_even_at_high_sample_rate(self):
         f = SamplingFilter({"performance": 1000})
         for _ in range(10):
-            assert (
-                f.filter(_make_record(logging.WARNING, {"type": "performance"})) is True
-            )
+            assert f.filter(_make_record(logging.WARNING, {"type": "performance"})) is True
 
     def test_error_always_logged_even_at_high_sample_rate(self):
         f = SamplingFilter({"performance": 1000})
         for _ in range(10):
-            assert (
-                f.filter(_make_record(logging.ERROR, {"type": "performance"})) is True
-            )
+            assert f.filter(_make_record(logging.ERROR, {"type": "performance"})) is True
 
     def test_critical_always_logged(self):
         f = SamplingFilter({"performance": 1000})
@@ -129,20 +121,14 @@ class TestConfigWiring:
         )
         assert logger.filters == []
         for handler in logger.handlers:
-            sampling_filters = [
-                f for f in handler.filters if isinstance(f, SamplingFilter)
-            ]
+            sampling_filters = [f for f in handler.filters if isinstance(f, SamplingFilter)]
             assert len(sampling_filters) == 1
             assert sampling_filters[0].sample_rates == {"performance": 7}
 
     def test_setup_logging_default_config_disables_sampling(self, tmp_path):
-        logger = setup_logging(
-            log_file=str(tmp_path / "test.log"), console_output=False
-        )
+        logger = setup_logging(log_file=str(tmp_path / "test.log"), console_output=False)
         assert logger.filters == []
         for handler in logger.handlers:
-            sampling_filters = [
-                f for f in handler.filters if isinstance(f, SamplingFilter)
-            ]
+            sampling_filters = [f for f in handler.filters if isinstance(f, SamplingFilter)]
             assert len(sampling_filters) == 1
             assert sampling_filters[0].sample_rates == {}

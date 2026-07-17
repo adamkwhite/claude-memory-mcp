@@ -14,7 +14,7 @@ import os
 import sys
 import uuid
 from pathlib import Path
-from typing import TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING
 
 # Import path utilities for dynamic path resolution
 try:
@@ -27,7 +27,7 @@ if TYPE_CHECKING:  # pragma: no cover - type-only import
     from config import Config
 
 
-def _resolve_config(config: "Optional[Config]") -> "Config":
+def _resolve_config(config: "Config | None") -> "Config":
     """Return ``config`` when supplied, otherwise build one from env+file.
 
     Uses ``validate=False`` because logging setup is performed early in the
@@ -53,7 +53,7 @@ ISO_DATETIME_FORMAT = "%Y-%m-%dT%H:%M:%S"
 # throughout: each asyncio Task gets its own copy of the context, so
 # concurrent operations never see each other's correlation ID, while a single
 # operation's own await chain keeps seeing the value it set.
-_correlation_id: "contextvars.ContextVar[Optional[str]]" = contextvars.ContextVar(
+_correlation_id: "contextvars.ContextVar[str | None]" = contextvars.ContextVar(
     "correlation_id", default=None
 )
 
@@ -62,12 +62,12 @@ _correlation_id: "contextvars.ContextVar[Optional[str]]" = contextvars.ContextVa
 NO_CORRELATION_ID = "-"
 
 
-def get_correlation_id() -> Optional[str]:
+def get_correlation_id() -> str | None:
     """Return the correlation ID for the current context, if any."""
     return _correlation_id.get()
 
 
-def set_correlation_id(correlation_id: Optional[str] = None) -> str:
+def set_correlation_id(correlation_id: str | None = None) -> str:
     """Start (or attach to) a correlation ID for the current context.
 
     Call this once at the top of a high-level operation (a search, an
@@ -160,7 +160,7 @@ class SamplingFilter(logging.Filter):
     handler in the same emit reuses that decision instead of re-counting.
     """
 
-    def __init__(self, sample_rates: Optional[dict] = None):
+    def __init__(self, sample_rates: dict | None = None):
         super().__init__()
         self.sample_rates = sample_rates or {}
         self._counters: dict = {}
@@ -174,11 +174,7 @@ class SamplingFilter(logging.Filter):
             decision = True
         else:
             context = getattr(record, "context", None)
-            op_type = (
-                context.get("type", "default")
-                if isinstance(context, dict)
-                else "default"
-            )
+            op_type = context.get("type", "default") if isinstance(context, dict) else "default"
             rate = self.sample_rates.get(op_type, 1)
             if rate <= 1:
                 decision = True
@@ -254,9 +250,7 @@ class JSONFormatter(logging.Formatter):
                 # Ultimate fallback: return basic error message
                 return json.dumps(
                     {
-                        "timestamp": self.formatTime(
-                            record, self.datefmt or ISO_DATETIME_FORMAT
-                        ),
+                        "timestamp": self.formatTime(record, self.datefmt or ISO_DATETIME_FORMAT),
                         "level": "ERROR",
                         "logger": "logging_config",
                         "message": f"Failed to serialize log record: {str(e)}",
@@ -283,7 +277,7 @@ class ColoredFormatter(logging.Formatter):
         return super().format(record)
 
 
-def _get_log_format(config: "Optional[Config]" = None) -> str:
+def _get_log_format(config: "Config | None" = None) -> str:
     """
     Get the log format, preferring an explicit :class:`~config.Config`.
 
@@ -323,7 +317,7 @@ def _get_log_format(config: "Optional[Config]" = None) -> str:
     return log_format
 
 
-def _get_log_sample_rates(config: "Optional[Config]" = None) -> dict:
+def _get_log_sample_rates(config: "Config | None" = None) -> dict:
     """Get per-operation-type log sample rates, preferring an explicit Config.
 
     Mirrors :func:`_get_log_format`'s defensive fallback: a malformed config
@@ -338,11 +332,11 @@ def _get_log_sample_rates(config: "Optional[Config]" = None) -> dict:
 
 def setup_logging(
     log_level: str = "INFO",
-    log_file: Optional[str] = None,
+    log_file: str | None = None,
     console_output: bool = True,
     max_bytes: int = 10_485_760,  # 10MB
     backup_count: int = 5,
-    config: "Optional[Config]" = None,
+    config: "Config | None" = None,
 ) -> logging.Logger:
     """
     Set up comprehensive logging for the application
@@ -489,8 +483,7 @@ def log_security_event(event_type: str, details: str, severity: str = "WARNING")
                     r"/[^\s]+",
                     lambda m: (
                         str(Path(m.group()).relative_to(home))
-                        if Path(m.group()).is_absolute()
-                        and Path(m.group()).is_relative_to(home)
+                        if Path(m.group()).is_absolute() and Path(m.group()).is_relative_to(home)
                         else "<redacted_path>"
                     ),
                     safe_details,
@@ -596,7 +589,7 @@ def log_file_operation(operation: str, file_path: str, success: bool, **details)
 
 
 # Default logging setup for the application
-def init_default_logging(config: "Optional[Config]" = None):
+def init_default_logging(config: "Config | None" = None):
     """Initialize default logging configuration.
 
     Args:
@@ -626,9 +619,7 @@ def init_default_logging(config: "Optional[Config]" = None):
             home = os.getenv("HOME")
             if home:
                 # Fallback to manual construction
-                log_file = os.path.join(
-                    home, ".claude-memory", "logs", "claude-mcp.log"
-                )
+                log_file = os.path.join(home, ".claude-memory", "logs", "claude-mcp.log")
 
     # Console output for MCP server mode (must remain False by default to
     # avoid corrupting the JSON-RPC stream over stdout).

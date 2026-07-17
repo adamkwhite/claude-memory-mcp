@@ -9,7 +9,7 @@ import json
 import logging
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from .base_importer import BaseImporter, ImportResult
 
@@ -23,7 +23,7 @@ class CursorImporter(BaseImporter):
         super().__init__(storage_path, "cursor")
         self.logger = logging.getLogger(f"{__name__}.CursorImporter")
 
-    def get_supported_formats(self) -> List[str]:
+    def get_supported_formats(self) -> list[str]:
         """Return list of supported file formats."""
         return [".json"]
 
@@ -45,7 +45,7 @@ class CursorImporter(BaseImporter):
                 )
 
             # Load and validate Cursor export file
-            with open(file_path, "r", encoding="utf-8") as f:
+            with open(file_path, encoding="utf-8") as f:
                 data = json.load(f)
 
             if not self._validate_cursor_format(data):
@@ -122,7 +122,7 @@ class CursorImporter(BaseImporter):
                 metadata={},
             )
 
-    def parse_conversation(self, raw_data: Any) -> Dict[str, Any]:
+    def parse_conversation(self, raw_data: Any) -> dict[str, Any]:
         """
         Parse raw Cursor session data into universal format.
 
@@ -158,11 +158,7 @@ class CursorImporter(BaseImporter):
         session_timestamp = raw_data.get("timestamp", "")
 
         # Parse session start time
-        date = (
-            self._parse_timestamp(session_timestamp)
-            if session_timestamp
-            else datetime.now()
-        )
+        date = self._parse_timestamp(session_timestamp) if session_timestamp else datetime.now()
 
         # Generate title from workspace and session info
         workspace_name = Path(workspace).name if workspace else "Unknown Project"
@@ -187,14 +183,10 @@ class CursorImporter(BaseImporter):
         # Cursor sessions map naturally onto session_id.
         files_involved = self._extract_files_from_interactions(interactions)
         tags = self._extract_cursor_tags(workspace, files_involved, raw_data)
-        custom_fields = self._extract_cursor_custom_fields(
-            raw_data, workspace, files_involved
-        )
+        custom_fields = self._extract_cursor_custom_fields(raw_data, workspace, files_involved)
         explicit_type = raw_data.get("conversation_type")
         conversation_type = (
-            explicit_type
-            if isinstance(explicit_type, str) and explicit_type
-            else "code"
+            explicit_type if isinstance(explicit_type, str) and explicit_type else "code"
         )
 
         # Create universal conversation
@@ -223,11 +215,11 @@ class CursorImporter(BaseImporter):
     def _extract_cursor_tags(
         self,
         workspace: str,
-        files_involved: List[str],
-        raw_data: Dict[str, Any],
-    ) -> List[str]:
+        files_involved: list[str],
+        raw_data: dict[str, Any],
+    ) -> list[str]:
         """Build tag list for a Cursor session (workspace + caller-supplied)."""
-        tags: List[str] = []
+        tags: list[str] = []
         if workspace:
             workspace_name = Path(workspace).name
             if workspace_name:
@@ -241,12 +233,12 @@ class CursorImporter(BaseImporter):
 
     def _extract_cursor_custom_fields(
         self,
-        raw_data: Dict[str, Any],
+        raw_data: dict[str, Any],
         workspace: str,
-        files_involved: List[str],
-    ) -> Dict[str, Any]:
+        files_involved: list[str],
+    ) -> dict[str, Any]:
         """Capture Cursor-specific extras into custom_fields."""
-        custom: Dict[str, Any] = {}
+        custom: dict[str, Any] = {}
         if workspace:
             custom["workspace_path"] = workspace
         if files_involved:
@@ -258,7 +250,7 @@ class CursorImporter(BaseImporter):
 
     def _process_interactions(
         self,
-        interactions: List[Any],
+        interactions: list[Any],
         workspace: str,
         model: str,
         session_id: str,
@@ -266,7 +258,7 @@ class CursorImporter(BaseImporter):
     ) -> tuple:
         """Process interactions and return messages and content."""
         messages = []
-        content_parts: List[str] = []
+        content_parts: list[str] = []
 
         self._add_session_header(content_parts, workspace, model, session_id)
 
@@ -284,7 +276,7 @@ class CursorImporter(BaseImporter):
         return messages, full_content
 
     def _add_session_header(
-        self, content_parts: List[str], workspace: str, model: str, session_id: str
+        self, content_parts: list[str], workspace: str, model: str, session_id: str
     ) -> None:
         """Add session header to content parts."""
         content_parts.append("# Cursor AI Session")
@@ -294,8 +286,8 @@ class CursorImporter(BaseImporter):
         content_parts.append("")
 
     def _process_single_interaction(
-        self, interaction: Dict[str, Any], date: datetime
-    ) -> Optional[tuple]:
+        self, interaction: dict[str, Any], date: datetime
+    ) -> tuple | None:
         """Process a single interaction and return message and content display."""
         interaction_type = interaction.get("type", "unknown")
         content = interaction.get("content", "")
@@ -334,9 +326,7 @@ class CursorImporter(BaseImporter):
         else:
             return "system", f"**{interaction_type.title()}**"
 
-    def _enhance_interaction_content(
-        self, interaction: Dict[str, Any], content: str
-    ) -> str:
+    def _enhance_interaction_content(self, interaction: dict[str, Any], content: str) -> str:
         """Enhance content with file context and changes."""
         enhanced_content = content
 
@@ -354,9 +344,7 @@ class CursorImporter(BaseImporter):
 
         return enhanced_content
 
-    def _create_interaction_metadata(
-        self, interaction: Dict[str, Any]
-    ) -> Dict[str, Any]:
+    def _create_interaction_metadata(self, interaction: dict[str, Any]) -> dict[str, Any]:
         """Create metadata for interaction."""
         metadata = {
             "interaction_type": interaction.get("type", "unknown"),
@@ -406,9 +394,7 @@ class CursorImporter(BaseImporter):
 
         return True
 
-    def _extract_files_from_interactions(
-        self, interactions: List[Dict[str, Any]]
-    ) -> List[str]:
+    def _extract_files_from_interactions(self, interactions: list[dict[str, Any]]) -> list[str]:
         """Extract all files mentioned in interactions."""
         files = set()
 
@@ -425,7 +411,7 @@ class CursorImporter(BaseImporter):
 
         return sorted(files)
 
-    def _save_conversation(self, conversation: Dict[str, Any]) -> Path:
+    def _save_conversation(self, conversation: dict[str, Any]) -> Path:
         """Save a conversation to the storage directory."""
         # Create date-based subdirectory
         date = datetime.fromisoformat(conversation["date"].replace("Z", "+00:00"))
@@ -443,7 +429,7 @@ class CursorImporter(BaseImporter):
         self.logger.info("Saved Cursor session to: %s", file_path)
         return file_path
 
-    def _extract_topics(self, content: str) -> List[str]:
+    def _extract_topics(self, content: str) -> list[str]:
         """Override base topic extraction for Cursor-specific patterns."""
         topics = super()._extract_topics(content)
 

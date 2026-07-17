@@ -6,7 +6,7 @@ Based on actual ChatGPT export structure analysis.
 
 import json
 import logging
-from typing import Any, Dict
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -261,7 +261,7 @@ CHATGPT_SCHEMA = {
 }
 
 
-def validate_chatgpt_export(data: Any) -> Dict[str, Any]:
+def validate_chatgpt_export(data: Any) -> dict[str, Any]:
     """
     Validate ChatGPT export data against schema.
 
@@ -295,9 +295,7 @@ def validate_chatgpt_export(data: Any) -> Dict[str, Any]:
                 if message_count == 0:
                     validation_warnings.append(f"Conversation {i} has no messages")
                 elif message_count < 2:
-                    validation_warnings.append(
-                        f"Conversation {i} has only {message_count} message"
-                    )
+                    validation_warnings.append(f"Conversation {i} has only {message_count} message")
 
         return {
             "valid": True,
@@ -329,7 +327,7 @@ def validate_chatgpt_export(data: Any) -> Dict[str, Any]:
         }
 
 
-def get_chatgpt_conversation_stats(conversation: Dict[str, Any]) -> Dict[str, Any]:
+def get_chatgpt_conversation_stats(conversation: dict[str, Any]) -> dict[str, Any]:
     """Get statistics about a ChatGPT conversation."""
     stats = {
         "title": conversation.get("title", "Untitled"),
@@ -383,7 +381,7 @@ if __name__ == "__main__":
         file_path = sys.argv[1]
 
         try:
-            with open(file_path, "r", encoding="utf-8") as f:
+            with open(file_path, encoding="utf-8") as f:
                 data = json.load(f)
 
             result = validate_chatgpt_export(data)

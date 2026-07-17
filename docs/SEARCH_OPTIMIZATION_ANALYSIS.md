@@ -23,7 +23,7 @@
 
 **Scoring Algorithm** (`_calculate_search_score`):
 - Content matches: +1 point per occurrence
-- Title matches: +3 points per occurrence  
+- Title matches: +3 points per occurrence
 - Topic matches: +5 points per exact match
 - Simple additive scoring
 
@@ -33,13 +33,13 @@ def search_conversations(self, query: str, limit: int = 10) -> List[Dict[str, An
     # 1. Load index from JSON file
     with open(self.index_file, 'r') as f:
         index_data = json.load(f)
-    
+
     # 2. Linear iteration through ALL conversations
     for conv_info in conversations:
         result = self._process_conversation_for_search(conv_info, query_terms)
         if result:
             results.append(result)
-    
+
     # 3. Sort and limit results
     results.sort(key=lambda x: x["score"], reverse=True)
     return results[:limit]
@@ -88,7 +88,7 @@ def search_conversations(self, query: str, limit: int = 10) -> List[Dict[str, An
 
 **Estimated Performance with Dataset Growth**:
 - 100 conversations: ~50-100ms
-- 500 conversations: ~250-500ms  
+- 500 conversations: ~250-500ms
 - 1000 conversations: ~500ms-1s
 - 5000 conversations: ~2.5-5s (unusable)
 
@@ -97,7 +97,7 @@ def search_conversations(self, query: str, limit: int = 10) -> List[Dict[str, An
 ### 1.1.3 Functional Limitations
 
 **Search Quality Issues**:
-- No relevanHow about 
+- No relevanHow about
 
 **Technical Limitations**:
 - No concurrent search support
@@ -205,7 +205,7 @@ def search_conversations(self, query: str, limit: int = 10) -> List[Dict[str, An
 
 **Test Dataset Requirements**:
 - Small dataset: 50-100 conversations
-- Medium dataset: 500-1000 conversations  
+- Medium dataset: 500-1000 conversations
 - Large dataset: 2000-5000 conversations
 - Variable conversation sizes: 1KB, 10KB, 50KB, 100KB
 
@@ -218,7 +218,7 @@ def search_conversations(self, query: str, limit: int = 10) -> List[Dict[str, An
 
 **Performance Targets for SQLite FTS**:
 - Search time: <100ms for datasets up to 10,000 conversations
-- Memory usage: <50MB for search operations  
+- Memory usage: <50MB for search operations
 - Relevance: Improved ranking with BM25 or similar algorithms
 - Features: Boolean operators, phrase search, date filtering
 
@@ -251,7 +251,7 @@ def search_conversations(self, query: str, limit: int = 10) -> List[Dict[str, An
 ### Key Performance Findings
 
 **1. Linear Performance Degradation Confirmed**:
-- **6x increase** in dataset size (100 → 600 files) 
+- **6x increase** in dataset size (100 → 600 files)
 - **6.6x increase** in search time (25ms → 165ms)
 - Performance scales exactly with file count (O(n) confirmed)
 
@@ -353,7 +353,7 @@ def search_conversations(self, query: str, limit: int = 10) -> List[Dict[str, An
 
 **Quality Metrics**:
 - Search relevance score > 90% user satisfaction
-- Zero search failures under normal operation  
+- Zero search failures under normal operation
 - Database corruption recovery mechanisms
 - Comprehensive test coverage (>95%)
 
@@ -406,7 +406,7 @@ CREATE TABLE conversations (
     file_path TEXT
 );
 
--- Topics relationship table  
+-- Topics relationship table
 CREATE TABLE conversation_topics (
     conversation_id TEXT,
     topic TEXT,

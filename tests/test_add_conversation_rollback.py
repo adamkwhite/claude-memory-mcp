@@ -14,12 +14,11 @@ assert nothing is left inconsistent.
 import json
 import shutil
 import sqlite3
+import sys
 import tempfile
 from pathlib import Path
 
 import pytest
-
-import sys
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
 sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
@@ -44,12 +43,12 @@ def _all_conversation_files(server):
 
 
 def _index_conversations(server):
-    with open(server.index_file, "r", encoding="utf-8") as f:
+    with open(server.index_file, encoding="utf-8") as f:
         return json.load(f).get("conversations", [])
 
 
 def _topics_index(server):
-    with open(server.topics_file, "r", encoding="utf-8") as f:
+    with open(server.topics_file, encoding="utf-8") as f:
         return json.load(f).get("topics", {})
 
 
@@ -125,9 +124,7 @@ async def test_add_conversation_rollback_leaves_other_conversations_intact(serve
         conn.execute("DROP TABLE conversations")
         conn.commit()
 
-    bad = await server.add_conversation(
-        content="This one should roll back", title="Bad"
-    )
+    bad = await server.add_conversation(content="This one should roll back", title="Bad")
     assert bad["status"] == "error"
 
     # The earlier, healthy conversation is untouched.
@@ -145,9 +142,7 @@ async def test_rollback_helper_is_best_effort_on_missing_file(server):
     gone (e.g. removed by something else before rollback runs)."""
     missing_path = server.conversations_path / "conv_20260101_000000_ffffffff.json"
     # Should not raise even though the file was never created.
-    server._rollback_add_conversation(
-        missing_path, "conv_20260101_000000_ffffffff", ["python"]
-    )
+    server._rollback_add_conversation(missing_path, "conv_20260101_000000_ffffffff", ["python"])
 
     topics = _topics_index(server)
     assert all(
@@ -215,5 +210,5 @@ async def test_update_conversation_succeeds_normally(server):
 
 
 def _load_conversation(server, file_path):
-    with open(file_path, "r", encoding="utf-8") as f:
+    with open(file_path, encoding="utf-8") as f:
         return json.load(f)

@@ -123,9 +123,7 @@ class TestFormatDetector:
             "message_list": [
                 {
                     "uuid": "msg-desktop-1",
-                    "content": [
-                        {"type": "text", "text": "Hello Desktop Claude"}
-                    ],
+                    "content": [{"type": "text", "text": "Hello Desktop Claude"}],
                     "sender": "human",
                 }
             ],
@@ -206,9 +204,7 @@ class TestFormatDetector:
     def test_detect_format_unsupported_extension(self):
         """Test detection with unsupported file extension."""
         test_file = self.temp_path / "conversation.xml"
-        test_file.write_text(
-            "<conversation><message>Hello</message></conversation>"
-        )
+        test_file.write_text("<conversation><message>Hello</message></conversation>")
 
         result = self.detector.detect_format(test_file)
 
@@ -283,9 +279,7 @@ class TestFormatDetectorValidationMethods:
         """Test _is_claude_desktop_format with valid data."""
         data = {
             "id": "test-id",
-            "message_list": [
-                {"content": [{"type": "text"}], "sender": "human"}
-            ],
+            "message_list": [{"content": [{"type": "text"}], "sender": "human"}],
         }
 
         result = self.detector._is_claude_desktop_format(data)
@@ -359,10 +353,7 @@ class TestFormatDetectorErrorHandling:
             "conversations": [
                 {
                     "id": f"conv-{i}",
-                    "messages": [
-                        {"role": "user", "content": f"Message {j}"}
-                        for j in range(5)
-                    ],
+                    "messages": [{"role": "user", "content": f"Message {j}"} for j in range(5)],
                 }
                 for i in range(20)
             ]

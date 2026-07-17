@@ -7,7 +7,6 @@ Supports storing conversations locally and retrieving context for current sessio
 """
 
 from pathlib import Path
-from typing import List, Optional
 
 from mcp.server.fastmcp import FastMCP
 
@@ -83,8 +82,8 @@ class FastMCPConversationMemoryServer(CoreMemoryServer):
     def __init__(
         self,
         storage_path: str = _DEFAULT_STORAGE_SENTINEL,
-        use_data_dir: Optional[bool] = None,
-        config: Optional[Config] = None,
+        use_data_dir: bool | None = None,
+        config: Config | None = None,
     ):
         # Load (or accept) centralized configuration. Validation runs here so
         # misconfiguration fails loudly at server startup rather than later.
@@ -148,9 +147,7 @@ class FastMCPConversationMemoryServer(CoreMemoryServer):
 
         # An explicitly-configured path is trusted for location.
         if trusted:
-            self.fastmcp_logger.debug(
-                f"Storage path validation passed (trusted): {storage_path}"
-            )
+            self.fastmcp_logger.debug(f"Storage path validation passed (trusted): {storage_path}")
             return
 
         # Ensure path is within user's home directory or explicit allowed paths
@@ -206,12 +203,12 @@ async def search_conversations(query: str, limit: int = DEFAULT_SEARCH_LIMIT) ->
 @mcp.tool()
 async def add_conversation(
     content: str,
-    title: Optional[str] = None,
-    date: Optional[str] = None,
-    session_id: Optional[str] = None,
-    user_id: Optional[str] = None,
-    tags: Optional[List[str]] = None,
-    conversation_type: Optional[str] = None,
+    title: str | None = None,
+    date: str | None = None,
+    session_id: str | None = None,
+    user_id: str | None = None,
+    tags: list[str] | None = None,
+    conversation_type: str | None = None,
 ) -> str:
     """Add a new conversation to the memory system.
 
@@ -247,15 +244,15 @@ async def add_conversation(
 @mcp.tool()
 async def update_conversation(
     conversation_id: str,
-    content: Optional[str] = None,
-    title: Optional[str] = None,
-    add_tags: Optional[List[str]] = None,
-    remove_tags: Optional[List[str]] = None,
-    set_tags: Optional[List[str]] = None,
-    conversation_type: Optional[str] = None,
-    session_id: Optional[str] = None,
-    user_id: Optional[str] = None,
-    change_note: Optional[str] = None,
+    content: str | None = None,
+    title: str | None = None,
+    add_tags: list[str] | None = None,
+    remove_tags: list[str] | None = None,
+    set_tags: list[str] | None = None,
+    conversation_type: str | None = None,
+    session_id: str | None = None,
+    user_id: str | None = None,
+    change_note: str | None = None,
 ) -> str:
     """Update fields on an existing conversation in place.
 
@@ -346,9 +343,7 @@ async def search_by_conversation_type(conversation_type: str, limit: int = 10) -
     Typical values: ``chat``, ``code``, ``analysis``. Requires SQLite FTS.
     """
     results = await memory_server.search_by_conversation_type(conversation_type, limit)
-    return _format_metadata_results(
-        results, label="conversation_type", value=conversation_type
-    )
+    return _format_metadata_results(results, label="conversation_type", value=conversation_type)
 
 
 def _format_metadata_results(results: list, *, label: str, value: str) -> str:
@@ -397,9 +392,7 @@ async def get_search_stats() -> str:
     if "popular_topics" in stats:
         response += "\nPopular Topics:\n"
         for topic_info in stats["popular_topics"][:5]:
-            response += (
-                f"  - {topic_info['topic']}: {topic_info['count']} conversations\n"
-            )
+            response += f"  - {topic_info['topic']}: {topic_info['count']} conversations\n"
 
     if stats.get("popular_tags"):
         response += "\nPopular Tags:\n"

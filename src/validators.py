@@ -4,7 +4,7 @@ import json
 import re
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Union
 
 # Plain absolute import, matching server_fastmcp.py/conversation_memory.py:
 # ``src/`` is always a direct sys.path entry, and server_fastmcp.py imports
@@ -49,7 +49,7 @@ CONTROL_CHAR_PATTERN = re.compile(r"[\x00-\x1F\x7F]")  # Except newline, tab, CR
 SAFE_CONTROL_CHARS = {"\n", "\r", "\t"}
 
 
-def validate_title(title: Optional[str]) -> str:
+def validate_title(title: str | None) -> str:
     """
     Validate and sanitize conversation title
 
@@ -81,9 +81,7 @@ def validate_title(title: Optional[str]) -> str:
 
     # Remove control characters except safe ones
     cleaned_title = "".join(
-        char
-        for char in title
-        if char in SAFE_CONTROL_CHARS or not CONTROL_CHAR_PATTERN.match(char)
+        char for char in title if char in SAFE_CONTROL_CHARS or not CONTROL_CHAR_PATTERN.match(char)
     )
 
     # Remove potentially dangerous file characters
@@ -132,7 +130,7 @@ def validate_content(content: str) -> str:
     return content
 
 
-def validate_date(date_str: Optional[str]) -> Optional[datetime]:
+def validate_date(date_str: str | None) -> datetime | None:
     """
     Validate and parse date string
 
@@ -161,9 +159,7 @@ def validate_date(date_str: Optional[str]) -> Optional[datetime]:
         years_diff = abs((parsed_date - now).days / 365)
 
         if years_diff > 100:
-            raise DateValidationError(
-                f"Date is unrealistic: {years_diff:.0f} years from now"
-            )
+            raise DateValidationError(f"Date is unrealistic: {years_diff:.0f} years from now")
 
         return parsed_date
 
@@ -313,15 +309,11 @@ def validate_storage_path(storage_path: Union[str, "Path", None]) -> str:
 def _strip_control_chars(value: str) -> str:
     """Remove control chars (keeping safe whitespace), matching validate_title."""
     return "".join(
-        char
-        for char in value
-        if char in SAFE_CONTROL_CHARS or not CONTROL_CHAR_PATTERN.match(char)
+        char for char in value if char in SAFE_CONTROL_CHARS or not CONTROL_CHAR_PATTERN.match(char)
     ).strip()
 
 
-def _validate_identifier(
-    value: Optional[str], field_name: str, max_length: int
-) -> Optional[str]:
+def _validate_identifier(value: str | None, field_name: str, max_length: int) -> str | None:
     """Shared validation for single-string metadata fields (session_id,
     user_id, conversation_type). Returns None for missing/blank-after-clean
     input so "not provided" round-trips as None rather than an empty string.
@@ -344,7 +336,7 @@ def _validate_identifier(
     return cleaned or None
 
 
-def validate_session_id(session_id: Optional[str]) -> Optional[str]:
+def validate_session_id(session_id: str | None) -> str | None:
     """Validate the universal ``session_id`` metadata field.
 
     Raises:
@@ -353,7 +345,7 @@ def validate_session_id(session_id: Optional[str]) -> Optional[str]:
     return _validate_identifier(session_id, "session_id", MAX_SESSION_ID_LENGTH)
 
 
-def validate_user_id(user_id: Optional[str]) -> Optional[str]:
+def validate_user_id(user_id: str | None) -> str | None:
     """Validate the universal ``user_id`` metadata field.
 
     Raises:
@@ -362,7 +354,7 @@ def validate_user_id(user_id: Optional[str]) -> Optional[str]:
     return _validate_identifier(user_id, "user_id", MAX_USER_ID_LENGTH)
 
 
-def validate_conversation_type(conversation_type: Optional[str]) -> Optional[str]:
+def validate_conversation_type(conversation_type: str | None) -> str | None:
     """Validate the universal ``conversation_type`` metadata field.
 
     Raises:
@@ -373,7 +365,7 @@ def validate_conversation_type(conversation_type: Optional[str]) -> Optional[str
     )
 
 
-def validate_tags(tags: Optional[List[str]]) -> Optional[List[str]]:
+def validate_tags(tags: list[str] | None) -> list[str] | None:
     """Validate the universal ``tags`` metadata field.
 
     ``None`` is returned unchanged (distinguishes "not provided" from an
@@ -390,16 +382,12 @@ def validate_tags(tags: Optional[List[str]]) -> Optional[List[str]]:
         raise MetadataValidationError("Tags must be a list of strings")
 
     if len(tags) > MAX_TAGS_COUNT:
-        raise MetadataValidationError(
-            f"Too many tags: {len(tags)} (max {MAX_TAGS_COUNT})"
-        )
+        raise MetadataValidationError(f"Too many tags: {len(tags)} (max {MAX_TAGS_COUNT})")
 
-    cleaned_tags: List[str] = []
+    cleaned_tags: list[str] = []
     for tag in tags:
         if not isinstance(tag, str):
-            raise MetadataValidationError(
-                f"Tag must be a string, got {type(tag).__name__}"
-            )
+            raise MetadataValidationError(f"Tag must be a string, got {type(tag).__name__}")
 
         if not tag:
             continue
@@ -434,8 +422,8 @@ def _check_custom_fields_depth(value: Any, current_depth: int = 0) -> None:
 
 
 def validate_custom_fields(
-    custom_fields: Optional[Dict[str, Any]],
-) -> Dict[str, Any]:
+    custom_fields: dict[str, Any] | None,
+) -> dict[str, Any]:
     """Validate the universal ``custom_fields`` metadata field.
 
     Bounds: key count, nesting depth, and total serialized size. Values are
@@ -454,8 +442,7 @@ def validate_custom_fields(
 
     if len(custom_fields) > MAX_CUSTOM_FIELDS_KEYS:
         raise MetadataValidationError(
-            f"custom_fields has too many keys: {len(custom_fields)} "
-            f"(max {MAX_CUSTOM_FIELDS_KEYS})"
+            f"custom_fields has too many keys: {len(custom_fields)} (max {MAX_CUSTOM_FIELDS_KEYS})"
         )
 
     _check_custom_fields_depth(custom_fields)
@@ -475,8 +462,7 @@ def validate_custom_fields(
     serialized_bytes = len(serialized.encode("utf-8"))
     if serialized_bytes > MAX_CUSTOM_FIELDS_BYTES:
         raise MetadataValidationError(
-            f"custom_fields too large: {serialized_bytes} bytes "
-            f"(max {MAX_CUSTOM_FIELDS_BYTES})"
+            f"custom_fields too large: {serialized_bytes} bytes (max {MAX_CUSTOM_FIELDS_BYTES})"
         )
 
     return custom_fields

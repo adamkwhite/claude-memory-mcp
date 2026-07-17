@@ -15,7 +15,7 @@ import statistics
 import string
 import time
 from pathlib import Path
-from typing import Any, Dict, List
+from typing import Any
 
 from conversation_memory import ConversationMemoryServer
 
@@ -43,7 +43,7 @@ class SearchBenchmark:
             storage_path=str(self.storage_path / "sqlite"), enable_sqlite=True
         )
 
-    def generate_test_data(self, num_conversations: int = 100) -> List[Dict[str, Any]]:
+    def generate_test_data(self, num_conversations: int = 100) -> list[dict[str, Any]]:
         """Generate test conversations with realistic content."""
         self.logger.info(f"Generating {num_conversations} test conversations...")
 
@@ -77,15 +77,11 @@ class SearchBenchmark:
         for i in range(num_conversations):
             # Generate realistic conversation content
             num_topics = random.randint(2, 5)  # nosec B311 - Test data generation only
-            selected_topics = random.sample(
-                tech_terms, num_topics
-            )  # nosec B311 - Test data generation only
+            selected_topics = random.sample(tech_terms, num_topics)  # nosec B311 - Test data generation only
 
             # Create conversation content with topics
             content_parts = []
-            content_parts.append(
-                f"Discussion about {' and '.join(selected_topics[:2])}"
-            )
+            content_parts.append(f"Discussion about {' and '.join(selected_topics[:2])}")
 
             # Add some random content
             for topic in selected_topics:
@@ -97,41 +93,29 @@ class SearchBenchmark:
                     f"The documentation for {topic} mentions that",
                 ]
 
-                template = random.choice(
-                    sentence_templates
-                )  # nosec B311 - Test data generation only
-                random_detail = "".join(
-                    random.choices(string.ascii_lowercase + " ", k=50)
-                )  # nosec B311 - Test data generation only
+                template = random.choice(sentence_templates)  # nosec B311 - Test data generation only
+                random_detail = "".join(random.choices(string.ascii_lowercase + " ", k=50))  # nosec B311 - Test data generation only
                 content_parts.append(f"{template} {random_detail}")
 
             content = ". ".join(content_parts)
             title = f"Conversation {i + 1}: {selected_topics[0]} discussion"
 
-            conversations.append(
-                {"title": title, "content": content, "topics": selected_topics}
-            )
+            conversations.append({"title": title, "content": content, "topics": selected_topics})
 
         return conversations
 
-    async def populate_test_data(self, conversations: List[Dict[str, Any]]):
+    async def populate_test_data(self, conversations: list[dict[str, Any]]):
         """Add test conversations to both storage systems."""
         self.logger.info("Populating test data in both storage systems...")
 
         for conv in conversations:
             # Add to linear search system
-            await self.linear_server.add_conversation(
-                content=conv["content"], title=conv["title"]
-            )
+            await self.linear_server.add_conversation(content=conv["content"], title=conv["title"])
 
             # Add to SQLite search system
-            await self.sqlite_server.add_conversation(
-                content=conv["content"], title=conv["title"]
-            )
+            await self.sqlite_server.add_conversation(content=conv["content"], title=conv["title"])
 
-    async def run_search_benchmark(
-        self, query: str, iterations: int = 10
-    ) -> Dict[str, Any]:
+    async def run_search_benchmark(self, query: str, iterations: int = 10) -> dict[str, Any]:
         """Run search benchmark for a specific query."""
         linear_times = []
         sqlite_times = []
@@ -139,24 +123,16 @@ class SearchBenchmark:
         # Benchmark linear search
         for _ in range(iterations):
             start_time = time.perf_counter()
-            linear_results = await self.linear_server.search_conversations(
-                query, limit=10
-            )
+            linear_results = await self.linear_server.search_conversations(query, limit=10)
             end_time = time.perf_counter()
-            linear_times.append(
-                (end_time - start_time) * 1000
-            )  # Convert to milliseconds
+            linear_times.append((end_time - start_time) * 1000)  # Convert to milliseconds
 
         # Benchmark SQLite search
         for _ in range(iterations):
             start_time = time.perf_counter()
-            sqlite_results = await self.sqlite_server.search_conversations(
-                query, limit=10
-            )
+            sqlite_results = await self.sqlite_server.search_conversations(query, limit=10)
             end_time = time.perf_counter()
-            sqlite_times.append(
-                (end_time - start_time) * 1000
-            )  # Convert to milliseconds
+            sqlite_times.append((end_time - start_time) * 1000)  # Convert to milliseconds
 
         # Calculate statistics
         linear_stats = {
@@ -176,11 +152,7 @@ class SearchBenchmark:
         }
 
         # Calculate performance improvement
-        speedup = (
-            linear_stats["mean"] / sqlite_stats["mean"]
-            if sqlite_stats["mean"] > 0
-            else 0
-        )
+        speedup = linear_stats["mean"] / sqlite_stats["mean"] if sqlite_stats["mean"] > 0 else 0
 
         return {
             "query": query,
@@ -188,35 +160,25 @@ class SearchBenchmark:
             "linear_search": {
                 "times_ms": linear_times,
                 "stats": linear_stats,
-                "result_count": (
-                    len(linear_results) if isinstance(linear_results, list) else 0
-                ),
+                "result_count": (len(linear_results) if isinstance(linear_results, list) else 0),
             },
             "sqlite_search": {
                 "times_ms": sqlite_times,
                 "stats": sqlite_stats,
-                "result_count": (
-                    len(sqlite_results) if isinstance(sqlite_results, list) else 0
-                ),
+                "result_count": (len(sqlite_results) if isinstance(sqlite_results, list) else 0),
             },
             "performance": {
                 "speedup_factor": speedup,
                 "time_saved_ms": linear_stats["mean"] - sqlite_stats["mean"],
                 "percentage_improvement": (
-                    (
-                        (linear_stats["mean"] - sqlite_stats["mean"])
-                        / linear_stats["mean"]
-                        * 100
-                    )
+                    ((linear_stats["mean"] - sqlite_stats["mean"]) / linear_stats["mean"] * 100)
                     if linear_stats["mean"] > 0
                     else 0
                 ),
             },
         }
 
-    async def run_comprehensive_benchmark(
-        self, num_conversations: int = 100
-    ) -> Dict[str, Any]:
+    async def run_comprehensive_benchmark(self, num_conversations: int = 100) -> dict[str, Any]:
         """Run comprehensive benchmark with various queries."""
         self.logger.info(
             f"Running comprehensive benchmark with {num_conversations} conversations..."
@@ -235,7 +197,7 @@ class SearchBenchmark:
             "machine learning data science algorithms",
         ]
 
-        benchmark_results: Dict[str, Any] = {
+        benchmark_results: dict[str, Any] = {
             "setup": {
                 "num_conversations": num_conversations,
                 "storage_path": str(self.storage_path),
@@ -250,8 +212,8 @@ class SearchBenchmark:
             benchmark_results["queries"].append(result)
 
         # Calculate overall statistics
-        all_linear_times: List[float] = []
-        all_sqlite_times: List[float] = []
+        all_linear_times: list[float] = []
+        all_sqlite_times: list[float] = []
 
         for query_result in benchmark_results["queries"]:
             all_linear_times.extend(query_result["linear_search"]["times_ms"])
@@ -264,16 +226,10 @@ class SearchBenchmark:
             "linear_mean_ms": overall_linear_mean,
             "sqlite_mean_ms": overall_sqlite_mean,
             "overall_speedup": (
-                overall_linear_mean / overall_sqlite_mean
-                if overall_sqlite_mean > 0
-                else 0
+                overall_linear_mean / overall_sqlite_mean if overall_sqlite_mean > 0 else 0
             ),
             "overall_improvement_percent": (
-                (
-                    (overall_linear_mean - overall_sqlite_mean)
-                    / overall_linear_mean
-                    * 100
-                )
+                ((overall_linear_mean - overall_sqlite_mean) / overall_linear_mean * 100)
                 if overall_linear_mean > 0
                 else 0
             ),
@@ -281,7 +237,7 @@ class SearchBenchmark:
 
         return benchmark_results
 
-    def print_benchmark_report(self, results: Dict[str, Any]):
+    def print_benchmark_report(self, results: dict[str, Any]):
         """Print a formatted benchmark report."""
         print(f"\n{'=' * 60}")
         print("SEARCH PERFORMANCE BENCHMARK REPORT")
@@ -301,12 +257,8 @@ class SearchBenchmark:
             perf = query_result["performance"]
 
             print(f"\nQuery: '{query}'")
-            print(
-                f"  Linear Search:  {linear['mean']:.2f}ms (±{linear['stdev']:.2f}ms)"
-            )
-            print(
-                f"  SQLite Search:  {sqlite['mean']:.2f}ms (±{sqlite['stdev']:.2f}ms)"
-            )
+            print(f"  Linear Search:  {linear['mean']:.2f}ms (±{linear['stdev']:.2f}ms)")
+            print(f"  SQLite Search:  {sqlite['mean']:.2f}ms (±{sqlite['stdev']:.2f}ms)")
             print(f"  Speedup:        {perf['speedup_factor']:.1f}x faster")
             print(f"  Improvement:    {perf['percentage_improvement']:.1f}%")
 
@@ -321,12 +273,8 @@ class SearchBenchmark:
         print(f"\n{'Conclusion:'}")
         print(f"{'─' * 60}")
         if overall["overall_speedup"] > 1:
-            print(
-                f"  ✅ SQLite FTS is {overall['overall_speedup']:.1f}x faster than linear search"
-            )
-            print(
-                f"  ✅ Performance improvement of {overall['overall_improvement_percent']:.1f}%"
-            )
+            print(f"  ✅ SQLite FTS is {overall['overall_speedup']:.1f}x faster than linear search")
+            print(f"  ✅ Performance improvement of {overall['overall_improvement_percent']:.1f}%")
         else:
             print("  ⚠️  Linear search performed better in this test")
 

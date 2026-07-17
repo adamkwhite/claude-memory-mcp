@@ -17,10 +17,10 @@ Use this template for each exploratory testing session. Fill out all sections du
 
 ### BASIC SESSION DATA
 
-**Tester:** Adam  
-**Date/Time Started:** [YYYY-MM-DD HH:MM]  
-**Session ID:** [e.g., CMS-001, CMS-002]  
-**Product Version:** [MCP server version/commit hash if available]  
+**Tester:** Adam
+**Date/Time Started:** [YYYY-MM-DD HH:MM]
+**Session ID:** [e.g., CMS-001, CMS-002]
+**Product Version:** [MCP server version/commit hash if available]
 **Test Environment:** [Ubuntu 20.04 WSL, Claude Desktop version]
 
 ---
@@ -29,8 +29,8 @@ Use this template for each exploratory testing session. Fill out all sections du
 
 **Duration:** [Actual session length in minutes]
 
-**Test Design and Execution:** [Percentage of time spent actively testing]  
-**Bug Investigation and Reporting:** [Percentage of time spent investigating and documenting issues]  
+**Test Design and Execution:** [Percentage of time spent actively testing]
+**Bug Investigation and Reporting:** [Percentage of time spent investigating and documenting issues]
 **Session Setup:** [Percentage of time spent on setup, configuration, note-taking]
 
 **Charter vs. Opportunity:** [% on charter / % on unplanned exploration]
@@ -39,8 +39,8 @@ Use this template for each exploratory testing session. Fill out all sections du
 
 ### DATA FILES
 
-**Test Data Used:** [List any specific test conversations, queries, or datasets used]  
-**Files Created:** [Any new test files, logs, or artifacts created during session]  
+**Test Data Used:** [List any specific test conversations, queries, or datasets used]
+**Files Created:** [Any new test files, logs, or artifacts created during session]
 **External Resources:** [Documentation, tools, or references consulted]
 
 ---
@@ -56,7 +56,7 @@ Use this template for each exploratory testing session. Fill out all sections du
 
 #### Test Strategy Applied:
 - [ ] Function Testing (testing what it can do)
-- [ ] Domain Testing (boundary values, data partitioning) 
+- [ ] Domain Testing (boundary values, data partitioning)
 - [ ] Stress Testing (overloading the system)
 - [ ] Flow Testing (sequences of operations)
 - [ ] Scenario Testing (realistic user stories)
@@ -68,10 +68,10 @@ Use this template for each exploratory testing session. Fill out all sections du
 
 ### BUGS
 
-**Bug #1:** [Brief headline description]  
+**Bug #1:** [Brief headline description]
 **Details:** [Steps to reproduce, expected vs. actual results, severity assessment]
 
-**Bug #2:** [Brief headline description]  
+**Bug #2:** [Brief headline description]
 **Details:** [Steps to reproduce, expected vs. actual results, severity assessment]
 
 [Continue for additional bugs found]
@@ -80,19 +80,19 @@ Use this template for each exploratory testing session. Fill out all sections du
 
 ### ISSUES
 
-**Issue #1:** [Non-bug problems that impacted testing]  
+**Issue #1:** [Non-bug problems that impacted testing]
 **Details:** [Description of testing obstacles, questions raised, blockers encountered]
 
-**Issue #2:** [Additional issues]  
+**Issue #2:** [Additional issues]
 **Details:** [Continue as needed]
 
 ---
 
 ### SESSION SUMMARY
 
-**Charter Completion:** [Was the charter fulfilled? If not, what remains?]  
-**Key Findings:** [Most important discoveries from this session]  
-**Confidence Level:** [How confident are you in the tested areas?]  
+**Charter Completion:** [Was the charter fulfilled? If not, what remains?]
+**Key Findings:** [Most important discoveries from this session]
+**Confidence Level:** [How confident are you in the tested areas?]
 **Follow-up Needed:** [What should be tested next? Any specific areas needing attention?]
 
 ---
@@ -203,6 +203,6 @@ Use this structure for session debriefing discussions:
 
 ---
 
-**Template Version**: 1.0  
-**Based on**: Session-Based Test Management methodology by James Bach and Jonathan Bach  
+**Template Version**: 1.0
+**Based on**: Session-Based Test Management methodology by James Bach and Jonathan Bach
 **Last Updated**: 2025-06-01

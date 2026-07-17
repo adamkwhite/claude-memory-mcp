@@ -5,7 +5,7 @@
 ### New Files Added:
 - `TESTING.md` - Comprehensive testing framework documentation
 - `tasks/test-strategy.md` - Risk-based test strategy for this project
-- `tasks/session-charters.md` - 5 focused exploratory testing sessions  
+- `tasks/session-charters.md` - 5 focused exploratory testing sessions
 - `tasks/session-templates.md` - SBTM session recording templates
 - `tasks/test-execution-guide.md` - Step-by-step execution coordination
 - `tasks/structured-tests/security-tests.md` - Security testing procedures
@@ -17,7 +17,7 @@
 - `tasks/prompt-session-charters.md` - Generate SBTM session charters
 - `tasks/prompt-session-templates.md` - Generate SBTM templates
 - `tasks/prompt-security-tests.md` - Generate security test suites
-- `tasks/prompt-integration-tests.md` - Generate integration tests  
+- `tasks/prompt-integration-tests.md` - Generate integration tests
 - `tasks/prompt-functional-tests.md` - Generate functional tests
 - `tasks/prompt-test-execution-guide.md` - Generate execution guides
 - `tasks/prompt-library-guide.md` - Complete prompt library documentation
@@ -50,7 +50,7 @@ git add README.md
 git commit -m "Add comprehensive testing framework based on HTSM, SBTM, and RST methodologies
 
 - Add TESTING.md with complete framework documentation
-- Add risk-based test strategy focused on security and compatibility  
+- Add risk-based test strategy focused on security and compatibility
 - Add 5 session-based exploratory testing charters (6 hours total)
 - Add structured test suites for security, integration, and functional testing
 - Add SBTM session templates and execution coordination guide
@@ -81,7 +81,7 @@ If you want to review changes before committing:
 git add TESTING.md
 git diff --cached TESTING.md
 
-git add README.md  
+git add README.md
 git diff --cached README.md
 
 # Add tasks directory
