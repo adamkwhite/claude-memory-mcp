@@ -119,7 +119,7 @@ class TestChatGPTImporter:
 
     def test_parse_conversation_invalid_data(self):
         """Test parsing invalid conversation data."""
-        with pytest.raises(ValueError, match="ChatGPT conversation data must be a dictionary"):
+        with pytest.raises(TypeError, match="ChatGPT conversation data must be a dictionary"):
             self.importer.parse_conversation("not a dict")
 
     def test_parse_conversation_missing_messages(self):

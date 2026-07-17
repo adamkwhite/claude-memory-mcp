@@ -164,7 +164,7 @@ def validate_date(date_str: str | None) -> datetime | None:
         return parsed_date
 
     except (ValueError, TypeError) as e:
-        raise DateValidationError(f"Invalid date format: {str(e)}")
+        raise DateValidationError(f"Invalid date format: {str(e)}") from e
 
 
 def validate_search_query(query: str) -> str:
@@ -450,7 +450,7 @@ def validate_custom_fields(
     try:
         serialized = json.dumps(custom_fields)
     except (TypeError, ValueError) as e:
-        raise MetadataValidationError(f"custom_fields must be JSON-serializable: {e}")
+        raise MetadataValidationError(f"custom_fields must be JSON-serializable: {e}") from e
 
     # json.dumps escapes null bytes as a backslash-u0000 sequence rather
     # than emitting a raw null byte, so NULL_BYTE_PATTERN (which matches a

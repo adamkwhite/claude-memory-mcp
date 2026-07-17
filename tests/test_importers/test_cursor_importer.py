@@ -251,7 +251,7 @@ class TestCursorImporterParsing:
         """Test parsing invalid conversation data."""
         data = "not a dictionary"
 
-        with pytest.raises(ValueError, match="Cursor session data must be a dictionary"):
+        with pytest.raises(TypeError, match="Cursor session data must be a dictionary"):
             self.importer.parse_conversation(data)
 
     def test_parse_conversation_missing_interactions(self):

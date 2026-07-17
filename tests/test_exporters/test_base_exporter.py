@@ -437,7 +437,12 @@ class TestWriteJson:
         # /proc is non-writable on Linux; using a known pseudo-fs path keeps
         # the test platform-portable since we only need the OSError raise.
         bad_path = Path("/proc/cannot-write-here/out.json")
-        with pytest.raises(OSError):
+        # The exact OSError subclass under /proc varies by kernel/mount setup
+        # (observed both FileNotFoundError and PermissionError) - narrowing to
+        # one subclass or matching an exact errno string would make this test
+        # environment-fragile. The contract under test is genuinely "some
+        # OSError", per write_json's own docstring.
+        with pytest.raises(OSError):  # noqa: PT011 - see comment above
             exp.write_json(bad_path, {"x": 1})
 
 

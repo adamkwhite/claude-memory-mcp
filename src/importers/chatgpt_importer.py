@@ -71,7 +71,7 @@ class ChatGPTImporter(BaseImporter):
                 imported_ids=[],
                 metadata={},
             )
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - top-level import boundary: report failure via ImportResult instead of crashing the batch run
             return ImportResult(
                 success=False,
                 conversations_imported=0,
@@ -105,12 +105,12 @@ class ChatGPTImporter(BaseImporter):
                         f"Invalid conversation format for ID: {conversation.get('id', 'unknown')}"
                     )
 
-            except Exception as e:
+            except Exception as e:  # noqa: BLE001 - resilience: skip unparseable conversation, keep processing the rest of the batch
                 failed_count += 1
                 conv_id = conversation.get("id", "unknown")
                 error_msg = f"Failed to process conversation {conv_id}: {str(e)}"
                 errors.append(error_msg)
-                self.logger.error(error_msg)
+                self.logger.exception(error_msg)
 
         return ImportResult(
             success=imported_count > 0,
@@ -147,7 +147,7 @@ class ChatGPTImporter(BaseImporter):
         }
         """
         if not isinstance(raw_data, dict):
-            raise ValueError("ChatGPT conversation data must be a dictionary")
+            raise TypeError("ChatGPT conversation data must be a dictionary")
 
         # Extract basic information
         platform_id = raw_data.get("id", "")

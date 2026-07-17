@@ -10,7 +10,7 @@ import json
 import logging
 import sqlite3
 from pathlib import Path
-from typing import Any
+from typing import Any, ClassVar
 
 
 class SearchDatabase:
@@ -28,7 +28,7 @@ class SearchDatabase:
     # Metadata columns added by PR adding FTS indexing of D2 universal fields.
     # Column name -> SQL type. All default to NULL (nullable) for backwards
     # compat with conversations imported before the metadata fields existed.
-    _METADATA_COLUMNS = {
+    _METADATA_COLUMNS: ClassVar[dict[str, str]] = {
         "session_id": "TEXT",
         "user_id": "TEXT",
         "conversation_type": "TEXT",
@@ -148,7 +148,7 @@ class SearchDatabase:
                 conn.commit()
 
         except sqlite3.Error as e:
-            self.logger.error(f"Database initialization failed: {e}")
+            self.logger.exception(f"Database initialization failed: {e}")
             raise
 
     def _migrate_metadata_columns(self, conn: sqlite3.Connection) -> None:
@@ -250,7 +250,7 @@ class SearchDatabase:
                 return True
 
         except sqlite3.Error as e:
-            self.logger.error("Failed to add conversation: %s", e)
+            self.logger.exception("Failed to add conversation: %s", e)
             return False
 
     def search_conversations(self, query: str, limit: int = 10) -> list[dict[str, Any]]:
@@ -293,7 +293,7 @@ class SearchDatabase:
                 return results
 
         except sqlite3.Error as e:
-            self.logger.error(f"Search failed: {e}")
+            self.logger.exception(f"Search failed: {e}")
             return [{"error": f"Search failed: {str(e)}"}]
 
     def search_by_topic(self, topic: str, limit: int = 10) -> list[dict[str, Any]]:
@@ -328,7 +328,7 @@ class SearchDatabase:
                 return results
 
         except sqlite3.Error as e:
-            self.logger.error(f"Topic search failed: {e}")
+            self.logger.exception(f"Topic search failed: {e}")
             return []
 
     def search_by_tag(self, tag: str, limit: int = 10) -> list[dict[str, Any]]:
@@ -353,7 +353,7 @@ class SearchDatabase:
                 return [self._row_to_metadata_result(row) for row in cursor]
 
         except sqlite3.Error as e:
-            self.logger.error(f"Tag search failed: {e}")
+            self.logger.exception(f"Tag search failed: {e}")
             return []
 
     def search_by_session_id(self, session_id: str, limit: int = 10) -> list[dict[str, Any]]:
@@ -377,7 +377,7 @@ class SearchDatabase:
                 return [self._row_to_metadata_result(row) for row in cursor]
 
         except sqlite3.Error as e:
-            self.logger.error(f"Session search failed: {e}")
+            self.logger.exception(f"Session search failed: {e}")
             return []
 
     def search_by_conversation_type(
@@ -403,7 +403,7 @@ class SearchDatabase:
                 return [self._row_to_metadata_result(row) for row in cursor]
 
         except sqlite3.Error as e:
-            self.logger.error(f"Conversation-type search failed: {e}")
+            self.logger.exception(f"Conversation-type search failed: {e}")
             return []
 
     @staticmethod
@@ -474,7 +474,7 @@ class SearchDatabase:
                 }
 
         except sqlite3.Error as e:
-            self.logger.error(f"Stats query failed: {e}")
+            self.logger.exception(f"Stats query failed: {e}")
             return {"error": str(e)}
 
     def _sanitize_fts_query(self, query: str) -> str:
@@ -506,7 +506,7 @@ class SearchDatabase:
                 conn.commit()
 
         except sqlite3.Error as e:
-            self.logger.error(f"FTS index rebuild failed: {e}")
+            self.logger.exception(f"FTS index rebuild failed: {e}")
             raise
 
     def get_conversation_count(self) -> int:
@@ -517,5 +517,5 @@ class SearchDatabase:
                 return cursor.fetchone()[0]
 
         except sqlite3.Error as e:
-            self.logger.error(f"Count query failed: {e}")
+            self.logger.exception(f"Count query failed: {e}")
             return 0

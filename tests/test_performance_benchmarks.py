@@ -247,7 +247,7 @@ class TestSearchPerformance:
         # Perform multiple searches to check for memory leaks
         performance_metrics.start()
 
-        for i in range(100):
+        for _ in range(100):
             await server.search_conversations("python testing", limit=20)
 
         metrics = performance_metrics.stop()

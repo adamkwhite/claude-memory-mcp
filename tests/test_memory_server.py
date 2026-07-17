@@ -341,7 +341,7 @@ class TestFastMCPServer:
         try:
             results = await server.search_conversations("test", limit=1)
             assert isinstance(results, list)
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - environment-dependent smoke test: skip rather than fail when preconditions aren't met
             pytest.skip(f"FastMCP search test skipped due to: {e}")
 
 

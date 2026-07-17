@@ -105,7 +105,7 @@ class TestImportIntegration:
             pytest.fail("Expected ChatGPT format detection")
 
         # Import with detected importer
-        with patch.object(importer, "_save_conversation") as mock_save:
+        with patch.object(importer, "_save_conversation"):
             result = importer.import_file(test_file)
 
         assert result.success is True
@@ -190,9 +190,11 @@ class TestImportIntegration:
                 return False
             return original_validate(conv)
 
-        with patch.object(importer, "_validate_conversation", side_effect=mock_validate):
-            with patch.object(importer, "_save_conversation") as mock_save:
-                result = importer.import_file(test_file)
+        with (
+            patch.object(importer, "_validate_conversation", side_effect=mock_validate),
+            patch.object(importer, "_save_conversation"),
+        ):
+            result = importer.import_file(test_file)
 
         # Should have partial success
         assert result.conversations_imported >= 1
@@ -283,7 +285,7 @@ class TestImportIntegration:
 
         importer = ChatGPTImporter(self.storage_path)
 
-        with patch.object(importer, "_save_conversation") as mock_save:
+        with patch.object(importer, "_save_conversation"):
             start_time = time.time()
             result = importer.import_file(test_file)
             end_time = time.time()

@@ -59,23 +59,6 @@ lint.ignore = [
     "E501",  # line too long (handled by ruff format)
     "B008",  # function calls in argument defaults
     "B905",  # zip without explicit strict parameter
-
-    # --- TEMPORARY: deferred to chore/strict-lint-manual (PR 2) ---
-    # These ~124 remaining violations are real behavior/judgment calls (blind
-    # excepts to narrow, log.error->log.exception, etc.) that need per-site
-    # review, not a bulk --fix. Rules stay selected (not removed) so new code
-    # can't add fresh violations silently; remove this block in PR 2 once
-    # each site is fixed or given a reasoned `# noqa`.
-    "BLE001",  # blind-except - narrow or justify each of the 69 individually
-    "TRY400",  # log.error in except (loses traceback) - 28 sites
-    "TRY004",  # raise TypeError not ValueError - 4 sites
-    "SIM102", "SIM103", "SIM105", "SIM110", "SIM117",  # flake8-simplify - 10 sites total
-    "B007",    # unused loop var - 3 sites
-    "F841",    # unused variable - 3 sites
-    "B904",    # raise without `from` in except - 2 sites
-    "PT011",   # pytest.raises too broad - 2 sites
-    "RUF012",  # mutable class default - 2 sites
-    "C408",    # dict()/list() call instead of literal - 1 site
 ]
 
 exclude = [

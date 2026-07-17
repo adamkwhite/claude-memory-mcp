@@ -91,9 +91,9 @@ class CursorImporter(BaseImporter):
                         metadata={},
                     )
 
-            except Exception as e:
+            except Exception as e:  # noqa: BLE001 - per-session boundary: report failure via ImportResult instead of crashing the batch run
                 error_msg = f"Failed to process Cursor session: {str(e)}"
-                self.logger.error(error_msg)
+                self.logger.exception(error_msg)
                 return ImportResult(
                     success=False,
                     conversations_imported=0,
@@ -112,7 +112,7 @@ class CursorImporter(BaseImporter):
                 imported_ids=[],
                 metadata={},
             )
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - top-level import boundary: report failure via ImportResult instead of crashing the batch run
             return ImportResult(
                 success=False,
                 conversations_imported=0,
@@ -149,7 +149,7 @@ class CursorImporter(BaseImporter):
         }
         """
         if not isinstance(raw_data, dict):
-            raise ValueError("Cursor session data must be a dictionary")
+            raise TypeError("Cursor session data must be a dictionary")
 
         # Extract basic session information
         session_id = raw_data.get("session_id", "")

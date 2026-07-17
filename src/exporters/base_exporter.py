@@ -161,7 +161,7 @@ class BaseExporter(ABC):
             with open(index_file, encoding="utf-8") as f:
                 index_data = json.load(f)
         except (OSError, json.JSONDecodeError) as exc:
-            self.logger.error("Failed to read index.json: %s", exc)
+            self.logger.exception("Failed to read index.json: %s", exc)
             return []
 
         loaded: list[dict[str, Any]] = []
