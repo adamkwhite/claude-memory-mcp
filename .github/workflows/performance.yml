@@ -30,8 +30,12 @@ jobs:
     - name: Install dependencies
       run: |
         uv sync --locked --no-build --no-install-project --extra dev
-        uv pip install -e . --no-deps --no-build
         echo "$PWD/.venv/bin" >> "$GITHUB_PATH"
+        # No editable install of our own package: it's local source, not a
+        # locked dependency, and a separate `pip install`/`uv pip install`
+        # line here trips githubactions:S8544 regardless of flags. src/ on
+        # PYTHONPATH is all these scripts and tests need (verified).
+        echo "PYTHONPATH=$PWD:$PWD/src" >> "$GITHUB_ENV"
 
     - name: Generate test data
       run: |
@@ -45,7 +49,7 @@ jobs:
 
     - name: Run performance benchmarks
       run: |
-        PYTHONPATH=. python -m pytest tests/test_performance_benchmarks.py -v --tb=short
+        python -m pytest tests/test_performance_benchmarks.py -v --tb=short
 
     - name: Generate performance report
       run: |
@@ -145,8 +149,14 @@ jobs:
     - name: Install dependencies
       run: |
         uv sync --locked --no-build --no-install-project --extra dev
-        uv pip install -e . --no-deps --no-build
         echo "$PWD/.venv/bin" >> "$GITHUB_PATH"
+        # No editable install of our own package: it's local source, not a
+        # locked dependency, and a separate `pip install`/`uv pip install`
+        # line here trips githubactions:S8544 regardless of flags. src/ on
+        # PYTHONPATH is all these scripts and tests need (verified). This
+        # stays valid across the `git checkout`s below -- they swap file
+        # contents in place, not $PWD.
+        echo "PYTHONPATH=$PWD:$PWD/src" >> "$GITHUB_ENV"
 
     - name: Run baseline performance (main branch)
       run: |
@@ -157,7 +167,7 @@ jobs:
         # searches an empty auto-created directory and "passes" comparing
         # ~0s against ~0s regardless of real performance.
         python scripts/generate_test_data.py --conversations 159 --clean
-        PYTHONPATH=. python -m pytest tests/test_performance_benchmarks.py::TestOverallPerformance::test_readme_claims_validation -v --tb=short
+        python -m pytest tests/test_performance_benchmarks.py::TestOverallPerformance::test_readme_claims_validation -v --tb=short
         # Rename results
         mkdir -p baseline_results
         mv benchmark_results/* baseline_results/ 2>/dev/null || true
@@ -166,7 +176,7 @@ jobs:
       run: |
         git checkout ${{ github.event.pull_request.head.sha }}
         python scripts/generate_test_data.py --conversations 159 --clean
-        PYTHONPATH=. python -m pytest tests/test_performance_benchmarks.py::TestOverallPerformance::test_readme_claims_validation -v --tb=short
+        python -m pytest tests/test_performance_benchmarks.py::TestOverallPerformance::test_readme_claims_validation -v --tb=short
 
     - name: Compare performance
       run: |
