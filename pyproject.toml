@@ -10,12 +10,14 @@ dependencies = [
     "aiofiles==25.1.0",
 ]
 
-# Pinned to exact resolved versions (not floors) so `pip install -e .` in CI
-# resolves the same dependency graph every run instead of whatever PyPI
-# happens to serve that day (SonarCloud githubactions:S8544 -- "Using
-# dependencies without locking resolved versions is security-sensitive").
-# This is the single source of truth both workflow files install from; bump
-# versions here, not by editing .github/workflows/*.yml.
+# Pinned to exact versions (not floors) as a floor of defense for anyone who
+# installs with plain `pip install -e .` outside CI, bypassing the lockfile.
+# CI itself installs from `uv.lock` (`uv sync --locked`), which is the actual
+# source of truth for the full resolved dependency graph, including
+# transitive deps these direct-dep pins can't cover (SonarCloud
+# githubactions:S8544 -- "Using dependencies without locking resolved
+# versions is security-sensitive"). Bump a version here, then run `uv lock`
+# to update uv.lock to match -- CI enforces the two stay in sync.
 [project.optional-dependencies]
 dev = [
     "pytest==9.1.1",
