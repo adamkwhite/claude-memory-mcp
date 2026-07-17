@@ -6,13 +6,58 @@ on:
     paths-ignore: ['*.md', 'docs/**', 'LICENSE', '.gitignore', '.github/**']
   pull_request:
     branches: [ main ]
-    paths-ignore: ['*.md', 'docs/**', 'LICENSE', '.gitignore', '.github/**']
+    # NO paths-ignore here on purpose — see build.yml's pull_request comment.
+    # A skipped WORKFLOW never reports a required status check; the `changes`
+    # job below always runs and gates the heavy jobs instead.
+    types: [opened, reopened, ready_for_review, synchronize]
   schedule:
     # Run weekly on Sundays at 6 AM UTC
     - cron: '0 6 * * 0'
 
 jobs:
+  # Mirrors job-agent's `changes` job (also used in build.yml). Always runs;
+  # gates performance-tests/performance-comparison on code changes + draft.
+  changes:
+    name: Detect changed paths
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: read
+    timeout-minutes: 3
+    outputs:
+      code: ${{ steps.set.outputs.code }}
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+      - uses: dorny/paths-filter@d1c1ffe0248fe513906c8e24db8ea791d46f8590 # v3
+        id: filter_code
+        if: github.event_name == 'pull_request'
+        with:
+          predicate-quantifier: 'every'
+          filters: |
+            code:
+              - '**'
+              - '!*.md'
+              - '!docs/**'
+              - '!LICENSE'
+              - '!.gitignore'
+              - '!.github/**'
+      - name: Resolve flags
+        id: set
+        # Non-PR events (push, schedule, workflow_dispatch) have no base to
+        # diff against, so default to running everything.
+        run: |
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            echo "code=${{ steps.filter_code.outputs.code }}" >> "$GITHUB_OUTPUT"
+          else
+            echo "code=true" >> "$GITHUB_OUTPUT"
+          fi
+
   performance-tests:
+    name: performance-tests
+    needs: [changes]
+    if: >-
+      (github.event.pull_request.draft == false || github.event_name != 'pull_request')
+      && needs.changes.outputs.code == 'true'
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -133,6 +178,11 @@ jobs:
           });
 
   performance-comparison:
+    name: performance-comparison
+    needs: [changes]
+    if: >-
+      (github.event.pull_request.draft == false || github.event_name != 'pull_request')
+      && needs.changes.outputs.code == 'true'
     runs-on: ubuntu-latest
 
     steps:
