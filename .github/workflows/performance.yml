@@ -199,14 +199,26 @@ jobs:
                 print(f'Performance change: {change:+.1f}%')
                 print(f'Baseline: {baseline_time:.3f}s → Current: {current_time:.3f}s')
 
-                # Check for significant regression (>10%)
-                if change > 10:
-                    print(f'❌ Performance regression detected: {change:+.1f}% slower')
+                # Threshold rationale: this compares ONE (n=1) ~40ms measurement
+                # against a baseline taken on a DIFFERENT shared CI runner, so it is
+                # noise-dominated. Observed spread across real runs of this very job:
+                # -14.6% and +53.2%, with no code change responsible. A 10% threshold
+                # (the original) therefore fires on runner jitter, which is how this
+                # job ended up disabled with 'if: false' rather than fixed.
+                #
+                # The statistically meaningful gate for the README claim is the
+                # RELATIVE, same-runner assertion inside test_readme_claims_validation
+                # (SQLite vs linear scan on identical data, self-calibrating). This
+                # job is the coarse backstop: it should only fire on a gross,
+                # unambiguous regression (algorithmic -- a dropped index, an N+1),
+                # which is 3x+, not 1.1x.
+                if change > 200:
+                    print(f'❌ Gross performance regression: {change:+.1f}% slower (>3x)')
                     exit(1)
-                elif change < -10:
+                elif change < -50:
                     print(f'🚀 Performance improvement: {change:+.1f}% faster')
                 else:
-                    print(f'✅ Performance stable: {change:+.1f}% change')
+                    print(f'✅ Within CI noise band: {change:+.1f}% change (gate fires >200%)')
             else:
                 print('No baseline data available for comparison')
         else:
