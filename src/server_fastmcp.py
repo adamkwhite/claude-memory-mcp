@@ -19,6 +19,7 @@ try:
         init_default_logging,
         log_function_call,
         log_security_event,
+        set_correlation_id,
     )
 except ImportError:
     # For direct imports during testing
@@ -29,6 +30,7 @@ except ImportError:
         init_default_logging,
         log_function_call,
         log_security_event,
+        set_correlation_id,
     )
 
 # Constants
@@ -180,6 +182,7 @@ memory_server = FastMCPConversationMemoryServer()
 @mcp.tool()
 async def search_conversations(query: str, limit: int = DEFAULT_SEARCH_LIMIT) -> str:
     """Search through stored Claude conversations for relevant content"""
+    set_correlation_id()
     results = await memory_server.search_conversations(query, limit)
 
     if not results:
@@ -218,6 +221,7 @@ async def add_conversation(
     (``search_by_tag`` / ``search_by_session_id`` /
     ``search_by_conversation_type``).
     """
+    set_correlation_id()
     result = await memory_server.add_conversation(
         content,
         title,
@@ -275,6 +279,7 @@ async def update_conversation(
 @mcp.tool()
 async def generate_weekly_summary(week_offset: int = 0) -> str:
     """Generate a summary of conversations from the past week"""
+    set_correlation_id()
     return await memory_server.generate_weekly_summary(week_offset)
 
 
