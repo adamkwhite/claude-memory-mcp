@@ -1,4 +1,6 @@
 """Custom exceptions for Claude Memory MCP system"""
+# scratch: verifying the changes-job code filter for PR #183; this branch is
+# throwaway and will be closed unmerged.
 
 
 class ValidationError(ValueError):
