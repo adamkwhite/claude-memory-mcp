@@ -383,10 +383,26 @@ class ConversationMemoryServer:
             # Update topics index
             self._update_topics_index(topics, conversation_id)
 
-            # Add to SQLite search database if available
+            # Add to SQLite search database if available. Its return value
+            # was previously ignored, so a failed SQLite write still left
+            # the JSON file + index.json/topics.json entries behind while
+            # reporting "success" — silent drift between JSON and SQLite.
+            # Roll back the file/index writes on failure so a partial
+            # add_conversation call doesn't leave an orphan.
             if self.use_sqlite_search and self.search_db:
                 relative_path = str(file_path.relative_to(self.storage_path))
-                self.search_db.add_conversation(conversation_data, relative_path)
+                sqlite_ok = self.search_db.add_conversation(
+                    conversation_data, relative_path
+                )
+                if not sqlite_ok:
+                    self._rollback_add_conversation(file_path, conversation_id, topics)
+                    return {
+                        "status": "error",
+                        "message": (
+                            "Failed to save conversation: SQLite index update "
+                            "failed; file and index writes were rolled back"
+                        ),
+                    }
 
             return {
                 "status": "success",
@@ -400,6 +416,47 @@ class ConversationMemoryServer:
                 "status": "error",
                 "message": f"Failed to save conversation: {str(e)}",
             }
+
+    def _rollback_add_conversation(
+        self, file_path: Path, conversation_id: str, topics: List[str]
+    ) -> None:
+        """Undo the file + index writes from a failed add_conversation call
+        so a SQLite indexing failure doesn't leave an orphaned JSON file
+        behind. Best-effort: each step is independently guarded (logged,
+        not raised) since we're already in an error path and a failure in
+        one cleanup step shouldn't block the others.
+
+        Not a true transaction — see PR description for what "rollback"
+        does and doesn't guarantee here.
+        """
+        try:
+            file_path.unlink(missing_ok=True)
+        except OSError as e:
+            self.logger.error(f"Rollback: failed to remove orphaned file: {e}")
+
+        self._remove_index_entry(conversation_id)
+        # Reuse the topics-diff helper with an empty new_topics set: every
+        # entry in `topics` is treated as "dropped" for this conversation.
+        self._resync_topics_index(topics, [], conversation_id)
+
+    def _remove_index_entry(self, conversation_id: str) -> None:
+        """Remove a conversation's entry from index.json (rollback helper)."""
+        try:
+            with open(self.index_file, "r") as f:
+                index_data = json.load(f)
+
+            index_data["conversations"] = [
+                c
+                for c in index_data.get("conversations", [])
+                if c.get("id") != conversation_id
+            ]
+            index_data["last_updated"] = datetime.now().isoformat()
+
+            with open(self.index_file, "w") as f:
+                json.dump(index_data, f, indent=2)
+
+        except (OSError, ValueError, KeyError, TypeError) as e:
+            self.logger.error(f"Rollback: failed to remove index entry: {e}")
 
     _CONVERSATION_ID_RE = re.compile(r"^conv_(\d{8})_(\d{6})_[\w]+$")
 
