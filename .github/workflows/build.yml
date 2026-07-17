@@ -30,7 +30,7 @@ jobs:
 
       - name: Install linting tools
         run: |
-          pip install flake8 mypy black isort
+          pip install --only-binary :all: -e ".[lint]"
 
       - name: Check code formatting (Black)
         run: |
@@ -71,8 +71,7 @@ jobs:
 
       - name: Install dependencies
         run: |
-          pip install -e .
-          pip install pytest pytest-cov pytest-asyncio
+          pip install --only-binary :all: -e ".[dev]"
 
       - name: Run tests with coverage
         run: |

@@ -5,18 +5,33 @@ description = "A Model Context Protocol server for searchable local storage of C
 readme = "README.md"
 requires-python = ">=3.10"
 dependencies = [
-    "mcp[cli]>=1.28.1",
-    "jsonschema>=4.26.0",
-    "aiofiles>=25.1.0",
+    "mcp[cli]==1.28.1",
+    "jsonschema==4.26.0",
+    "aiofiles==25.1.0",
 ]
 
+# Pinned to exact resolved versions (not floors) so `pip install -e .` in CI
+# resolves the same dependency graph every run instead of whatever PyPI
+# happens to serve that day (SonarCloud githubactions:S8544 -- "Using
+# dependencies without locking resolved versions is security-sensitive").
+# This is the single source of truth both workflow files install from; bump
+# versions here, not by editing .github/workflows/*.yml.
 [project.optional-dependencies]
 dev = [
-    "pytest>=9.1.1",
-    "pytest-cov>=7.1.0",
-    "pytest-asyncio>=1.4.0",
-    "psutil>=7.2.2",
-    "types-aiofiles>=24.1.0",
+    "pytest==9.1.1",
+    "pytest-cov==7.1.0",
+    "pytest-asyncio==1.4.0",
+    "psutil==7.2.2",
+    "types-aiofiles==25.1.0.20260518",
+]
+# CI-only lint tooling (quick-checks job in build.yml). Not used by
+# pre-commit, which already runs ruff instead -- see chore/strict-lint-config
+# (#167) for migrating CI to match. Pinned for the same S8544 reason as dev.
+lint = [
+    "flake8==7.3.0",
+    "mypy==1.16.0",
+    "black==26.5.1",
+    "isort==8.0.1",
 ]
 
 [build-system]
