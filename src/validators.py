@@ -310,6 +310,65 @@ def validate_storage_path(storage_path: Union[str, "Path", None]) -> str:
     return text
 
 
+def validate_import_file_path(file_path: Union[str, "Path", None]) -> Path:
+    """Validate a file path immediately before it is opened for import
+    parsing or format detection.
+
+    Shared choke point for the ``BaseImporter`` subclasses' ``import_file``
+    entry points and ``FormatDetector.detect_format`` (SonarCloud
+    pythonsecurity:S8707 -- "LLMs running this code with faulty CLI
+    arguments can escape file system restrictions"). Every caller of these
+    entry points is a human running a local script
+    (``scripts/bulk_import_enhanced.py``, or an importer's own ``__main__``
+    demo block) against a file of their own choosing; the importers are not
+    wired into any MCP tool, so there is no remote/privilege boundary being
+    crossed here -- this is hardening a CLI against its own operator, not
+    closing a live hole.
+
+    This intentionally does NOT reject ``..`` traversal or relative paths:
+    doing so would only break legitimate relative-path CLI usage without
+    stopping anything a local user couldn't already do directly with
+    ``cat``. That mirrors the "no location policy" carve-out documented on
+    ``validate_storage_path`` above, for the same reason.
+
+    Args:
+        file_path: The raw path as passed to import_file/detect_format.
+
+    Returns:
+        The path, resolved to an absolute ``Path``.
+
+    Raises:
+        MetadataValidationError: If file_path is missing, not a string or
+            Path, empty/whitespace-only, contains a null byte, does not
+            exist, or is not a regular file (e.g. a directory).
+    """
+    if file_path is None:
+        raise MetadataValidationError("file_path cannot be None")
+
+    if not isinstance(file_path, (str, Path)):
+        raise MetadataValidationError(
+            f"file_path must be a string or Path, got {type(file_path).__name__}"
+        )
+
+    text = str(file_path)
+
+    if not text.strip():
+        raise MetadataValidationError("file_path cannot be empty or whitespace-only")
+
+    if NULL_BYTE_PATTERN.search(text):
+        raise MetadataValidationError("file_path contains null bytes")
+
+    resolved = Path(file_path).resolve()
+
+    if not resolved.exists():
+        raise MetadataValidationError(f"file_path does not exist: {resolved}")
+
+    if not resolved.is_file():
+        raise MetadataValidationError(f"file_path is not a regular file: {resolved}")
+
+    return resolved
+
+
 def _strip_control_chars(value: str) -> str:
     """Remove control chars (keeping safe whitespace), matching validate_title."""
     return "".join(

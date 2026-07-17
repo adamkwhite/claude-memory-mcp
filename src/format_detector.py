@@ -13,6 +13,8 @@ from enum import Enum
 from pathlib import Path
 from typing import Any, Dict, List
 
+from validators import validate_import_file_path
+
 logger = logging.getLogger(__name__)
 
 
@@ -48,6 +50,8 @@ class FormatDetector:
         try:
             if not file_path.exists():
                 return self._create_result(PlatformType.UNKNOWN, 0.0, "File not found")
+
+            file_path = validate_import_file_path(file_path)
 
             # Check file extension
             extension = file_path.suffix.lower()

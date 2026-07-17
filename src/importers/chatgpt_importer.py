@@ -11,6 +11,8 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, List
 
+from validators import validate_import_file_path
+
 from .base_importer import BaseImporter, ImportResult
 
 logger = logging.getLogger(__name__)
@@ -43,6 +45,8 @@ class ChatGPTImporter(BaseImporter):
                     imported_ids=[],
                     metadata={},
                 )
+
+            file_path = validate_import_file_path(file_path)
 
             # Load and validate ChatGPT export file
             with open(file_path, "r", encoding="utf-8") as f:

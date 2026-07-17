@@ -278,9 +278,13 @@ class BaseImporter(ABC):
             except ValueError:
                 continue
 
-        # If all formats fail, use current time and log warning
+        # If all formats fail, use current time and log warning.
+        # ``timestamp_str`` is untrusted (platform export data); log it via
+        # %r (through lazy %-formatting) rather than f-string concatenation
+        # so control/newline characters are escaped instead of injected
+        # verbatim into the log (SonarCloud pythonsecurity:S5145).
         self.logger.warning(
-            f"Could not parse timestamp: {timestamp_str}, using current time"
+            "Could not parse timestamp: %r, using current time", timestamp_str
         )
         return datetime.now()
 

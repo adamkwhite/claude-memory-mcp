@@ -380,9 +380,11 @@ if __name__ == "__main__":
     import sys
 
     if len(sys.argv) > 1:
-        file_path = sys.argv[1]
+        from validators import validate_import_file_path
 
         try:
+            file_path = validate_import_file_path(sys.argv[1])
+
             with open(file_path, "r", encoding="utf-8") as f:
                 data = json.load(f)
 
