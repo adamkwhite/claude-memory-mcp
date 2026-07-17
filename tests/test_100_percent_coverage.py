@@ -4,6 +4,7 @@ Additional tests to achieve 100% coverage for the MCP server
 Targets the remaining 28 uncovered lines from previous coverage report
 """
 
+import contextlib
 import json
 import shutil
 import sys
@@ -1271,7 +1272,7 @@ class TestServerExceptionCoverage:
                 ConversationMemoryServer(temp_storage)
                 # If no exception is raised, the lines might not be covered
                 # But we're testing the path exists
-            except Exception as e:
+            except Exception as e:  # noqa: BLE001 - mock raises plain Exception; asserting on its message is the point of this coverage test
                 # Exception handling should log and possibly continue
                 assert "JSON write failed" in str(e)
 
@@ -1279,17 +1280,13 @@ class TestServerExceptionCoverage:
         """Test index file creation permission errors"""
         from unittest.mock import patch
 
-        # Mock Path.mkdir to raise PermissionError
-        with patch(
-            "pathlib.Path.mkdir",
-            side_effect=PermissionError("Permission denied"),
+        # Mock Path.mkdir to raise PermissionError. Exception might be
+        # re-raised or handled by the server; either is acceptable.
+        with (
+            patch("pathlib.Path.mkdir", side_effect=PermissionError("Permission denied")),
+            contextlib.suppress(PermissionError),
         ):
-            try:
-                ConversationMemoryServer(temp_storage)
-                # Test that server handles permission errors gracefully
-            except PermissionError:
-                # Exception might be re-raised or handled
-                pass
+            ConversationMemoryServer(temp_storage)
 
     @pytest.mark.asyncio
     async def test_search_conversations_file_error_lines_212_215(self, server):

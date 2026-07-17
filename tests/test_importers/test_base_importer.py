@@ -434,13 +434,13 @@ class TestUniversalMetadataFields:
 
     def _build(self, **kwargs):
         """Build a minimal universal conversation with overrides."""
-        defaults = dict(
-            platform_id="meta_test",
-            title="Meta",
-            content="content",
-            messages=[],
-            date=datetime(2026, 4, 18, 10, 0, 0),
-        )
+        defaults = {
+            "platform_id": "meta_test",
+            "title": "Meta",
+            "content": "content",
+            "messages": [],
+            "date": datetime(2026, 4, 18, 10, 0, 0),
+        }
         defaults.update(kwargs)
         return self.importer.create_universal_conversation(**defaults)
 

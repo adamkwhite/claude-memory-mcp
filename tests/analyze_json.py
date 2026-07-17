@@ -72,7 +72,7 @@ def analyze_json_structure(file_path):
                 print(f"❌ JSON parsing failed: {e}")
                 print("🔍 This might be a streaming JSON format or malformed")
 
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 - manual CLI diagnostic script: print/report and continue rather than crash mid-run
         print(f"❌ Error analyzing file: {e}")
 
 

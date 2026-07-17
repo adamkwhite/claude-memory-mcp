@@ -447,8 +447,8 @@ class TestGenericImporterParsingMethods:
         assert len(result["messages"]) == 2
 
     def test_parse_conversation_invalid_type(self):
-        """Test parsing invalid type raises ValueError."""
-        with pytest.raises(ValueError, match="Generic conversation data must be"):
+        """Test parsing invalid type raises TypeError."""
+        with pytest.raises(TypeError, match="Generic conversation data must be"):
             self.importer.parse_conversation(123)
 
     def test_looks_like_conversation_positive(self):
@@ -602,7 +602,7 @@ class TestGenericImporterHelperMethods:
         """Test XML element conversation detection."""
         # Create XML elements
         conv_elem = ET.Element("conversation")
-        for i in range(5):
+        for _ in range(5):
             ET.SubElement(conv_elem, "message")
 
         random_elem = ET.Element("data")

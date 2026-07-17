@@ -56,9 +56,7 @@ class ConversationMigrator:
 
         if data_conversations.exists():
             return True
-        if legacy_conversations.exists():
-            return False
-        return True
+        return not legacy_conversations.exists()
 
     def migrate_all_conversations(self) -> dict[str, Any]:
         """Migrate all conversations from JSON to SQLite."""
@@ -97,8 +95,8 @@ class ConversationMigrator:
             self.logger.info(f"Migration completed: {stats}")
             return stats
 
-        except Exception as e:
-            self.logger.error(f"Migration failed: {e}")
+        except Exception as e:  # noqa: BLE001 - top-level migration boundary: report failure in stats rather than crash the migration run
+            self.logger.exception(f"Migration failed: {e}")
             stats["error"] = str(e)
             return stats
 
@@ -161,8 +159,10 @@ class ConversationMigrator:
 
             return success
 
-        except Exception as e:
-            self.logger.error(f"Error migrating conversation {conv_info.get('id', 'unknown')}: {e}")
+        except Exception as e:  # noqa: BLE001 - resilience: skip unmigratable conversation, keep processing the rest of the batch
+            self.logger.exception(
+                f"Error migrating conversation {conv_info.get('id', 'unknown')}: {e}"
+            )
             return False
 
     def _migrate_json_file(self, file_path: Path) -> bool:
@@ -192,8 +192,8 @@ class ConversationMigrator:
 
             return success
 
-        except Exception as e:
-            self.logger.error(f"Error migrating file {file_path}: {e}")
+        except Exception as e:  # noqa: BLE001 - resilience: skip unmigratable file, keep processing the rest of the batch
+            self.logger.exception(f"Error migrating file {file_path}: {e}")
             return False
 
     def verify_migration(self) -> dict[str, Any]:
@@ -232,8 +232,8 @@ class ConversationMigrator:
             self.logger.info(f"Verification results: {verification}")
             return verification
 
-        except Exception as e:
-            self.logger.error(f"Verification failed: {e}")
+        except Exception as e:  # noqa: BLE001 - top-level verification boundary: report failure rather than crash
+            self.logger.exception(f"Verification failed: {e}")
             return {"error": str(e)}
 
 

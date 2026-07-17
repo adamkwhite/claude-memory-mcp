@@ -70,7 +70,7 @@ class ClaudeImporter(BaseImporter):
                     metadata={},
                 )
 
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - top-level import boundary: report failure via ImportResult instead of crashing the batch run
             return ImportResult(
                 success=False,
                 conversations_imported=0,
@@ -139,7 +139,7 @@ class ClaudeImporter(BaseImporter):
                     metadata={},
                 )
 
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - best-effort text parse: report failure via ImportResult instead of crashing
             return ImportResult(
                 success=False,
                 conversations_imported=0,
@@ -178,7 +178,7 @@ class ClaudeImporter(BaseImporter):
                     metadata={},
                 )
 
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - top-level format-branch boundary: report failure via ImportResult instead of crashing
             return ImportResult(
                 success=False,
                 conversations_imported=0,
@@ -218,7 +218,7 @@ class ClaudeImporter(BaseImporter):
                     metadata={},
                 )
 
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - top-level format-branch boundary: report failure via ImportResult instead of crashing
             return ImportResult(
                 success=False,
                 conversations_imported=0,
@@ -258,7 +258,7 @@ class ClaudeImporter(BaseImporter):
                     metadata={},
                 )
 
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - top-level format-branch boundary: report failure via ImportResult instead of crashing
             return ImportResult(
                 success=False,
                 conversations_imported=0,
@@ -284,7 +284,7 @@ class ClaudeImporter(BaseImporter):
             else:
                 return self._parse_claude_json(raw_data)
         else:
-            raise ValueError("Claude conversation data must be string or dictionary")
+            raise TypeError("Claude conversation data must be string or dictionary")
 
     def _parse_claude_json(self, data: dict[str, Any]) -> dict[str, Any]:
         """Parse Claude JSON conversation data."""
@@ -463,9 +463,13 @@ class ClaudeImporter(BaseImporter):
         has_required = sum(1 for field in required_fields if field in data)
 
         # Check for our specific ID format
-        if "id" in data and isinstance(data["id"], str):
-            if data["id"].startswith("conv_") and len(data["id"]) > 15:
-                has_required += 1
+        if (
+            "id" in data
+            and isinstance(data["id"], str)
+            and data["id"].startswith("conv_")
+            and len(data["id"]) > 15
+        ):
+            has_required += 1
 
         return has_required >= 5
 

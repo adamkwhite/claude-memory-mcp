@@ -557,7 +557,7 @@ class TestSaveAndReport:
             dry_run=True,
             detector=_make_detector(PlatformType.UNKNOWN, 0.0),
         )
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError, match="Unknown importer label"):
             importer._build_importer("not-a-real-format", tmp_path)
 
 

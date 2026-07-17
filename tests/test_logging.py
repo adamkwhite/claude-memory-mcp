@@ -1,5 +1,6 @@
 """Test logging functionality for Claude Memory MCP system"""
 
+import contextlib
 import logging
 import os
 import tempfile
@@ -361,10 +362,8 @@ class TestLoggingIntegration:
             finally:
                 # Clean up potential backup files
                 for suffix in ["", ".1", ".2"]:
-                    try:
+                    with contextlib.suppress(FileNotFoundError):
                         os.unlink(f"{temp_file.name}{suffix}")
-                    except FileNotFoundError:
-                        pass
 
 
 class TestLoggingExceptionHandling:
@@ -382,7 +381,7 @@ class TestLoggingExceptionHandling:
             try:
                 log_function_call("test_function", param1="value1", param2="value2")
                 # Should not raise an exception due to silent failure
-            except Exception as e:
+            except Exception as e:  # noqa: BLE001 - test asserts the function fails silently: catch-and-fail is the assertion
                 pytest.fail(f"log_function_call should fail silently, but raised: {e}")
 
     def test_log_performance_exception_handling(self):
@@ -396,7 +395,7 @@ class TestLoggingExceptionHandling:
             try:
                 log_performance("test_function", 1.234, results=10)
                 # Should not raise an exception due to silent failure
-            except Exception as e:
+            except Exception as e:  # noqa: BLE001 - test asserts the function fails silently: catch-and-fail is the assertion
                 pytest.fail(f"log_performance should fail silently, but raised: {e}")
 
     def test_log_security_event_exception_handling(self):
@@ -410,7 +409,7 @@ class TestLoggingExceptionHandling:
             try:
                 log_security_event("TEST_EVENT", "Test message", "ERROR")
                 # Should not raise an exception due to silent failure
-            except Exception as e:
+            except Exception as e:  # noqa: BLE001 - test asserts the function fails silently: catch-and-fail is the assertion
                 pytest.fail(f"log_security_event should fail silently, but raised: {e}")
 
     def test_security_event_path_redaction_failure(self):
@@ -428,7 +427,7 @@ class TestLoggingExceptionHandling:
                     "ERROR",
                 )
                 # Should not raise an exception - should use fallback path redaction
-            except Exception as e:
+            except Exception as e:  # noqa: BLE001 - test asserts the function fails silently: catch-and-fail is the assertion
                 pytest.fail(
                     f"log_security_event should handle path operation errors, but raised: {e}"
                 )
@@ -448,7 +447,7 @@ class TestLoggingExceptionHandling:
                     "WARNING",
                 )
                 # Should not raise an exception - should use fallback
-            except Exception as e:
+            except Exception as e:  # noqa: BLE001 - test asserts the function fails silently: catch-and-fail is the assertion
                 pytest.fail(f"log_security_event should handle OSError, but raised: {e}")
 
     def test_file_operation_path_redaction_failure(self):
@@ -459,7 +458,7 @@ class TestLoggingExceptionHandling:
             try:
                 log_file_operation("read", "/some/file/path.txt", True)
                 # Should not raise an exception
-            except Exception as e:
+            except Exception as e:  # noqa: BLE001 - test asserts the function fails silently: catch-and-fail is the assertion
                 pytest.fail(f"log_file_operation should handle path errors, but raised: {e}")
 
 
